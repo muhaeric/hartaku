@@ -18,7 +18,7 @@ export default function TransactionRow ({ transaction, selecting, selected, onSe
     <button
       type="button"
       onClick={selecting ? onSelect : onOpen}
-      className={`flex w-full items-center gap-2.5 px-page py-2 text-left transition hover:bg-black/[0.03] dark:hover:bg-white/[0.04] ${
+      className={`flex w-full items-center gap-2 px-page py-1.5 text-left transition hover:bg-black/[0.03] dark:hover:bg-white/[0.04] ${
         selected ? 'bg-brand-50 dark:bg-brand-500/10' : ''
       }`}
     >
@@ -31,14 +31,16 @@ export default function TransactionRow ({ transaction, selecting, selected, onSe
           className="h-5 w-5 shrink-0 rounded border-hairline text-brand-500"
         />
       ) : (
-        <span className="w-[74px] shrink-0 truncate text-caption text-subtitle dark:text-subtitle-dark sm:w-24">
+        // Wraps to two lines rather than truncating - the row is two lines tall
+        // anyway, so "Food & Beverages" can be read in full.
+        <span className="line-clamp-2 w-[64px] shrink-0 text-[11px] leading-[14px] text-subtitle dark:text-subtitle-dark sm:w-20">
           {transfer ? 'Transfer' : transaction.category || 'Tanpa kategori'}
         </span>
       )}
 
       <span className="min-w-0 flex-1">
         <span className="block truncate text-body font-medium">{label}</span>
-        <span className="mt-0.5 block truncate text-caption text-subtitle dark:text-subtitle-dark">
+        <span className="block truncate text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">
           {source || '—'}
         </span>
       </span>
@@ -48,7 +50,7 @@ export default function TransactionRow ({ transaction, selecting, selected, onSe
         value={transaction.amount}
         type={transaction.type}
         signed
-        className="shrink-0 text-body font-semibold"
+        className="shrink-0 text-caption font-semibold"
       />
     </button>
   )

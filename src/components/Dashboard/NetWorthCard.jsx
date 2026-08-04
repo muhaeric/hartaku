@@ -16,14 +16,14 @@ export default function NetWorthCard ({ worth }) {
         Total aset
       </p>
       <p
-        className={`mt-0.5 overflow-hidden text-[30px] font-bold leading-9 tracking-tight amount ${
+        className={`mt-0.5 overflow-hidden text-hero font-bold tracking-tight amount ${
           worth.total < 0 ? 'text-expense dark:text-red-400' : ''
         }`}
       >
         {money(worth.total)}
       </p>
 
-      <div className="mt-3 flex items-end gap-6 border-t border-hairline pt-2.5 dark:border-hairline-dark">
+      <div className="mt-2.5 flex items-end gap-6 border-t border-hairline pt-2 dark:border-hairline-dark">
         <Figure label="Aset" value={money(worth.assets, true)} />
         <Figure
           label="Kewajiban"

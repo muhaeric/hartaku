@@ -25,7 +25,7 @@ export default function Navbar () {
 
   return (
     <header className="sticky top-0 z-20 bg-canvas/90 backdrop-blur dark:bg-canvas-dark/90">
-      <div className="mx-auto flex max-w-2xl items-center gap-1 px-page pb-2 pt-3">
+      <div className="mx-auto flex max-w-2xl items-center gap-1 px-page pb-2 pt-2">
         {/* Page title carries the hierarchy, so the bar itself stays chrome-free. */}
         <h1 className="flex-1 truncate text-page-title font-bold tracking-tight">
           {PAGE_TITLES[pathname] || 'Hartaku'}

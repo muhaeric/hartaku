@@ -31,19 +31,25 @@ export default {
         sheet: '24px'
       },
       fontSize: {
-        // Brief's scale. Line heights kept tight so rows stay inside their budget.
-        caption: ['13px', '18px'],
-        body: ['15px', '21px'],
-        amount: ['17px', '22px'],
-        'card-title': ['17px', '23px'],
-        'section-title': ['20px', '27px'],
-        'page-title': ['30px', '36px']
+        /*
+         * Tightened a step from the brief's original scale after seeing it on a
+         * real phone: 30px page titles and 17px amounts dominated every screen,
+         * and the amounts were wide enough to truncate in three-column layouts.
+         * Line heights stay tight so rows keep to their height budget.
+         */
+        caption: ['13px', '17px'],
+        body: ['15px', '20px'],
+        amount: ['15px', '20px'],
+        'card-title': ['16px', '22px'],
+        'section-title': ['17px', '24px'],
+        'page-title': ['24px', '30px'],
+        hero: ['26px', '32px']
       },
       spacing: {
-        // 8pt system: the brief's five steps, named so intent survives review.
+        // 8pt system: the brief's steps, named so intent survives review.
         gap: '8px',
         'gap-normal': '12px',
-        section: '20px',
+        section: '16px',
         page: '16px'
       },
       animation: {

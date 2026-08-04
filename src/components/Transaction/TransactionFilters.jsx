@@ -33,14 +33,14 @@ export default function TransactionFilters ({
   return (
     <div className="space-y-gap">
       <div className="relative">
-        <SearchIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-subtitle" />
+        <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-subtitle" />
         <label className="sr-only" htmlFor="search">
           Cari keterangan atau kategori
         </label>
         <input
           id="search"
           type="search"
-          className="field h-10 py-0 pl-10"
+          className="field h-9 py-0 pl-9"
           placeholder="Cari keterangan…"
           value={filters.search}
           onChange={(event) => onChange({ search: event.target.value })}
@@ -84,7 +84,7 @@ export default function TransactionFilters ({
                   type="button"
                   aria-pressed={active}
                   onClick={() => toggleCategory(category.name)}
-                  className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-caption transition ${
+                  className={`flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-caption transition ${
                     active
                       ? 'border-brand-500 bg-brand-50 font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200'
                       : 'border-hairline text-subtitle dark:border-hairline-dark dark:text-subtitle-dark'

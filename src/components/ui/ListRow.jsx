@@ -29,7 +29,7 @@ export default function ListRow ({
       <span className="min-w-0 flex-1">
         <span className="block truncate text-body font-medium">{title}</span>
         {(subtitle || meta) && (
-          <span className="mt-0.5 block truncate text-caption text-subtitle dark:text-subtitle-dark">
+          <span className="block truncate text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">
             {subtitle}
             {subtitle && meta && ' · '}
             {meta}
@@ -41,7 +41,7 @@ export default function ListRow ({
         <span className="shrink-0 text-right">
           {trailing && <span className="block text-amount font-semibold amount">{trailing}</span>}
           {trailingSub && (
-            <span className="mt-0.5 block text-caption amount text-subtitle dark:text-subtitle-dark">
+            <span className="block text-[11px] leading-4 amount text-subtitle dark:text-subtitle-dark">
               {trailingSub}
             </span>
           )}
@@ -50,7 +50,7 @@ export default function ListRow ({
     </>
   )
 
-  const shared = `flex w-full items-center gap-3 px-page py-2.5 text-left ${
+  const shared = `flex w-full items-center gap-2.5 px-page py-2 text-left ${
     interactive ? 'transition hover:bg-black/[0.03] dark:hover:bg-white/[0.04]' : ''
   } ${className}`
 
@@ -77,7 +77,7 @@ export default function ListRow ({
 export function RowIcon ({ icon, color }) {
   return (
     <span
-      className="flex h-9 w-9 items-center justify-center rounded-[12px] text-[17px] ring-1 ring-inset ring-black/[0.06] dark:ring-white/10"
+      className="flex h-8 w-8 items-center justify-center rounded-[10px] text-[15px] ring-1 ring-inset ring-black/[0.06] dark:ring-white/10"
       style={color ? { backgroundColor: `${color}1f` } : undefined}
       aria-hidden="true"
     >

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AuthCallback from './components/Auth/AuthCallback.jsx'
 import LoginScreen from './components/Auth/LoginScreen.jsx'
 import Dashboard from './components/Dashboard/Dashboard.jsx'
+import DevPreview from './components/DevPreview.jsx'
 import ImportScreenshot from './components/Import/ImportScreenshot.jsx'
 import AppLayout from './components/Layout/AppLayout.jsx'
 import ManagePage from './components/Manage/ManagePage.jsx'
@@ -21,6 +22,8 @@ export default function App () {
         <AuthProvider>
           <Routes>
             <Route path="/auth/callback" element={<AuthCallback />} />
+            {/* Layout harness; excluded from production builds. */}
+            {import.meta.env.DEV && <Route path="/__preview" element={<DevPreview />} />}
             <Route path="/*" element={<AuthenticatedApp />} />
           </Routes>
         </AuthProvider>

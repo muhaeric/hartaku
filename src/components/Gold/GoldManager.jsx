@@ -173,7 +173,7 @@ function GoldPortfolio ({ summary, quote, loading, error, stale, onRefresh, mone
           <p id="gold-label" className="text-caption text-subtitle dark:text-subtitle-dark">
             Nilai emas sekarang
           </p>
-          <p className="mt-0.5 text-[26px] font-bold leading-8 tracking-tight amount">
+          <p className="mt-0.5 text-hero font-bold tracking-tight amount">
             {hasValue ? money(summary.value) : '—'}
           </p>
         </div>
