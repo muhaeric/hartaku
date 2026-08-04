@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kebijakan Privasi — Hartaku</title>
+    <meta
+      name="description"
+      content="Bagaimana Hartaku menangani data kamu: semua catatan keuangan tersimpan di Google Spreadsheet milikmu sendiri, bukan di server kami."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/legal.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <a class="brand" href="/"><span>💸</span> Hartaku</a>
+        <h1>Kebijakan Privasi</h1>
+        <p class="updated">Terakhir diperbarui: 4 Agustus 2026</p>
+      </header>
+
+      <div class="note">
+        <p>
+          <strong>Ringkasnya:</strong> Hartaku tidak punya database. Seluruh catatan
+          keuanganmu disimpan di Google Spreadsheet di dalam Google Drive milikmu sendiri.
+          Kami tidak menyimpan, membaca, maupun membagikan isinya.
+        </p>
+      </div>
+
+      <h2>1. Siapa kami</h2>
+      <p>
+        Hartaku adalah aplikasi pencatat keuangan pribadi berbasis web. Aplikasi ini
+        dikembangkan sebagai proyek perorangan dan dipakai secara gratis. Dokumen ini
+        menjelaskan data apa yang diproses aplikasi dan ke mana perginya.
+      </p>
+
+      <h2>2. Data yang kami proses</h2>
+      <ul>
+        <li>
+          <strong>Identitas dasar Google:</strong> nama, alamat email, dan foto profil.
+          Dipakai hanya untuk menampilkan siapa yang sedang masuk dan untuk menghubungkan
+          sesi ke akun Google-mu.
+        </li>
+        <li>
+          <strong>Catatan keuangan</strong> — transaksi, akun, kategori, dan catatan
+          investasi emas. Data ini <strong>tidak pernah dikirim ke server kami</strong>.
+          Browser-mu menulisnya langsung ke Google Sheets memakai izin yang kamu berikan.
+        </li>
+        <li>
+          <strong>Token akses Google.</strong> Refresh token disimpan dalam bentuk
+          terenkripsi (AES-256-GCM) di dalam cookie <code>HttpOnly</code> pada browser-mu.
+          Server kami tidak menyimpan salinannya. Access token hanya hidup di memori
+          halaman dan hilang saat tab ditutup.
+        </li>
+      </ul>
+
+      <h2>3. Izin Google yang diminta</h2>
+      <ul>
+        <li><code>openid</code>, <code>email</code>, <code>profile</code> — mengenali kamu saat masuk.</li>
+        <li>
+          <code>drive.file</code> — membuat dan mengelola <strong>hanya file yang dibuat
+          oleh aplikasi ini</strong>. Aplikasi tidak bisa melihat, membuka, atau menghapus
+          file lain di Google Drive-mu. Ini adalah izin Drive tersempit yang tersedia.
+        </li>
+      </ul>
+      <p>
+        Hartaku tidak meminta akses ke Gmail, Kontak, Kalender, atau layanan Google lainnya.
+      </p>
+
+      <h2>4. Penyimpanan di perangkatmu</h2>
+      <ul>
+        <li>
+          <strong>Cache lokal.</strong> Salinan isi spreadsheet disimpan di
+          <code>localStorage</code> browser agar aplikasi terbuka seketika tanpa menunggu
+          jaringan. Cache ini tidak pernah dikirim ke mana pun, dan dihapus saat kamu keluar
+          atau berganti spreadsheet.
+        </li>
+        <li>
+          <strong>Preferensi.</strong> Tema, mata uang, dan format tanggal disimpan lokal.
+        </li>
+      </ul>
+
+      <h2>5. Fitur OCR (import dari screenshot)</h2>
+      <p>
+        Pembacaan teks dari screenshot berjalan <strong>sepenuhnya di perangkatmu</strong>
+        memakai Tesseract. Gambar tidak diunggah ke server kami maupun ke layanan pihak
+        ketiga, dan tidak disimpan setelah kamu meninggalkan halaman import.
+      </p>
+
+      <h2>6. Pihak ketiga</h2>
+      <ul>
+        <li>
+          <strong>Google</strong> — autentikasi, Google Sheets, dan Google Drive. Tunduk pada
+          <a href="https://policies.google.com/privacy" rel="noopener noreferrer">Kebijakan Privasi Google</a>.
+        </li>
+        <li>
+          <strong>Vercel</strong> — hosting. Menyimpan log permintaan teknis standar
+          (alamat IP, waktu, user agent) untuk operasional dan keamanan.
+        </li>
+        <li>
+          <strong>logam-mulia-api</strong> — sumber harga emas harian. Dipanggil dari server
+          kami, bukan dari browser-mu, dan permintaan itu <strong>tidak menyertakan data
+          apa pun tentang kamu</strong> — hanya meminta harga hari ini.
+        </li>
+      </ul>
+
+      <h2>7. Yang tidak kami lakukan</h2>
+      <ul>
+        <li>Tidak ada analytics, pixel pelacak, atau cookie iklan.</li>
+        <li>Tidak ada pelacakan lintas situs.</li>
+        <li>Tidak menjual, menyewakan, atau membagikan datamu ke siapa pun.</li>
+        <li>Tidak membaca isi spreadsheet-mu dari sisi server.</li>
+      </ul>
+
+      <h2>8. Retensi</h2>
+      <p>
+        Cookie sesi berlaku 7 hari dan diperpanjang setiap kali kamu membuka aplikasi. Jika
+        aplikasi tidak dibuka selama 7 hari, sesi berakhir dan kamu perlu masuk lagi. Karena
+        kami tidak menyimpan catatan keuanganmu, tidak ada data keuangan yang perlu kami
+        hapus — kendalinya sepenuhnya ada padamu.
+      </p>
+
+      <h2>9. Mengontrol dan menghapus datamu</h2>
+      <ul>
+        <li>
+          <strong>Cabut akses aplikasi:</strong> buka
+          <a href="https://myaccount.google.com/permissions" rel="noopener noreferrer">Izin akun Google</a>,
+          pilih Hartaku, lalu Hapus akses.
+        </li>
+        <li>
+          <strong>Hapus datamu:</strong> hapus spreadsheet bernama
+          <em>Hartaku - Expense Tracker</em> dari Google Drive-mu. Datanya hilang seketika,
+          karena hanya ada di sana.
+        </li>
+        <li>
+          <strong>Bersihkan perangkat:</strong> tombol Keluar di aplikasi menghapus cookie
+          sesi dan cache lokal.
+        </li>
+      </ul>
+
+      <h2>10. Anak-anak</h2>
+      <p>
+        Hartaku tidak ditujukan untuk pengguna di bawah 13 tahun dan tidak secara sengaja
+        memproses data mereka.
+      </p>
+
+      <h2>11. Perubahan kebijakan</h2>
+      <p>
+        Kebijakan ini dapat diperbarui seiring berkembangnya aplikasi. Tanggal pembaruan
+        terakhir selalu tercantum di bagian atas halaman ini.
+      </p>
+
+      <h2>12. Kontak</h2>
+      <p>
+        Pertanyaan soal privasi bisa dikirim ke
+        <a href="mailto:GANTI-DENGAN-EMAIL-KAMU@example.com">GANTI-DENGAN-EMAIL-KAMU@example.com</a>.
+      </p>
+
+      <footer>
+        <a href="/">Beranda</a>
+        <a href="/terms">Syarat &amp; Ketentuan</a>
+      </footer>
+    </main>
+  </body>
+</html>

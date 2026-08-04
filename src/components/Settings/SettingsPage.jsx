@@ -158,6 +158,29 @@ export default function SettingsPage () {
         </div>
       </Section>
 
+      <Section title="Tentang">
+        <div className="flex flex-wrap gap-x-4 gap-y-1">
+          <a className="text-body font-medium text-brand-500" href="/privacy">
+            Kebijakan Privasi
+          </a>
+          <a className="text-body font-medium text-brand-500" href="/terms">
+            Syarat &amp; Ketentuan
+          </a>
+        </div>
+        <p className="hint">
+          Cabut akses aplikasi kapan saja lewat{' '}
+          <a
+            className="font-medium text-brand-500"
+            href="https://myaccount.google.com/permissions"
+            target="_blank"
+            rel="noreferrer"
+          >
+            izin akun Google
+          </a>
+          .
+        </p>
+      </Section>
+
       <Section title="Akun">
         <p className="text-body text-subtitle dark:text-subtitle-dark">{user?.email}</p>
         <div className="flex flex-col gap-gap sm:flex-row">

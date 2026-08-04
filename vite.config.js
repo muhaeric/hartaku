@@ -14,6 +14,16 @@ function devApiPlugin (env) {
       // The api/ handlers read secrets from process.env; in dev they come from .env
       Object.assign(process.env, env)
 
+      // Mirrors the vercel.json rewrites so the legal pages have the same URLs
+      // in development as in production.
+      server.middlewares.use((req, res, next) => {
+        const [pathname] = req.url.split('?')
+        if (pathname === '/privacy' || pathname === '/terms') {
+          req.url = `${pathname}.html`
+        }
+        next()
+      })
+
       server.middlewares.use(async (req, res, next) => {
         if (!req.url.startsWith('/api/')) return next()
 
