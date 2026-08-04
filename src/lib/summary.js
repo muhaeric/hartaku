@@ -125,6 +125,29 @@ export function categoryBreakdown (transactions, type = 'expense') {
     .sort((a, b) => b.total - a.total)
 }
 
+/**
+ * Transactions bucketed by day, newest first, each bucket carrying its own
+ * income and expense totals for the day header.
+ */
+export function groupByDay (transactions) {
+  const days = new Map()
+
+  for (const transaction of transactions) {
+    let day = days.get(transaction.date)
+    if (!day) {
+      day = { date: transaction.date, income: 0, expense: 0, items: [] }
+      days.set(transaction.date, day)
+    }
+
+    day.items.push(transaction)
+    // Transfers move money between accounts, so they belong in neither total.
+    if (transaction.type === 'income') day.income += transaction.amount
+    else if (transaction.type === 'expense') day.expense += transaction.amount
+  }
+
+  return [...days.values()].sort((a, b) => b.date.localeCompare(a.date))
+}
+
 export function monthsWithData (transactions) {
   return [...new Set(transactions.map((transaction) => monthKeyOf(transaction.date)))]
 }

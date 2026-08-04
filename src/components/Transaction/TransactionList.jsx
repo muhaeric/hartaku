@@ -1,41 +1,31 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
-import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { PAGE_SIZE, PAGINATION_THRESHOLD } from '../../lib/constants.js'
 import { buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
-import { relativeDayLabel } from '../../lib/format.js'
-import { filterByMonth, monthsWithData } from '../../lib/summary.js'
-import Amount from '../ui/Amount.jsx'
+import { filterByMonth, groupByDay, monthsWithData, summarize } from '../../lib/summary.js'
 import Button from '../ui/Button.jsx'
 import { Card } from '../ui/Card.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
 import { EmptyState, ErrorState, SkeletonRows } from '../ui/Feedback.jsx'
-import KebabMenu from '../ui/KebabMenu.jsx'
-import ListRow, { RowIcon } from '../ui/ListRow.jsx'
-import { PencilIcon, TrashIcon } from '../ui/icons.jsx'
+import { TrashIcon } from '../ui/icons.jsx'
+import DayGroupHeader from './DayGroup.jsx'
+import PeriodSummary from './PeriodSummary.jsx'
 import TransactionFilters from './TransactionFilters.jsx'
+import TransactionRow from './TransactionRow.jsx'
 
 const INITIAL_FILTERS = { type: 'all', categories: [], account: '', search: '' }
 
-/** What identifies a row at a glance. */
-function primaryLabel (transaction) {
+function labelOf (transaction) {
   if (transaction.description) return transaction.description
   if (transaction.type === 'transfer') return 'Transfer'
   return transaction.category || 'Tanpa kategori'
 }
 
-function accountLabel (transaction) {
-  return transaction.type === 'transfer'
-    ? `${transaction.account} → ${transaction.toAccount}`
-    : transaction.account || '—'
-}
-
 export default function TransactionList () {
   const navigate = useNavigate()
   const toast = useToast()
-  const { settings } = useSettings()
   const { transactions, categories, accounts, loading, error, reload, removeTransactions } =
     useData()
 
@@ -49,11 +39,6 @@ export default function TransactionList () {
   const monthOptions = useMemo(
     () => buildMonthOptions(monthsWithData(transactions)),
     [transactions]
-  )
-
-  const categoryIcons = useMemo(
-    () => new Map(categories.map((category) => [category.name, category])),
-    [categories]
   )
 
   const visible = useMemo(() => {
@@ -88,9 +73,21 @@ export default function TransactionList () {
       .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
   }, [transactions, month, filters])
 
+  const summary = useMemo(() => summarize(visible), [visible])
+
   const paginated = visible.length > PAGINATION_THRESHOLD
   const pageCount = paginated ? Math.ceil(visible.length / PAGE_SIZE) : 1
   const rows = paginated ? visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) : visible
+
+  // Grouping happens after paging so a day is never split across two pages
+  // without its header.
+  const days = useMemo(() => groupByDay(rows), [rows])
+
+  const filtersActive =
+    filters.type !== 'all' ||
+    filters.categories.length > 0 ||
+    Boolean(filters.account) ||
+    Boolean(filters.search.trim())
 
   useEffect(() => setPage(1), [month, filters])
   useEffect(() => setSelected([]), [month, filters])
@@ -126,6 +123,8 @@ export default function TransactionList () {
         onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))}
         onMonthChange={setMonth}
       />
+
+      <PeriodSummary summary={summary} filtered={filtersActive} />
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-caption text-subtitle dark:text-subtitle-dark">
@@ -175,72 +174,25 @@ export default function TransactionList () {
         />
       ) : (
         <>
-          <Card flush as="ul" className="divide-hairline overflow-hidden">
-            {rows.map((transaction) => {
-              const category = categoryIcons.get(transaction.category)
-              const isSelected = selected.includes(transaction.id)
-
-              return (
-                <li key={transaction.id} className={isSelected ? 'bg-brand-50 dark:bg-brand-500/10' : ''}>
-                  <ListRow
-                    onClick={
-                      selecting
-                        ? () => toggleSelected(transaction.id)
-                        : () => navigate(`/transactions/${transaction.id}/edit`)
-                    }
-                    leading={
-                      selecting ? (
-                        <span className="flex h-9 w-9 items-center justify-center">
-                          <input
-                            type="checkbox"
-                            readOnly
-                            checked={isSelected}
-                            aria-label={`Pilih ${primaryLabel(transaction)}`}
-                            className="h-5 w-5 rounded border-hairline text-brand-500"
-                          />
-                        </span>
-                      ) : (
-                        <RowIcon
-                          icon={transaction.type === 'transfer' ? '🔄' : category?.icon || '📝'}
-                          color={category?.color || '#6b7280'}
-                        />
-                      )
-                    }
-                    title={primaryLabel(transaction)}
-                    subtitle={
-                      transaction.type === 'transfer'
-                        ? accountLabel(transaction)
-                        : transaction.category
-                    }
-                    meta={relativeDayLabel(transaction.date, settings.dateFormat)}
-                    trailing={
-                      <Amount value={transaction.amount} type={transaction.type} signed />
-                    }
-                    action={
-                      selecting ? null : (
-                        <KebabMenu
-                          label={`Aksi untuk ${primaryLabel(transaction)}`}
-                          items={[
-                            {
-                              label: 'Ubah',
-                              icon: <PencilIcon className="h-4 w-4" />,
-                              onSelect: () => navigate(`/transactions/${transaction.id}/edit`)
-                            },
-                            {
-                              label: 'Hapus',
-                              icon: <TrashIcon className="h-4 w-4" />,
-                              destructive: true,
-                              onSelect: () =>
-                                setPendingDelete({ ids: [transaction.id], transaction })
-                            }
-                          ]}
-                        />
-                      )
-                    }
-                  />
-                </li>
-              )
-            })}
+          <Card flush as="div" className="overflow-hidden">
+            {days.map((day) => (
+              <section key={day.date}>
+                <DayGroupHeader day={day} />
+                <ul className="divide-hairline">
+                  {day.items.map((transaction) => (
+                    <li key={transaction.id}>
+                      <TransactionRow
+                        transaction={transaction}
+                        selecting={selecting}
+                        selected={selected.includes(transaction.id)}
+                        onSelect={() => toggleSelected(transaction.id)}
+                        onOpen={() => navigate(`/transactions/${transaction.id}/edit`)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
           </Card>
 
           {paginated && (
@@ -274,7 +226,7 @@ export default function TransactionList () {
         title="Hapus transaksi?"
         message={
           pendingDelete?.transaction
-            ? `"${primaryLabel(pendingDelete.transaction)}" akan dihapus dari spreadsheet. Tindakan ini tidak bisa dibatalkan.`
+            ? `"${labelOf(pendingDelete.transaction)}" akan dihapus dari spreadsheet. Tindakan ini tidak bisa dibatalkan.`
             : `${pendingDelete?.ids.length || 0} transaksi akan dihapus dari spreadsheet. Tindakan ini tidak bisa dibatalkan.`
         }
         onConfirm={confirmDelete}

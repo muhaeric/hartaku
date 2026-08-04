@@ -262,8 +262,20 @@ Nominal memakai kelas `.amount` (`whitespace-nowrap` + `tabular-nums`) supaya ti
 dan lebarnya tidak bergoyang saat angkanya berubah. Kolom trailing pada baris daftar tidak boleh
 menyusut — judulnya yang mengalah lebih dulu.
 
-Satu bentuk baris (`ListRow`) dipakai akun, transaksi, kategori, dan emas. Aksi edit/hapus ada di
-menu kebab, bukan tombol yang selalu tampil.
+Satu bentuk baris (`ListRow`) dipakai akun, kategori, dan emas. Aksi edit/hapus ada di menu
+kebab, bukan tombol yang selalu tampil.
+
+**Halaman transaksi punya bentuk barisnya sendiri**, mengikuti pola aplikasi money manager:
+transaksi dikelompokkan per tanggal, dengan header hari berisi nomor tanggal, nama hari, dan
+total masuk/keluar hari itu. Barisnya tiga kolom — kategori (lebar tetap, supaya mata bisa
+memindai lurus ke bawah), keterangan + akun, lalu nominal. Kolom nominal tidak pernah menyusut;
+keterangannya yang mengalah duluan.
+
+Nominalnya diberi tanda − / + selain warna. Di aplikasi rujukan arah uang hanya dibedakan warna,
+dan itu satu-satunya penanda — tidak terbaca oleh yang buta warna.
+
+Ketuk baris untuk mengubah; hapus lewat mode **Pilih**. Tab Calendar/Monthly/Summary/Description
+di aplikasi rujukan belum dibuat — yang ada baru tampilan harian.
 
 ## PWA
 
