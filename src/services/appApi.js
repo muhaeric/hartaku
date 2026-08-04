@@ -1,0 +1,30 @@
+/** Calls to this app's own serverless endpoints under /api. */
+
+async function post (path, body) {
+  const response = await fetch(path, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body ?? {})
+  })
+
+  const payload = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    const error = new Error(payload.message || payload.error || `Request gagal (${response.status})`)
+    error.code = payload.error
+    error.status = response.status
+    throw error
+  }
+
+  return payload
+}
+
+export const authApi = {
+  /** Returns the Google consent URL to redirect the browser to. */
+  start: () => post('/api/auth/start'),
+  /** Exchanges the authorization code for a session. */
+  callback: (code, state) => post('/api/auth/callback', { code, state }),
+  /** Restores the session and returns a fresh access token. */
+  session: () => post('/api/auth/session'),
+  logout: () => post('/api/auth/logout')
+}
