@@ -16,9 +16,11 @@ sendiri** — aplikasi ini tidak punya database.
    `Hartaku`.
 2. **APIs & Services → Library** → aktifkan:
    - **Google Sheets API** (wajib)
-   - **Google Drive API** (opsional — dipakai untuk menemukan kembali spreadsheet lama kalau
-     `localStorage` browser terhapus. Tanpa ini aplikasi tetap jalan, tinggal tempel ID
-     spreadsheet lewat halaman Pengaturan.)
+   - **Google Drive API** (wajib juga dalam praktiknya — ini satu-satunya cara aplikasi
+     menemukan kembali spreadsheet yang sudah ada. ID spreadsheet disimpan di `localStorage`,
+     yang terpisah per origin dan per browser, jadi tanpa Drive API setiap perangkat baru
+     tidak akan menemukan data lamamu. Aplikasi menolak membuat spreadsheet baru diam-diam
+     dalam keadaan itu — kamu akan disodori layar pilihan.)
 3. **APIs & Services → OAuth consent screen**:
    - User type: **External**, isi nama app + email support.
    - Scopes: tambahkan `.../auth/drive.file` (yang lain — `openid`, `email`, `profile` — sudah

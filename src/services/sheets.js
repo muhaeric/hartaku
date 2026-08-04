@@ -19,15 +19,17 @@ export async function createSpreadsheet ({ title, sheets }) {
  * Looks for a spreadsheet this app created earlier. The `drive.file` scope only
  * ever returns files created by this app, so the listing stays private.
  */
-export async function findSpreadsheetByName (name) {
+export async function findSpreadsheetsByName (name) {
   const params = new URLSearchParams({
     q: `name='${name.replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`,
-    fields: 'files(id,name)',
-    pageSize: '10'
+    fields: 'files(id,name,createdTime)',
+    // Oldest first: if duplicates exist, the original is the one to reopen.
+    orderBy: 'createdTime',
+    pageSize: '25'
   })
 
   const { files = [] } = await googleFetch(`${DRIVE_API}?${params}`)
-  return files[0]?.id || null
+  return files
 }
 
 export async function getSpreadsheet (spreadsheetId) {

@@ -13,7 +13,7 @@ import {
   appendValues,
   batchUpdate,
   createSpreadsheet,
-  findSpreadsheetByName,
+  findSpreadsheetsByName,
   getSpreadsheet,
   getValues,
   spreadsheetUrl,
@@ -21,6 +21,16 @@ import {
 } from './sheets.js'
 
 const STORAGE_KEY = 'hartaku.spreadsheetId'
+
+/** Raised when we cannot tell whether a workbook already exists. */
+export class WorkbookLookupError extends Error {
+  constructor (message, cause) {
+    super(message)
+    this.name = 'WorkbookLookupError'
+    this.code = 'workbook_lookup_failed'
+    this.cause = cause
+  }
+}
 
 export function storedSpreadsheetId () {
   try {
@@ -40,10 +50,15 @@ export function rememberSpreadsheetId (id) {
 }
 
 /**
- * Resolves the spreadsheet backing this account, creating it on first run.
+ * Resolves the spreadsheet backing this account.
  * Order: explicitly chosen id -> remembered id -> Drive lookup -> create new.
+ *
+ * A new workbook is only created when the Drive lookup ran and genuinely found
+ * nothing. If the lookup itself fails we refuse and throw, because creating
+ * blind is how a second device ends up with its own empty copy of the data.
+ * Pass `allowCreate` once the user has explicitly asked for a fresh one.
  */
-export async function ensureWorkbook ({ spreadsheetId } = {}) {
+export async function ensureWorkbook ({ spreadsheetId, allowCreate = false } = {}) {
   let meta = null
 
   const candidates = [spreadsheetId, storedSpreadsheetId()].filter(Boolean)
@@ -52,9 +67,24 @@ export async function ensureWorkbook ({ spreadsheetId } = {}) {
     if (meta) break
   }
 
-  if (!meta) {
-    const found = await lookupExisting()
-    if (found) meta = await loadSpreadsheet(found)
+  if (!meta && !spreadsheetId) {
+    let existing = []
+    try {
+      existing = await findSpreadsheetsByName(SPREADSHEET_NAME)
+    } catch (err) {
+      if (!allowCreate) {
+        throw new WorkbookLookupError(
+          'Tidak bisa memeriksa apakah spreadsheet Hartaku sudah ada. ' +
+            'Biasanya karena Google Drive API belum diaktifkan di project Google Cloud-mu.',
+          err
+        )
+      }
+    }
+
+    for (const file of existing) {
+      meta = await loadSpreadsheet(file.id)
+      if (meta) break
+    }
   }
 
   if (!meta) {
@@ -86,15 +116,6 @@ async function loadSpreadsheet (id) {
   try {
     return await getSpreadsheet(id)
   } catch {
-    return null
-  }
-}
-
-async function lookupExisting () {
-  try {
-    return await findSpreadsheetByName(SPREADSHEET_NAME)
-  } catch {
-    // Drive API not enabled on the Google Cloud project - fall back to creating.
     return null
   }
 }

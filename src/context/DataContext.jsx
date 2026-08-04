@@ -28,6 +28,7 @@ import {
   updateTransaction
 } from '../services/repository.js'
 import { ensureWorkbook, rememberSpreadsheetId } from '../services/workbook.js'
+import WorkbookSetup from '../components/Setup/WorkbookSetup.jsx'
 import { useAuth } from './AuthContext.jsx'
 
 const DataContext = createContext(null)
@@ -39,7 +40,8 @@ const EMPTY = {
   accounts: [],
   goldLots: [],
   loading: true,
-  error: null
+  error: null,
+  errorCode: null
 }
 
 export function DataProvider ({ children }) {
@@ -51,11 +53,11 @@ export function DataProvider ({ children }) {
   const latest = useRef(state)
   latest.current = state
 
-  const load = useCallback(async ({ spreadsheetId } = {}) => {
-    setState((current) => ({ ...current, loading: true, error: null }))
+  const load = useCallback(async ({ spreadsheetId, allowCreate = false } = {}) => {
+    setState((current) => ({ ...current, loading: true, error: null, errorCode: null }))
 
     try {
-      const workbook = await ensureWorkbook({ spreadsheetId })
+      const workbook = await ensureWorkbook({ spreadsheetId, allowCreate })
       const [transactions, categories, accounts, goldLots] = await Promise.all([
         listTransactions(workbook),
         listCategories(workbook),
@@ -69,10 +71,16 @@ export function DataProvider ({ children }) {
         accounts,
         goldLots,
         loading: false,
-        error: null
+        error: null,
+        errorCode: null
       })
     } catch (err) {
-      setState((current) => ({ ...current, loading: false, error: err.message }))
+      setState((current) => ({
+        ...current,
+        loading: false,
+        error: err.message,
+        errorCode: err.code || null
+      }))
     }
   }, [])
 
@@ -261,6 +269,12 @@ export function DataProvider ({ children }) {
     [load]
   )
 
+  /** Only reachable from the setup screen, where the user asked for a fresh one. */
+  const createFreshWorkbook = useCallback(async () => {
+    rememberSpreadsheetId(null)
+    await load({ allowCreate: true })
+  }, [load])
+
   const value = useMemo(
     () => ({
       ...state,
@@ -277,7 +291,8 @@ export function DataProvider ({ children }) {
       addGoldLot,
       editGoldLot,
       removeGoldLot,
-      useSpreadsheet
+      useSpreadsheet,
+      createFreshWorkbook
     }),
     [
       state,
@@ -294,11 +309,27 @@ export function DataProvider ({ children }) {
       addGoldLot,
       editGoldLot,
       removeGoldLot,
-      useSpreadsheet
+      useSpreadsheet,
+      createFreshWorkbook
     ]
   )
 
-  return <DataContext.Provider value={value}>{children}</DataContext.Provider>
+  return (
+    <DataContext.Provider value={value}>
+      {/* Without a workbook nothing in the app can render, so this takes over. */}
+      {state.errorCode === 'workbook_lookup_failed' ? (
+        <WorkbookSetup
+          message={state.error}
+          busy={state.loading}
+          onRetry={() => load()}
+          onUseSpreadsheet={useSpreadsheet}
+          onCreate={createFreshWorkbook}
+        />
+      ) : (
+        children
+      )}
+    </DataContext.Provider>
+  )
 }
 
 export function useData () {

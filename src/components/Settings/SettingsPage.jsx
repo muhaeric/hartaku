@@ -4,6 +4,7 @@ import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { CURRENCIES, DATE_FORMATS } from '../../lib/constants.js'
+import { extractSpreadsheetId } from '../../lib/spreadsheetId.js'
 import Button from '../ui/Button.jsx'
 import { ExternalIcon } from '../ui/icons.jsx'
 
@@ -23,8 +24,11 @@ export default function SettingsPage () {
   const [switching, setSwitching] = useState(false)
 
   const handleSwitchSheet = async () => {
-    const id = sheetId.trim()
-    if (!id) return
+    const id = extractSpreadsheetId(sheetId)
+    if (!id) {
+      toast.error('ID spreadsheet tidak dikenali. Tempel ID-nya atau URL Google Sheets lengkap.')
+      return
+    }
 
     setSwitching(true)
     try {
@@ -158,7 +162,7 @@ export default function SettingsPage () {
               id="sheet-id"
               type="text"
               className="field flex-1 font-mono text-sm"
-              placeholder="ID spreadsheet"
+              placeholder="ID atau URL spreadsheet"
               value={sheetId}
               onChange={(event) => setSheetId(event.target.value)}
             />
@@ -167,8 +171,9 @@ export default function SettingsPage () {
             </Button>
           </div>
           <p className="mt-1.5 text-xs text-slate-500">
-            Hanya spreadsheet yang dibuat oleh aplikasi ini yang bisa dibuka — itu batas izin{' '}
-            <code>drive.file</code> yang diminta saat login.
+            Pakai ini untuk membuka spreadsheet yang sama dari perangkat lain. Hanya spreadsheet
+            yang dibuat oleh aplikasi ini yang bisa dibuka — itu batas izin <code>drive.file</code>{' '}
+            yang diminta saat login.
           </p>
         </Field>
       </Section>
