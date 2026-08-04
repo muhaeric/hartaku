@@ -82,6 +82,28 @@ export function formatDate (isoDate, dateFormat = 'DD/MM/YYYY') {
   return `${day}/${month}/${year}`
 }
 
+/** "Hari ini" / "Kemarin" read faster than a date, and are shorter. */
+export function relativeDayLabel (isoDate, dateFormat = 'DD/MM/YYYY') {
+  if (!isoDate) return ''
+
+  const today = new Date()
+  const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(
+    today.getDate()
+  ).padStart(2, '0')}`
+
+  if (isoDate === todayIso) return 'Hari ini'
+
+  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)
+  const yesterdayIso = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(
+    2,
+    '0'
+  )}-${String(yesterday.getDate()).padStart(2, '0')}`
+
+  if (isoDate === yesterdayIso) return 'Kemarin'
+
+  return formatDate(isoDate, dateFormat)
+}
+
 export function formatDayLabel (isoDate, locale = 'id-ID') {
   if (!isoDate) return ''
 

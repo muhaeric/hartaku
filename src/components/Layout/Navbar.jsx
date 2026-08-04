@@ -15,18 +15,19 @@ export default function Navbar () {
   useEffect(() => {
     if (!menuOpen) return undefined
 
-    const onClickOutside = (event) => {
+    const onPointerDown = (event) => {
       if (!menuRef.current?.contains(event.target)) setMenuOpen(false)
     }
 
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
+    document.addEventListener('mousedown', onPointerDown)
+    return () => document.removeEventListener('mousedown', onPointerDown)
   }, [menuOpen])
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
-      <div className="mx-auto flex max-w-3xl items-center gap-2 px-4 py-3">
-        <h1 className="flex-1 truncate text-lg font-semibold">
+    <header className="sticky top-0 z-20 bg-canvas/90 backdrop-blur dark:bg-canvas-dark/90">
+      <div className="mx-auto flex max-w-2xl items-center gap-1 px-page pb-2 pt-3">
+        {/* Page title carries the hierarchy, so the bar itself stays chrome-free. */}
+        <h1 className="flex-1 truncate text-page-title font-bold tracking-tight">
           {PAGE_TITLES[pathname] || 'Hartaku'}
         </h1>
 
@@ -35,9 +36,9 @@ export default function Navbar () {
           onClick={() => reload()}
           disabled={loading}
           aria-label="Muat ulang data"
-          className="tap flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 disabled:opacity-40 dark:hover:bg-slate-800"
+          className="tap flex items-center justify-center rounded-control text-subtitle transition hover:bg-black/5 disabled:opacity-40 dark:text-subtitle-dark dark:hover:bg-white/5"
         >
-          <RefreshIcon className={loading ? 'h-5 w-5 animate-spin' : 'h-5 w-5'} />
+          <RefreshIcon className={loading ? 'h-[19px] w-[19px] animate-spin' : 'h-[19px] w-[19px]'} />
         </button>
 
         <div className="relative" ref={menuRef}>
@@ -53,20 +54,22 @@ export default function Navbar () {
                 src={user.picture}
                 alt=""
                 referrerPolicy="no-referrer"
-                className="h-9 w-9 rounded-full object-cover"
+                className="h-8 w-8 rounded-full object-cover"
               />
             ) : (
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-600 text-sm font-semibold text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-caption font-semibold text-white">
                 {(user?.name || '?').charAt(0).toUpperCase()}
               </span>
             )}
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 mt-2 w-64 animate-fade-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900">
-              <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
-                <p className="truncate text-sm font-semibold">{user?.name}</p>
-                <p className="truncate text-xs text-slate-500">{user?.email}</p>
+            <div className="absolute right-0 z-20 mt-1 w-60 animate-fade-in overflow-hidden rounded-control border border-hairline bg-surface shadow-lg dark:border-hairline-dark dark:bg-surface-dark">
+              <div className="border-b border-hairline px-3 py-2.5 dark:border-hairline-dark">
+                <p className="truncate text-body font-semibold">{user?.name}</p>
+                <p className="truncate text-caption text-subtitle dark:text-subtitle-dark">
+                  {user?.email}
+                </p>
               </div>
 
               {workbook && (
@@ -74,7 +77,7 @@ export default function Navbar () {
                   href={workbook.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 px-4 py-3 text-sm text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="flex items-center gap-2 px-3 py-2.5 text-body text-subtitle transition hover:bg-black/5 dark:text-subtitle-dark dark:hover:bg-white/5"
                 >
                   <ExternalIcon className="h-4 w-4" />
                   Buka spreadsheet
@@ -84,7 +87,7 @@ export default function Navbar () {
               <button
                 type="button"
                 onClick={signOut}
-                className="w-full px-4 py-3 text-left text-sm font-medium text-expense hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="w-full px-3 py-2.5 text-left text-body font-medium text-expense transition hover:bg-black/5 dark:hover:bg-white/5"
               >
                 Keluar
               </button>

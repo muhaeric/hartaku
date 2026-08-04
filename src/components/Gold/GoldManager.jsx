@@ -6,8 +6,11 @@ import { useGoldPrice } from '../../hooks/useGoldPrice.js'
 import { formatCurrency, formatDate, formatGrams, formatPercent } from '../../lib/format.js'
 import { goldSummary } from '../../lib/summary.js'
 import Button from '../ui/Button.jsx'
+import { Card, SectionHeader } from '../ui/Card.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
 import { EmptyState } from '../ui/Feedback.jsx'
+import KebabMenu from '../ui/KebabMenu.jsx'
+import ListRow, { RowIcon } from '../ui/ListRow.jsx'
 import { PencilIcon, PlusIcon, RefreshIcon, TrashIcon } from '../ui/icons.jsx'
 import GoldForm, { emptyGoldLot } from './GoldForm.jsx'
 
@@ -20,11 +23,7 @@ export default function GoldManager () {
   const [editing, setEditing] = useState(null)
   const [pendingDelete, setPendingDelete] = useState(null)
 
-  const summary = useMemo(
-    () => goldSummary(goldLots, quote?.buybackPerGram),
-    [goldLots, quote]
-  )
-
+  const summary = useMemo(() => goldSummary(goldLots, quote?.buybackPerGram), [goldLots, quote])
   const money = (value) => formatCurrency(value, settings.currency)
 
   const handleSubmit = async (values) => {
@@ -51,12 +50,11 @@ export default function GoldManager () {
     }
   }
 
-  const startEdit = (lot) => {
+  const startEdit = (lot) =>
     setEditing({ ...lot, grams: String(lot.grams), cost: String(lot.cost) })
-  }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-gap-normal">
       <GoldPortfolio
         summary={summary}
         quote={quote}
@@ -67,19 +65,29 @@ export default function GoldManager () {
         money={money}
       />
 
-      <Button className="w-full justify-center" onClick={() => setEditing(emptyGoldLot())}>
-        <PlusIcon className="h-5 w-5" />
-        Catat pembelian emas
-      </Button>
+      <SectionHeader
+        title="Pembelian"
+        hint={`${goldLots.length} catatan`}
+        action={
+          <Button size="sm" onClick={() => setEditing(emptyGoldLot())}>
+            <PlusIcon className="h-4 w-4" />
+            Catat
+          </Button>
+        }
+      />
 
       {!goldLots.length ? (
-        <EmptyState
-          icon="🥇"
-          title="Belum ada emas"
-          description="Catat pembelian pertama: gramasi, harga beli, dan tanggalnya."
-        />
+        <Card flush as="div">
+          <EmptyState
+            icon="🥇"
+            title="Belum ada emas"
+            description="Catat pembelian pertama: gramasi, harga beli, dan tanggalnya."
+            actionLabel="Catat pembelian"
+            onAction={() => setEditing(emptyGoldLot())}
+          />
+        </Card>
       ) : (
-        <ul className="space-y-2">
+        <Card flush as="ul" className="divide-hairline overflow-hidden">
           {[...goldLots]
             .sort((a, b) => b.date.localeCompare(a.date))
             .map((lot) => {
@@ -87,56 +95,50 @@ export default function GoldManager () {
               const profit = value === null ? null : value - lot.cost
 
               return (
-                <li key={lot.id} className="card p-3">
-                  <div className="flex items-start gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium">{formatGrams(lot.grams)}</p>
-                      <p className="mt-0.5 truncate text-sm text-slate-500 dark:text-slate-400">
-                        {formatDate(lot.date, settings.dateFormat)} · {money(lot.pricePerGram)}/gr
-                        {lot.fromAccount && ` · ${lot.fromAccount}`}
-                      </p>
-                      {lot.description && (
-                        <p className="mt-0.5 truncate text-sm text-slate-400">{lot.description}</p>
-                      )}
-                    </div>
-
-                    <div className="shrink-0 text-right">
-                      <p className="font-semibold tabular-nums">{money(lot.cost)}</p>
-                      {profit !== null && (
-                        <p
-                          className={`text-sm font-medium tabular-nums ${
+                <li key={lot.id}>
+                  <ListRow
+                    leading={<RowIcon icon="🥇" color="#eda100" />}
+                    title={formatGrams(lot.grams)}
+                    subtitle={formatDate(lot.date, settings.dateFormat)}
+                    meta={`${money(lot.pricePerGram)}/gr${lot.fromAccount ? ` · ${lot.fromAccount}` : ''}`}
+                    trailing={money(lot.cost)}
+                    trailingSub={
+                      profit === null ? null : (
+                        <span
+                          className={
                             profit >= 0
                               ? 'text-income dark:text-emerald-400'
                               : 'text-expense dark:text-red-400'
-                          }`}
+                          }
                         >
                           {profit >= 0 ? '+' : '−'}
                           {money(Math.abs(profit))}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-2 flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => startEdit(lot)}
-                      className="tap flex items-center gap-1.5 rounded-lg px-2 text-sm text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                    >
-                      <PencilIcon className="h-4 w-4" /> Ubah
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPendingDelete(lot)}
-                      className="tap flex items-center gap-1.5 rounded-lg px-2 text-sm text-expense hover:bg-expense/10"
-                    >
-                      <TrashIcon className="h-4 w-4" /> Hapus
-                    </button>
-                  </div>
+                        </span>
+                      )
+                    }
+                    action={
+                      <KebabMenu
+                        label={`Aksi untuk pembelian ${formatGrams(lot.grams)}`}
+                        items={[
+                          {
+                            label: 'Ubah',
+                            icon: <PencilIcon className="h-4 w-4" />,
+                            onSelect: () => startEdit(lot)
+                          },
+                          {
+                            label: 'Hapus',
+                            icon: <TrashIcon className="h-4 w-4" />,
+                            destructive: true,
+                            onSelect: () => setPendingDelete(lot)
+                          }
+                        ]}
+                      />
+                    }
+                  />
                 </li>
               )
             })}
-        </ul>
+        </Card>
       )}
 
       {editing && (
@@ -165,13 +167,13 @@ function GoldPortfolio ({ summary, quote, loading, error, stale, onRefresh, mone
   const hasValue = summary.value !== null
 
   return (
-    <section className="card" aria-labelledby="gold-heading">
+    <Card aria-labelledby="gold-label">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 id="gold-heading" className="text-sm text-slate-500 dark:text-slate-400">
+        <div className="min-w-0">
+          <p id="gold-label" className="text-caption text-subtitle dark:text-subtitle-dark">
             Nilai emas sekarang
-          </h2>
-          <p className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          </p>
+          <p className="mt-0.5 text-[26px] font-bold leading-8 tracking-tight amount">
             {hasValue ? money(summary.value) : '—'}
           </p>
         </div>
@@ -181,13 +183,13 @@ function GoldPortfolio ({ summary, quote, loading, error, stale, onRefresh, mone
           onClick={onRefresh}
           disabled={loading}
           aria-label="Perbarui harga emas"
-          className="tap flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 disabled:opacity-40 dark:hover:bg-slate-800"
+          className="tap -mr-1 -mt-1 flex items-center justify-center rounded-control text-subtitle transition hover:bg-black/5 disabled:opacity-40 dark:hover:bg-white/5"
         >
-          <RefreshIcon className={loading ? 'h-5 w-5 animate-spin' : 'h-5 w-5'} />
+          <RefreshIcon className={loading ? 'h-[19px] w-[19px] animate-spin' : 'h-[19px] w-[19px]'} />
         </button>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 border-t border-hairline pt-2.5 dark:border-hairline-dark">
         <Stat label="Total gram" value={formatGrams(summary.grams)} />
         <Stat label="Total investasi" value={money(summary.invested)} />
         <Stat
@@ -215,34 +217,27 @@ function GoldPortfolio ({ summary, quote, loading, error, stale, onRefresh, mone
         />
       </dl>
 
-      <div className="mt-4 border-t border-slate-200 pt-3 text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <p className="mt-2.5 border-t border-hairline pt-2 text-caption text-subtitle dark:border-hairline-dark dark:text-subtitle-dark">
         {quote ? (
           <>
-            <p>
-              Buyback <strong className="font-semibold">{money(quote.buybackPerGram)}/gr</strong> ·
-              beli {money(quote.sellPerGram)}/gr
-            </p>
-            <p className="mt-0.5 text-xs">
-              {quote.source}
-              {quote.recordedDate && ` · ${quote.recordedDate}`}
-              {stale && ' · harga tersimpan, gagal memperbarui'}
-            </p>
+            Buyback <strong className="font-semibold">{money(quote.buybackPerGram)}/gr</strong> ·
+            beli {money(quote.sellPerGram)}/gr · {quote.source}
+            {quote.recordedDate && ` · ${quote.recordedDate}`}
+            {stale && ' · harga tersimpan, gagal memperbarui'}
           </>
         ) : (
-          <p>{error || 'Mengambil harga emas…'}</p>
+          error || 'Mengambil harga emas…'
         )}
-
-        {error && quote && <p className="mt-1 text-xs text-expense">{error}</p>}
-      </div>
-    </section>
+      </p>
+    </Card>
   )
 }
 
 function Stat ({ label, value }) {
   return (
-    <div>
-      <dt className="text-slate-500 dark:text-slate-400">{label}</dt>
-      <dd className="mt-0.5 font-semibold tabular-nums">{value}</dd>
+    <div className="min-w-0">
+      <dt className="text-caption text-subtitle dark:text-subtitle-dark">{label}</dt>
+      <dd className="mt-0.5 text-body font-semibold amount">{value}</dd>
     </div>
   )
 }

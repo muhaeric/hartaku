@@ -197,6 +197,62 @@ hari ini.
 Yang **belum** ada: pencatatan penjualan emas. Saat ini hanya pembelian, jadi total gram tidak
 bisa berkurang.
 
+## Import dari screenshot (OCR)
+
+**Tambah → Import dari screenshot**, ambil dari kamera atau galeri. Nominal, tanggal, jam, jenis
+transaksi, nama merchant, dan nomor referensi dibaca otomatis, lalu diserahkan ke form transaksi
+biasa untuk diperiksa dan disimpan.
+
+**Akun dan kategori tetap dipilih manual.** Menebaknya dari nama merchant persis jenis perilaku
+percaya-diri-tapi-salah yang merusak kepercayaan pada angkanya.
+
+OCR-nya **Tesseract.js, berjalan di perangkat** — tanpa API key, tanpa biaya per-scan, dan gambar
+tidak pernah dikirim ke mana pun. Modelnya (bahasa Indonesia) diunduh saat pertama dipakai,
+jadi scan pertama terasa lambat; berikutnya cepat. Modul `src/services/ocr.js` sengaja hanya
+mengembalikan `{ text, confidence }`, jadi mengganti mesinnya dengan model vision berbayar nanti
+cukup menyentuh satu file.
+
+Parser-nya (`src/lib/receiptParser.js`) tidak dibuat per-bank. Ia mengunci pada label yang sama
+dipakai hampir semua aplikasi bank/e-wallet Indonesia ("Nominal", "Ke", "Saldo", "No. Ref"),
+sehingga bank yang tidak pernah diantisipasi pun tetap terbaca. Dua kehati-hatian yang lahir dari
+pengujian:
+
+- Label sering berada di baris terpisah dari nilainya ("Nominal" di atas, "Rp 250.000" di
+  bawahnya) — baris sebelumnya ikut diperiksa.
+- Tanggal, jam, dan nomor rekening juga berupa angka panjang. Semuanya dibuang sebelum
+  pencarian nominal, dan deretan 10+ digit tanpa tanda "Rp" ditolak.
+
+Skor keyakinan menggabungkan seberapa jernih gambar terbaca dengan seberapa banyak kolom yang
+berhasil dipahami — scan tajam yang tidak bisa ditafsirkan bukan hasil yang meyakinkan.
+
+Yang **belum** ada: satu screenshot berisi banyak transaksi (mutasi rekening) hanya diambil satu.
+
+## Desain
+
+Design system-nya ada di `tailwind.config.js` dan `src/styles/index.css`, bukan tersebar di
+komponen:
+
+- **Spasi** 8pt — 16 (padding halaman & kartu), 8, 12, 20 (antar seksi)
+- **Radius** kartu 16, kontrol 14, bottom sheet 24
+- **Warna** `#f6f7fb` kanvas, `#ffffff` kartu, `#e7eaf0` garis, `#4361ee` primer, `#6b7280`
+  subjudul — masing-masing punya padanan mode gelap
+- **Tipografi** 30 judul halaman / 20 judul seksi / 17 judul kartu / 15 body / 13 caption
+
+Nominal memakai kelas `.amount` (`whitespace-nowrap` + `tabular-nums`) supaya tidak pernah wrap
+dan lebarnya tidak bergoyang saat angkanya berubah. Kolom trailing pada baris daftar tidak boleh
+menyusut — judulnya yang mengalah lebih dulu.
+
+Satu bentuk baris (`ListRow`) dipakai akun, transaksi, kategori, dan emas. Aksi edit/hapus ada di
+menu kebab, bukan tombol yang selalu tampil.
+
+## PWA
+
+`manifest.webmanifest` + ikon 192/512/maskable, `display: standalone`, dan `theme-color` terpisah
+untuk mode terang dan gelap. Bisa di-install dari Chrome Android dan Safari iOS.
+
+Belum ada service worker, jadi **belum bisa dipakai offline** — aplikasi ini memang selalu butuh
+jaringan untuk membaca dan menulis Google Sheets.
+
 ## Struktur kode
 
 ```
@@ -236,6 +292,8 @@ Mengacu ke spesifikasi MVP:
 | — | Transaksi transfer antar akun | ✅ tambahan di luar spec |
 | — | Aset / kewajiban / total kekayaan | ✅ tambahan di luar spec |
 | — | Investasi emas + harga pasar + untung/rugi | ✅ tambahan di luar spec (jual emas belum) |
+| — | Import transaksi dari screenshot (OCR) | ✅ satu transaksi per gambar |
+| — | PWA installable | ✅ tanpa service worker / offline |
 
 ### Migrasi skema (kolom `merchant` → `account`)
 

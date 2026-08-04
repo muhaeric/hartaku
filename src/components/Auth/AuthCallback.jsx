@@ -46,7 +46,7 @@ export default function AuthCallback () {
           🔒
         </span>
         <h1 className="text-lg font-semibold">Login gagal</h1>
-        <p className="max-w-sm text-sm text-slate-600 dark:text-slate-400">{error}</p>
+        <p className="max-w-sm text-body text-subtitle dark:text-subtitle-dark">{error}</p>
         <Button onClick={() => navigate('/', { replace: true })}>Kembali ke halaman login</Button>
       </main>
     )

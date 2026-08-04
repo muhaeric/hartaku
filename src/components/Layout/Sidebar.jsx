@@ -4,31 +4,30 @@ import { NAV_ITEMS } from './navigation.js'
 /** Persistent navigation from `lg` up; hidden on phones and tablets. */
 export default function Sidebar () {
   return (
-    <aside className="hidden w-60 shrink-0 border-r border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 lg:block">
-      <div className="mb-6 flex items-center gap-2 px-2">
-        <span className="text-2xl" aria-hidden="true">
+    <aside className="hidden w-56 shrink-0 border-r border-hairline bg-surface p-3 dark:border-hairline-dark dark:bg-surface-dark lg:block">
+      <div className="mb-4 flex items-center gap-2 px-2 py-1">
+        <span className="text-xl" aria-hidden="true">
           💸
         </span>
-        <span className="text-lg font-bold">Hartaku</span>
+        <span className="text-card-title font-semibold">Hartaku</span>
       </div>
 
       <nav aria-label="Navigasi samping">
-        <ul className="space-y-1">
+        <ul className="space-y-0.5">
           {NAV_ITEMS.map(({ to, label, icon: NavIcon, end }) => (
             <li key={to}>
               <NavLink
                 to={to}
                 end={end}
                 className={({ isActive }) =>
-                  [
-                    'tap flex items-center gap-3 rounded-xl px-3 text-sm font-medium transition',
+                  `flex h-10 items-center gap-2.5 rounded-control px-2.5 text-body font-medium transition ${
                     isActive
-                      ? 'bg-brand-50 text-brand-700 dark:bg-brand-600/15 dark:text-brand-500'
-                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
-                  ].join(' ')
+                      ? 'bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-200'
+                      : 'text-subtitle hover:bg-black/5 dark:text-subtitle-dark dark:hover:bg-white/5'
+                  }`
                 }
               >
-                <NavIcon />
+                <NavIcon className="h-[19px] w-[19px]" />
                 {label}
               </NavLink>
             </li>

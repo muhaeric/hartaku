@@ -11,8 +11,8 @@ export default function AppLayout () {
       <div className="flex min-w-0 flex-1 flex-col">
         <Navbar />
 
-        {/* Bottom padding clears the mobile tab bar. */}
-        <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-28 pt-4 lg:pb-10">
+        {/* pb clears the 56px tab bar plus the home indicator. */}
+        <main className="mx-auto w-full max-w-2xl flex-1 space-y-section px-page pb-[calc(4.5rem+env(safe-area-inset-bottom))] pt-1 lg:pb-8">
           <Outlet />
         </main>
       </div>

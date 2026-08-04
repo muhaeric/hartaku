@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { CATEGORY_COLORS, CATEGORY_TYPES, LIMITS } from '../../lib/constants.js'
 import Button from '../ui/Button.jsx'
 import ColorPicker, { HEX_PATTERN } from '../ui/ColorPicker.jsx'
-import Modal from '../ui/Modal.jsx'
+import Sheet from '../ui/Sheet.jsx'
 
 export function emptyCategory () {
   return {
@@ -25,7 +25,7 @@ function validate (draft, existingNames) {
     errors.name = 'Nama kategori sudah dipakai.'
   }
 
-  if (!HEX_PATTERN.test(draft.color)) errors.color = 'Warna harus berupa kode hex, misal #2a78d6.'
+  if (!HEX_PATTERN.test(draft.color)) errors.color = 'Warna harus berupa kode hex, misal #4361ee.'
   if (!draft.icon.trim()) errors.icon = 'Ikon wajib diisi.'
 
   return errors
@@ -55,10 +55,10 @@ export default function CategoryForm ({ open, initial, takenNames, onSubmit, onC
   }
 
   return (
-    <Modal open={open} title={initial.id ? 'Ubah kategori' : 'Kategori baru'} onClose={onClose}>
-      <form id="category-form" className="space-y-4" onSubmit={handleSubmit} noValidate>
-        <div className="flex gap-3">
-          <div className="w-24">
+    <Sheet open={open} title={initial.id ? 'Ubah kategori' : 'Kategori baru'} onClose={onClose}>
+      <form className="space-y-gap-normal" onSubmit={handleSubmit} noValidate>
+        <div className="flex gap-gap">
+          <div className="w-20">
             <label className="label" htmlFor="category-icon">
               Ikon
             </label>
@@ -66,7 +66,7 @@ export default function CategoryForm ({ open, initial, takenNames, onSubmit, onC
               id="category-icon"
               type="text"
               maxLength={4}
-              className={`field text-center text-xl ${errors.icon ? 'field-error' : ''}`}
+              className={`field text-center text-[19px] ${errors.icon ? 'field-error' : ''}`}
               value={draft.icon}
               onChange={(event) => patch({ icon: event.target.value })}
             />
@@ -107,15 +107,11 @@ export default function CategoryForm ({ open, initial, takenNames, onSubmit, onC
           </select>
         </div>
 
-        <ColorPicker
-          value={draft.color}
-          error={errors.color}
-          onChange={(color) => patch({ color })}
-        />
+        <ColorPicker value={draft.color} error={errors.color} onChange={(color) => patch({ color })} />
 
         <div>
           <label className="label" htmlFor="category-description">
-            Keterangan <span className="font-normal text-slate-400">(opsional)</span>
+            Keterangan <span className="font-normal text-subtitle">(opsional)</span>
           </label>
           <input
             id="category-description"
@@ -126,7 +122,7 @@ export default function CategoryForm ({ open, initial, takenNames, onSubmit, onC
           />
         </div>
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-gap pt-1">
           <Button variant="secondary" className="flex-1 justify-center" onClick={onClose}>
             Batal
           </Button>
@@ -135,6 +131,6 @@ export default function CategoryForm ({ open, initial, takenNames, onSubmit, onC
           </Button>
         </div>
       </form>
-    </Modal>
+    </Sheet>
   )
 }

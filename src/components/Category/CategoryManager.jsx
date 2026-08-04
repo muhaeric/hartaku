@@ -3,8 +3,11 @@ import { useData } from '../../context/DataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { CATEGORY_TYPES } from '../../lib/constants.js'
 import Button from '../ui/Button.jsx'
+import { Card, SectionHeader } from '../ui/Card.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
 import { EmptyState } from '../ui/Feedback.jsx'
+import KebabMenu from '../ui/KebabMenu.jsx'
+import ListRow, { RowIcon } from '../ui/ListRow.jsx'
 import { PencilIcon, PlusIcon, TrashIcon } from '../ui/icons.jsx'
 import CategoryForm, { emptyCategory } from './CategoryForm.jsx'
 
@@ -12,7 +15,7 @@ export default function CategoryManager () {
   const toast = useToast()
   const { categories, transactions, addCategory, editCategory, removeCategory } = useData()
 
-  const [editingCategory, setEditingCategory] = useState(null)
+  const [editing, setEditing] = useState(null)
   const [pendingDelete, setPendingDelete] = useState(null)
 
   /** How many transactions reference each category - blocks unsafe deletes. */
@@ -27,15 +30,15 @@ export default function CategoryManager () {
   const takenNames = useMemo(
     () =>
       categories
-        .filter((category) => category.id !== editingCategory?.id)
+        .filter((category) => category.id !== editing?.id)
         .map((category) => category.name.toLowerCase()),
-    [categories, editingCategory]
+    [categories, editing]
   )
 
   const handleSubmit = async (values) => {
     try {
       if (values.id) {
-        await editCategory({ ...values })
+        await editCategory(values)
         toast.success('Kategori diperbarui!')
       } else {
         await addCategory({ ...values, sortOrder: categories.length })
@@ -57,76 +60,73 @@ export default function CategoryManager () {
   }
 
   return (
-    <div className="space-y-4">
-      <Button className="w-full justify-center" onClick={() => setEditingCategory(emptyCategory())}>
-        <PlusIcon className="h-5 w-5" />
-        Tambah kategori
-      </Button>
+    <div className="space-y-gap-normal">
+      <SectionHeader
+        title="Kategori"
+        hint={`${categories.length} kategori`}
+        action={
+          <Button size="sm" onClick={() => setEditing(emptyCategory())}>
+            <PlusIcon className="h-4 w-4" />
+            Tambah
+          </Button>
+        }
+      />
 
       {!categories.length ? (
-        <EmptyState icon="🏷️" title="Belum ada kategori" description="Tambahkan kategori pertama." />
+        <Card flush as="div">
+          <EmptyState
+            icon="🏷️"
+            title="Belum ada kategori"
+            description="Tambahkan kategori pertama."
+            actionLabel="Tambah kategori"
+            onAction={() => setEditing(emptyCategory())}
+          />
+        </Card>
       ) : (
-        <ul className="space-y-2">
+        <Card flush as="ul" className="divide-hairline overflow-hidden">
           {categories.map((category) => {
             const inUse = usage.get(category.name) || 0
 
             return (
-              <li key={category.id} className="card flex items-center gap-3 p-3">
-                <span
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ring-1 ring-slate-900/10 dark:ring-white/20"
-                  style={{ backgroundColor: `${category.color}22` }}
-                  aria-hidden="true"
-                >
-                  {category.icon}
-                </span>
-
-                <div className="min-w-0 flex-1">
-                  <p className="flex items-center gap-2 truncate font-medium">
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-slate-900/10 dark:ring-white/20"
-                      style={{ backgroundColor: category.color }}
-                      aria-hidden="true"
+              <li key={category.id}>
+                <ListRow
+                  leading={<RowIcon icon={category.icon} color={category.color} />}
+                  title={category.name}
+                  subtitle={CATEGORY_TYPES.find((type) => type.value === category.type)?.label}
+                  meta={inUse > 0 ? `${inUse} transaksi` : null}
+                  action={
+                    <KebabMenu
+                      label={`Aksi untuk ${category.name}`}
+                      items={[
+                        {
+                          label: 'Ubah',
+                          icon: <PencilIcon className="h-4 w-4" />,
+                          onSelect: () => setEditing(category)
+                        },
+                        {
+                          label: 'Hapus',
+                          icon: <TrashIcon className="h-4 w-4" />,
+                          destructive: true,
+                          onSelect: () => setPendingDelete({ ...category, inUse })
+                        }
+                      ]}
                     />
-                    {category.name}
-                  </p>
-                  <p className="truncate text-sm text-slate-500 dark:text-slate-400">
-                    {CATEGORY_TYPES.find((type) => type.value === category.type)?.label}
-                    {inUse > 0 && ` · ${inUse} transaksi`}
-                    {category.description && ` · ${category.description}`}
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setEditingCategory(category)}
-                  aria-label={`Ubah ${category.name}`}
-                  className="tap flex items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
-                >
-                  <PencilIcon />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPendingDelete({ ...category, inUse })}
-                  aria-label={`Hapus ${category.name}`}
-                  className="tap flex items-center justify-center rounded-xl text-expense hover:bg-expense/10"
-                >
-                  <TrashIcon />
-                </button>
+                  }
+                />
               </li>
             )
           })}
-        </ul>
+        </Card>
       )}
 
-      {editingCategory && (
+      {editing && (
         <CategoryForm
           open
-          // Remount per category so the draft state starts fresh.
-          key={editingCategory.id || 'new'}
-          initial={editingCategory}
+          key={editing.id || 'new'}
+          initial={editing}
           takenNames={takenNames}
           onSubmit={handleSubmit}
-          onClose={() => setEditingCategory(null)}
+          onClose={() => setEditing(null)}
         />
       )}
 
@@ -141,7 +141,7 @@ export default function CategoryManager () {
       <ConfirmDialog
         open={Boolean(pendingDelete?.inUse)}
         title="Kategori masih dipakai"
-        message={`"${pendingDelete?.name}" dipakai oleh ${pendingDelete?.inUse} transaksi. Pindahkan transaksi tersebut ke kategori lain dulu sebelum menghapusnya. Kalau cuma mau ganti nama, pakai tombol ubah — transaksi lamanya ikut diperbarui otomatis.`}
+        message={`"${pendingDelete?.name}" dipakai oleh ${pendingDelete?.inUse} transaksi. Pindahkan transaksi tersebut ke kategori lain dulu sebelum menghapusnya. Kalau cuma mau ganti nama, pakai Ubah — transaksi lamanya ikut diperbarui otomatis.`}
         confirmLabel="Mengerti"
         cancelLabel="Tutup"
         destructive={false}

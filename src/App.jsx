@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AuthCallback from './components/Auth/AuthCallback.jsx'
 import LoginScreen from './components/Auth/LoginScreen.jsx'
 import Dashboard from './components/Dashboard/Dashboard.jsx'
+import ImportScreenshot from './components/Import/ImportScreenshot.jsx'
 import AppLayout from './components/Layout/AppLayout.jsx'
 import ManagePage from './components/Manage/ManagePage.jsx'
 import SettingsPage from './components/Settings/SettingsPage.jsx'
@@ -48,6 +49,7 @@ function AuthenticatedApp () {
           <Route index element={<Dashboard />} />
           <Route path="transactions" element={<TransactionList />} />
           <Route path="add" element={<TransactionFormPage />} />
+          <Route path="import" element={<ImportScreenshot />} />
           <Route path="transactions/:id/edit" element={<TransactionFormPage />} />
           <Route path="manage" element={<ManagePage />} />
           <Route path="categories" element={<Navigate to="/manage?tab=categories" replace />} />

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Button from './Button.jsx'
-import Modal from './Modal.jsx'
+import Sheet from './Sheet.jsx'
 
 export default function ConfirmDialog ({
   open,
@@ -25,13 +25,13 @@ export default function ConfirmDialog ({
   }
 
   return (
-    <Modal
+    <Sheet
       open={open}
       title={title}
       onClose={busy ? () => {} : onClose}
       footer={
-        <div className="flex gap-3">
-          <Button variant="secondary" className="flex-1" onClick={onClose} disabled={busy}>
+        <div className="flex gap-2">
+          <Button variant="secondary" className="flex-1 justify-center" onClick={onClose} disabled={busy}>
             {cancelLabel}
           </Button>
           <Button
@@ -45,7 +45,7 @@ export default function ConfirmDialog ({
         </div>
       }
     >
-      <p className="text-slate-600 dark:text-slate-300">{message}</p>
-    </Modal>
+      <p className="text-body text-subtitle dark:text-subtitle-dark">{message}</p>
+    </Sheet>
   )
 }

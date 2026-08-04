@@ -4,6 +4,7 @@ import { LIMITS, TRANSACTION_TYPES } from '../../lib/constants.js'
 import { isFutureDate, todayIso } from '../../lib/dates.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
 import Button from '../ui/Button.jsx'
+import SegmentedControl from '../ui/SegmentedControl.jsx'
 
 export function emptyDraft (settings) {
   return {
@@ -101,33 +102,13 @@ export default function TransactionForm ({
       : null
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-      <fieldset>
-        <legend className="label">Jenis</legend>
-        <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
-          {TRANSACTION_TYPES.map((option) => (
-            <label
-              key={option.value}
-              className={`tap flex cursor-pointer items-center justify-center rounded-lg px-2 text-center text-sm font-semibold transition ${
-                draft.type === option.value
-                  ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-50'
-                  : 'text-slate-500 dark:text-slate-400'
-              }`}
-            >
-              <input
-                type="radio"
-                name="type"
-                className="sr-only"
-                value={option.value}
-                checked={draft.type === option.value}
-                // Switching flow can invalidate the chosen category.
-                onChange={() => patch({ type: option.value, category: '' })}
-              />
-              {option.label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+    <form className="space-y-gap-normal" onSubmit={handleSubmit} noValidate>
+      <SegmentedControl
+        label="Jenis transaksi"
+        value={draft.type}
+        options={TRANSACTION_TYPES}
+        onChange={(type) => patch({ type, category: '' })}
+      />
 
       <div>
         <label className="label" htmlFor="amount">
@@ -137,7 +118,8 @@ export default function TransactionForm ({
           id="amount"
           type="text"
           inputMode="decimal"
-          className={`field text-lg font-semibold ${errors.amount ? 'field-error' : ''}`}
+          autoComplete="off"
+          className={`field text-[22px] font-bold tracking-tight ${errors.amount ? 'field-error' : ''}`}
           value={draft.amount}
           placeholder="0"
           onChange={(event) => patch({ amount: event.target.value })}
@@ -145,38 +127,67 @@ export default function TransactionForm ({
         {errors.amount ? (
           <p className="hint-error">{errors.amount}</p>
         ) : (
-          amountPreview && <p className="mt-1.5 text-sm text-slate-500">{amountPreview}</p>
+          amountPreview && <p className="hint">{amountPreview}</p>
         )}
       </div>
 
-      <div>
-        <label className="label" htmlFor="account">
-          {transfer ? 'Dari akun' : 'Akun'}
-        </label>
-        <AccountSelect
-          id="account"
-          value={draft.account}
-          accounts={accounts}
-          invalid={Boolean(errors.account)}
-          onChange={(account) => patch({ account })}
-        />
-        {errors.account && <p className="hint-error">{errors.account}</p>}
-      </div>
-
-      {transfer && (
+      <div className="grid grid-cols-2 gap-gap">
         <div>
-          <label className="label" htmlFor="to-account">
-            Ke akun
+          <label className="label" htmlFor="account">
+            {transfer ? 'Dari akun' : 'Akun'}
           </label>
           <AccountSelect
-            id="to-account"
-            value={draft.toAccount}
-            accounts={accounts.filter((account) => account.name !== draft.account)}
-            invalid={Boolean(errors.toAccount)}
-            onChange={(toAccount) => patch({ toAccount })}
+            id="account"
+            value={draft.account}
+            accounts={accounts}
+            invalid={Boolean(errors.account)}
+            onChange={(account) => patch({ account })}
           />
-          {errors.toAccount && <p className="hint-error">{errors.toAccount}</p>}
         </div>
+
+        {transfer ? (
+          <div>
+            <label className="label" htmlFor="to-account">
+              Ke akun
+            </label>
+            <AccountSelect
+              id="to-account"
+              value={draft.toAccount}
+              accounts={accounts.filter((account) => account.name !== draft.account)}
+              invalid={Boolean(errors.toAccount)}
+              onChange={(toAccount) => patch({ toAccount })}
+            />
+          </div>
+        ) : (
+          <div>
+            <label className="label" htmlFor="category">
+              Kategori
+            </label>
+            <select
+              id="category"
+              className={`field ${errors.category ? 'field-error' : ''}`}
+              value={draft.category}
+              onChange={(event) => patch({ category: event.target.value })}
+            >
+              <option value="">Pilih…</option>
+              {visibleCategories.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {category.icon} {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+      {(errors.account || errors.toAccount || errors.category) && (
+        <p className="hint-error -mt-1">
+          {errors.account || errors.toAccount || errors.category}
+        </p>
+      )}
+      {!transfer && !visibleCategories.length && (
+        <p className="hint -mt-1">
+          Belum ada kategori untuk jenis ini. Tambahkan dulu di menu Kelola.
+        </p>
       )}
 
       <div>
@@ -194,61 +205,34 @@ export default function TransactionForm ({
         {errors.date && <p className="hint-error">{errors.date}</p>}
       </div>
 
-      {!transfer && (
-        <div>
-          <label className="label" htmlFor="category">
-            Kategori
-          </label>
-          <select
-            id="category"
-            className={`field ${errors.category ? 'field-error' : ''}`}
-            value={draft.category}
-            onChange={(event) => patch({ category: event.target.value })}
-          >
-            <option value="">Pilih kategori…</option>
-            {visibleCategories.map((category) => (
-              <option key={category.id} value={category.name}>
-                {category.icon} {category.name}
-              </option>
-            ))}
-          </select>
-          {errors.category && <p className="hint-error">{errors.category}</p>}
-          {!visibleCategories.length && (
-            <p className="mt-1.5 text-sm text-slate-500">
-              Belum ada kategori untuk jenis ini. Tambahkan dulu di menu Kelola.
-            </p>
-          )}
-        </div>
-      )}
-
       <div>
         <label className="label" htmlFor="description">
-          Keterangan <span className="font-normal text-slate-400">(opsional)</span>
+          Keterangan <span className="font-normal text-subtitle">(opsional)</span>
         </label>
         <textarea
           id="description"
           rows={2}
           maxLength={LIMITS.description}
           className={`field resize-none ${errors.description ? 'field-error' : ''}`}
-          placeholder={transfer ? 'Contoh: tarik tunai' : 'Contoh: belanja mingguan di Indomaret'}
+          placeholder={transfer ? 'Contoh: tarik tunai' : 'Contoh: McDonald’s'}
           value={draft.description}
           onChange={(event) => patch({ description: event.target.value })}
         />
-        <div className="mt-1.5 flex justify-between gap-3 text-sm">
+        <div className="mt-1 flex justify-between gap-3 text-caption">
           <span className="text-expense">{errors.description}</span>
-          <span className="shrink-0 text-slate-400">
+          <span className="shrink-0 text-subtitle">
             {draft.description.length}/{LIMITS.description}
           </span>
         </div>
       </div>
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-gap pt-1">
         {onCancel && (
           <Button variant="secondary" className="flex-1 justify-center" onClick={onCancel}>
             Batal
           </Button>
         )}
-        <Button type="submit" className="flex-1 justify-center" loading={busy}>
+        <Button type="submit" size="lg" className="flex-1 justify-center" loading={busy}>
           {submitLabel}
         </Button>
       </div>
@@ -258,25 +242,18 @@ export default function TransactionForm ({
 
 function AccountSelect ({ id, value, accounts, invalid, onChange }) {
   return (
-    <>
-      <select
-        id={id}
-        className={`field ${invalid ? 'field-error' : ''}`}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      >
-        <option value="">Pilih akun…</option>
-        {accounts.map((account) => (
-          <option key={account.id} value={account.name}>
-            {account.icon} {account.name}
-          </option>
-        ))}
-      </select>
-      {!accounts.length && (
-        <p className="mt-1.5 text-sm text-slate-500">
-          Belum ada akun. Tambahkan dulu di menu Kelola.
-        </p>
-      )}
-    </>
+    <select
+      id={id}
+      className={`field ${invalid ? 'field-error' : ''}`}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    >
+      <option value="">Pilih…</option>
+      {accounts.map((account) => (
+        <option key={account.id} value={account.name}>
+          {account.icon} {account.name}
+        </option>
+      ))}
+    </select>
   )
 }

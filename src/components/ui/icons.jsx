@@ -105,6 +105,48 @@ export const ExternalIcon = (props) => (
   </Icon>
 )
 
+export const MoreIcon = (props) => (
+  <Icon {...props}>
+    <circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+    <circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none" />
+  </Icon>
+)
+
+export const ChevronDownIcon = (props) => (
+  <Icon {...props}>
+    <path d="m6 9 6 6 6-6" />
+  </Icon>
+)
+
+export const CameraIcon = (props) => (
+  <Icon {...props}>
+    <path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5Z" />
+    <circle cx="12" cy="12.5" r="3.2" />
+  </Icon>
+)
+
+export const ImageIcon = (props) => (
+  <Icon {...props}>
+    <rect x="3" y="4.5" width="18" height="15" rx="2" />
+    <circle cx="8.5" cy="9.5" r="1.4" />
+    <path d="m4 17 4.5-4.5 3 3L15 11l5 5" />
+  </Icon>
+)
+
+export const ScanIcon = (props) => (
+  <Icon {...props}>
+    <path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2" />
+    <path d="M4 12h16" />
+  </Icon>
+)
+
+export const CheckIcon = (props) => (
+  <Icon {...props}>
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </Icon>
+)
+
 export const GoogleIcon = ({ className = 'h-5 w-5' }) => (
   <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
     <path

@@ -6,6 +6,7 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { CURRENCIES, DATE_FORMATS } from '../../lib/constants.js'
 import { extractSpreadsheetId } from '../../lib/spreadsheetId.js'
 import Button from '../ui/Button.jsx'
+import { Card, SectionHeader } from '../ui/Card.jsx'
 import { ExternalIcon } from '../ui/icons.jsx'
 
 const THEMES = [
@@ -43,125 +44,105 @@ export default function SettingsPage () {
   }
 
   return (
-    <div className="space-y-4">
+    <>
       <Section title="Tampilan">
-        <Field label="Tema" htmlFor="theme">
-          <select
+        <Row label="Tema" htmlFor="theme">
+          <Select
             id="theme"
-            className="field"
             value={settings.theme}
-            onChange={(event) => updateSettings({ theme: event.target.value })}
-          >
-            {THEMES.map((theme) => (
-              <option key={theme.value} value={theme.value}>
-                {theme.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="Mata uang" htmlFor="currency">
-          <select
+            onChange={(theme) => updateSettings({ theme })}
+            options={THEMES}
+          />
+        </Row>
+        <Row label="Mata uang" htmlFor="currency">
+          <Select
             id="currency"
-            className="field"
             value={settings.currency}
-            onChange={(event) => updateSettings({ currency: event.target.value })}
-          >
-            {CURRENCIES.map((currency) => (
-              <option key={currency.code} value={currency.code}>
-                {currency.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="Format tanggal" htmlFor="date-format">
-          <select
+            onChange={(currency) => updateSettings({ currency })}
+            options={CURRENCIES.map((item) => ({ value: item.code, label: item.label }))}
+          />
+        </Row>
+        <Row label="Format tanggal" htmlFor="date-format">
+          <Select
             id="date-format"
-            className="field"
             value={settings.dateFormat}
-            onChange={(event) => updateSettings({ dateFormat: event.target.value })}
-          >
-            {DATE_FORMATS.map((format) => (
-              <option key={format.value} value={format.value}>
-                {format.value} — {format.label}
-              </option>
-            ))}
-          </select>
-        </Field>
+            onChange={(dateFormat) => updateSettings({ dateFormat })}
+            options={DATE_FORMATS.map((item) => ({
+              value: item.value,
+              label: `${item.value} — ${item.label}`
+            }))}
+          />
+        </Row>
       </Section>
 
       <Section title="Default form transaksi">
-        <Field label="Jenis default" htmlFor="default-type">
-          <select
+        <Row label="Jenis" htmlFor="default-type">
+          <Select
             id="default-type"
-            className="field"
             value={settings.defaultType}
-            onChange={(event) => updateSettings({ defaultType: event.target.value })}
-          >
-            <option value="expense">Pengeluaran</option>
-            <option value="income">Pemasukan</option>
-          </select>
-        </Field>
-
-        <Field label="Akun default" htmlFor="default-account">
-          <select
+            onChange={(defaultType) => updateSettings({ defaultType })}
+            options={[
+              { value: 'expense', label: 'Pengeluaran' },
+              { value: 'income', label: 'Pemasukan' }
+            ]}
+          />
+        </Row>
+        <Row label="Akun" htmlFor="default-account">
+          <Select
             id="default-account"
-            className="field"
             value={settings.defaultAccount}
-            onChange={(event) => updateSettings({ defaultAccount: event.target.value })}
-          >
-            <option value="">Tidak ada</option>
-            {accounts.map((account) => (
-              <option key={account.id} value={account.name}>
-                {account.icon} {account.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="Kategori default" htmlFor="default-category">
-          <select
+            onChange={(defaultAccount) => updateSettings({ defaultAccount })}
+            options={[
+              { value: '', label: 'Tidak ada' },
+              ...accounts.map((account) => ({ value: account.name, label: account.name }))
+            ]}
+          />
+        </Row>
+        <Row label="Kategori" htmlFor="default-category">
+          <Select
             id="default-category"
-            className="field"
             value={settings.defaultCategory}
-            onChange={(event) => updateSettings({ defaultCategory: event.target.value })}
-          >
-            <option value="">Tidak ada</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.name}>
-                {category.icon} {category.name}
-              </option>
-            ))}
-          </select>
-        </Field>
+            onChange={(defaultCategory) => updateSettings({ defaultCategory })}
+            options={[
+              { value: '', label: 'Tidak ada' },
+              ...categories.map((category) => ({ value: category.name, label: category.name }))
+            ]}
+          />
+        </Row>
       </Section>
 
       <Section title="Sumber data">
         {workbook ? (
-          <div className="space-y-2">
-            <p className="text-sm text-slate-600 dark:text-slate-300">{workbook.title}</p>
-            <p className="break-all font-mono text-xs text-slate-400">{workbook.spreadsheetId}</p>
+          <div className="space-y-1">
+            <p className="text-body">{workbook.title}</p>
+            <p className="break-all font-mono text-caption text-subtitle dark:text-subtitle-dark">
+              {workbook.spreadsheetId}
+            </p>
             <a
               href={workbook.url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600"
+              className="inline-flex items-center gap-1.5 text-caption font-semibold text-brand-500"
             >
               <ExternalIcon className="h-4 w-4" />
               Buka di Google Sheets
             </a>
           </div>
         ) : (
-          <p className="text-sm text-slate-500">Spreadsheet belum siap.</p>
+          <p className="text-caption text-subtitle dark:text-subtitle-dark">
+            Spreadsheet belum siap.
+          </p>
         )}
 
-        <Field label="Pakai spreadsheet lain" htmlFor="sheet-id">
-          <div className="flex gap-2">
+        <div>
+          <label className="label" htmlFor="sheet-id">
+            Pakai spreadsheet lain
+          </label>
+          <div className="flex gap-gap">
             <input
               id="sheet-id"
               type="text"
-              className="field flex-1 font-mono text-sm"
+              className="field flex-1 font-mono text-caption"
               placeholder="ID atau URL spreadsheet"
               value={sheetId}
               onChange={(event) => setSheetId(event.target.value)}
@@ -170,17 +151,16 @@ export default function SettingsPage () {
               Ganti
             </Button>
           </div>
-          <p className="mt-1.5 text-xs text-slate-500">
+          <p className="hint">
             Pakai ini untuk membuka spreadsheet yang sama dari perangkat lain. Hanya spreadsheet
-            yang dibuat oleh aplikasi ini yang bisa dibuka — itu batas izin <code>drive.file</code>{' '}
-            yang diminta saat login.
+            yang dibuat aplikasi ini yang bisa dibuka — batas izin <code>drive.file</code>.
           </p>
-        </Field>
+        </div>
       </Section>
 
       <Section title="Akun">
-        <p className="text-sm text-slate-600 dark:text-slate-300">{user?.email}</p>
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <p className="text-body text-subtitle dark:text-subtitle-dark">{user?.email}</p>
+        <div className="flex flex-col gap-gap sm:flex-row">
           <Button
             variant="secondary"
             className="justify-center"
@@ -196,26 +176,44 @@ export default function SettingsPage () {
           </Button>
         </div>
       </Section>
-    </div>
+    </>
   )
 }
 
 function Section ({ title, children }) {
   return (
-    <section className="card space-y-4">
-      <h2 className="text-base font-semibold">{title}</h2>
-      {children}
-    </section>
+    <div className="space-y-gap-normal">
+      <SectionHeader title={title} />
+      <Card className="space-y-gap-normal">{children}</Card>
+    </div>
   )
 }
 
-function Field ({ label, htmlFor, children }) {
+/** Label left, control right - the iOS Settings shape, and far more compact. */
+function Row ({ label, htmlFor, children }) {
   return (
-    <div>
-      <label className="label" htmlFor={htmlFor}>
+    <div className="flex items-center justify-between gap-3">
+      <label className="text-body" htmlFor={htmlFor}>
         {label}
       </label>
-      {children}
+      <div className="w-1/2 max-w-[220px] shrink-0">{children}</div>
     </div>
+  )
+}
+
+function Select ({ id, value, onChange, options }) {
+  return (
+    <select
+      id={id}
+      className="field h-10 truncate py-0 text-caption"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   )
 }

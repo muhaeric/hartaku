@@ -1,25 +1,45 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
+import { useGoldPrice } from '../../hooks/useGoldPrice.js'
 import { buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
-import { categoryBreakdown, filterByMonth, monthsWithData, summarize } from '../../lib/summary.js'
-import Button from '../ui/Button.jsx'
-import { ErrorState, SkeletonCard } from '../ui/Feedback.jsx'
-import { ListIcon, PlusIcon } from '../ui/icons.jsx'
+import {
+  accountBalances,
+  categoryBreakdown,
+  filterByMonth,
+  goldSummary,
+  monthsWithData,
+  netWorth,
+  summarize
+} from '../../lib/summary.js'
+import { Card, SectionHeader } from '../ui/Card.jsx'
+import { ErrorState, SkeletonRows, SkeletonSummary } from '../ui/Feedback.jsx'
 import AccountBalances from './AccountBalances.jsx'
 import MonthSelector from './MonthSelector.jsx'
+import NetWorthCard from './NetWorthCard.jsx'
 import SummaryCards from './SummaryCards.jsx'
 import TopExpenses from './TopExpenses.jsx'
 
 export default function Dashboard () {
-  const navigate = useNavigate()
   const { transactions, categories, accounts, goldLots, loading, error, reload } = useData()
+  const { quote } = useGoldPrice()
   const [month, setMonth] = useState(currentMonthKey)
 
   const monthOptions = useMemo(
     () => buildMonthOptions(monthsWithData(transactions)),
     [transactions]
   )
+
+  const balances = useMemo(
+    () => accountBalances(accounts, transactions, goldLots),
+    [accounts, transactions, goldLots]
+  )
+
+  const gold = useMemo(
+    () => goldSummary(goldLots, quote?.buybackPerGram),
+    [goldLots, quote]
+  )
+
+  const worth = useMemo(() => netWorth(balances, gold.value || 0), [balances, gold.value])
 
   const { summary, breakdown } = useMemo(() => {
     const items = filterByMonth(transactions, month)
@@ -30,44 +50,33 @@ export default function Dashboard () {
 
   if (loading && !transactions.length && !accounts.length) {
     return (
-      <div className="space-y-3">
-        <SkeletonCard />
-        <div className="grid grid-cols-2 gap-3">
-          <SkeletonCard />
-          <SkeletonCard />
-        </div>
+      <div className="space-y-section">
+        <SkeletonSummary />
+        <SkeletonRows rows={4} />
       </div>
     )
   }
 
   return (
-    <div className="space-y-5">
-      <AccountBalances accounts={accounts} transactions={transactions} goldLots={goldLots} />
+    <>
+      <NetWorthCard worth={worth} />
 
-      <MonthSelector value={month} options={monthOptions} onChange={setMonth} />
-      <SummaryCards summary={summary} />
+      <AccountBalances balances={balances} gold={gold} />
 
-      <section className="card" aria-labelledby="top-expenses-heading">
-        <h2 id="top-expenses-heading" className="mb-4 text-base font-semibold">
-          Pengeluaran terbesar
-        </h2>
-        <TopExpenses breakdown={breakdown} categories={categories} />
-      </section>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Button className="justify-center" onClick={() => navigate('/add')}>
-          <PlusIcon className="h-5 w-5" />
-          Tambah transaksi
-        </Button>
-        <Button
-          variant="secondary"
-          className="justify-center"
-          onClick={() => navigate('/transactions')}
-        >
-          <ListIcon className="h-5 w-5" />
-          Lihat semua transaksi
-        </Button>
+      <div className="space-y-gap-normal">
+        <SectionHeader
+          title="Bulan ini"
+          action={<MonthSelector value={month} options={monthOptions} onChange={setMonth} />}
+        />
+        <SummaryCards summary={summary} />
       </div>
-    </div>
+
+      <div className="space-y-gap-normal">
+        <SectionHeader title="Pengeluaran terbesar" />
+        <Card flush as="div">
+          <TopExpenses breakdown={breakdown} categories={categories} />
+        </Card>
+      </div>
+    </>
   )
 }

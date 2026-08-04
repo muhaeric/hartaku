@@ -18,12 +18,12 @@ export default function WorkbookSetup ({ message, busy, onRetry, onUseSpreadshee
       <div className="card space-y-5">
         <div>
           <h1 className="text-lg font-semibold">Spreadsheet belum bisa dibuka</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{message}</p>
+          <p className="mt-1.5 text-body text-subtitle dark:text-subtitle-dark">{message}</p>
         </div>
 
         <section className="space-y-2">
           <h2 className="text-sm font-semibold">Cara terbaik: aktifkan Google Drive API</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
+          <p className="text-body text-subtitle dark:text-subtitle-dark">
             Buka Google Cloud Console → APIs &amp; Services → Library → cari{' '}
             <strong>Google Drive API</strong> → Enable. Setelah itu aplikasi bisa menemukan
             sendiri spreadsheet lamamu di perangkat mana pun.
@@ -33,9 +33,9 @@ export default function WorkbookSetup ({ message, busy, onRetry, onUseSpreadshee
           </Button>
         </section>
 
-        <section className="space-y-2 border-t border-slate-200 pt-5 dark:border-slate-800">
+        <section className="space-y-2 border-t border-hairline pt-4 dark:border-hairline-dark">
           <h2 className="text-sm font-semibold">Atau tempel ID spreadsheet-nya</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300">
+          <p className="text-body text-subtitle dark:text-subtitle-dark">
             Ambil dari halaman Pengaturan di perangkat yang sudah berisi data, atau dari URL
             Google Sheets-nya. Boleh tempel URL lengkapnya.
           </p>
@@ -52,7 +52,7 @@ export default function WorkbookSetup ({ message, busy, onRetry, onUseSpreadshee
           </Button>
         </section>
 
-        <section className="space-y-2 border-t border-slate-200 pt-5 dark:border-slate-800">
+        <section className="space-y-2 border-t border-hairline pt-4 dark:border-hairline-dark">
           <h2 className="text-sm font-semibold">Atau mulai dari nol</h2>
           {confirmingCreate ? (
             <>
@@ -71,7 +71,7 @@ export default function WorkbookSetup ({ message, busy, onRetry, onUseSpreadshee
             </>
           ) : (
             <>
-              <p className="text-sm text-slate-600 dark:text-slate-300">
+              <p className="text-body text-subtitle dark:text-subtitle-dark">
                 Pilih ini hanya kalau kamu memang belum pernah pakai Hartaku sebelumnya.
               </p>
               <Button variant="secondary" onClick={() => setConfirmingCreate(true)}>

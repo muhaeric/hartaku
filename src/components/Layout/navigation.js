@@ -11,7 +11,8 @@ export const NAV_ITEMS = [
 export const PAGE_TITLES = {
   '/': 'Beranda',
   '/transactions': 'Transaksi',
-  '/add': 'Tambah Transaksi',
+  '/add': 'Tambah',
+  '/import': 'Import',
   '/manage': 'Akun & Kategori',
   '/settings': 'Pengaturan'
 }

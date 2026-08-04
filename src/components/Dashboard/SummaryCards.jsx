@@ -1,48 +1,44 @@
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { formatCurrency } from '../../lib/format.js'
+import { Card } from '../ui/Card.jsx'
 
 /**
- * Month totals. Values stay in text ink; the small coloured dot beside each
- * label carries the income/expense polarity, so meaning never rests on colour
- * alone. Transfers are excluded - they move money, they do not create it.
+ * Month totals in one card rather than three. Transfers are excluded - they move
+ * money, they do not create it.
  */
 export default function SummaryCards ({ summary }) {
   const { settings } = useSettings()
-  const money = (value) => formatCurrency(value, settings.currency)
+  const money = (value) => formatCurrency(value, settings.currency, { compact: true })
 
   return (
-    <section aria-label="Ringkasan bulan ini" className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <Tile label="Pemasukan" value={money(summary.income)} dotClass="bg-income" />
-        <Tile label="Pengeluaran" value={money(summary.expense)} dotClass="bg-expense" />
+    <Card aria-label="Ringkasan bulan ini">
+      <div className="grid grid-cols-3 gap-3">
+        <Figure label="Masuk" value={money(summary.income)} dotClass="bg-income" />
+        <Figure label="Keluar" value={money(summary.expense)} dotClass="bg-expense" />
+        <Figure
+          label="Selisih"
+          value={money(summary.net)}
+          dotClass="bg-brand-500"
+          tone={summary.net < 0 ? 'text-expense dark:text-red-400' : ''}
+        />
       </div>
 
-      <div className="card">
-        <p className="text-sm text-slate-500 dark:text-slate-400">Selisih bulan ini</p>
-        <p
-          className={`mt-1 text-2xl font-semibold tracking-tight ${
-            summary.net < 0 ? 'text-expense dark:text-red-400' : ''
-          }`}
-        >
-          {money(summary.net)}
-        </p>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          {summary.count} transaksi
-          {summary.transfers > 0 && ` · ${summary.transfers} di antaranya transfer`}
-        </p>
-      </div>
-    </section>
+      <p className="mt-2.5 border-t border-hairline pt-2 text-caption text-subtitle dark:border-hairline-dark dark:text-subtitle-dark">
+        {summary.count} transaksi
+        {summary.transfers > 0 && ` · ${summary.transfers} transfer`}
+      </p>
+    </Card>
   )
 }
 
-function Tile ({ label, value, dotClass }) {
+function Figure ({ label, value, dotClass, tone = '' }) {
   return (
-    <div className="card">
-      <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-        <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotClass}`} aria-hidden="true" />
+    <div className="min-w-0">
+      <p className="flex items-center gap-1.5 text-caption text-subtitle dark:text-subtitle-dark">
+        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`} aria-hidden="true" />
         {label}
       </p>
-      <p className="mt-1 break-words text-xl font-semibold tracking-tight">{value}</p>
+      <p className={`mt-0.5 text-amount font-semibold amount ${tone}`}>{value}</p>
     </div>
   )
 }

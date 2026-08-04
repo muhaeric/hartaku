@@ -1,17 +1,19 @@
 const VARIANTS = {
-  primary:
-    'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-700 disabled:bg-brand-600/50',
+  primary: 'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 disabled:bg-brand-500/50',
   secondary:
-    'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50 disabled:opacity-50 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-800',
+    'border border-hairline bg-surface text-ink hover:bg-canvas disabled:opacity-50 dark:border-hairline-dark dark:bg-surface-dark dark:text-ink-dark dark:hover:bg-white/5',
+  soft: 'bg-brand-50 text-brand-700 hover:bg-brand-100 disabled:opacity-50 dark:bg-brand-500/15 dark:text-brand-200 dark:hover:bg-brand-500/25',
   danger: 'bg-expense text-white hover:brightness-95 disabled:opacity-50',
   ghost:
-    'text-slate-600 hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800'
+    'text-subtitle hover:bg-black/5 disabled:opacity-50 dark:text-subtitle-dark dark:hover:bg-white/5'
 }
 
 const SIZES = {
-  md: 'px-4 py-3 text-sm min-h-[48px]',
-  sm: 'px-3 py-2 text-sm min-h-[40px]',
-  icon: 'h-11 w-11 justify-center'
+  // Compact by default - full-width chunky buttons are what the brief moved away from.
+  sm: 'h-9 px-3 text-caption gap-1.5',
+  md: 'h-11 px-4 text-body gap-2',
+  lg: 'h-12 px-5 text-body gap-2',
+  icon: 'h-9 w-9 justify-center'
 }
 
 export default function Button ({
@@ -27,12 +29,12 @@ export default function Button ({
     <button
       type="button"
       disabled={disabled || loading}
-      className={`inline-flex items-center gap-2 rounded-xl font-semibold transition disabled:cursor-not-allowed ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex items-center rounded-control font-semibold transition disabled:cursor-not-allowed ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...props}
     >
       {loading && (
         <span
-          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+          className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
           aria-hidden="true"
         />
       )}

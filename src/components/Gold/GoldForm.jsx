@@ -4,7 +4,7 @@ import { LIMITS } from '../../lib/constants.js'
 import { isFutureDate, todayIso } from '../../lib/dates.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
 import Button from '../ui/Button.jsx'
-import Modal from '../ui/Modal.jsx'
+import Sheet from '../ui/Sheet.jsx'
 
 export function emptyGoldLot () {
   return {
@@ -49,8 +49,7 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
 
   const grams = parseAmount(draft.grams)
   const cost = parseAmount(draft.cost)
-  const perGram =
-    Number.isFinite(grams) && Number.isFinite(cost) && grams > 0 ? cost / grams : null
+  const perGram = Number.isFinite(grams) && Number.isFinite(cost) && grams > 0 ? cost / grams : null
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -61,12 +60,7 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
 
     setBusy(true)
     try {
-      await onSubmit({
-        ...draft,
-        grams,
-        cost,
-        description: draft.description.trim()
-      })
+      await onSubmit({ ...draft, grams, cost, description: draft.description.trim() })
       onClose()
     } finally {
       setBusy(false)
@@ -74,23 +68,41 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
   }
 
   return (
-    <Modal open={open} title={initial.id ? 'Ubah pembelian emas' : 'Beli emas'} onClose={onClose}>
-      <form className="space-y-4" onSubmit={handleSubmit} noValidate>
-        <div>
-          <label className="label" htmlFor="gold-grams">
-            Gramasi
-          </label>
-          <input
-            id="gold-grams"
-            type="text"
-            inputMode="decimal"
-            className={`field text-lg font-semibold ${errors.grams ? 'field-error' : ''}`}
-            value={draft.grams}
-            placeholder="Contoh: 5"
-            onChange={(event) => patch({ grams: event.target.value })}
-          />
-          {errors.grams && <p className="hint-error">{errors.grams}</p>}
+    <Sheet open={open} title={initial.id ? 'Ubah pembelian emas' : 'Beli emas'} onClose={onClose}>
+      <form className="space-y-gap-normal" onSubmit={handleSubmit} noValidate>
+        <div className="grid grid-cols-2 gap-gap">
+          <div>
+            <label className="label" htmlFor="gold-grams">
+              Gramasi
+            </label>
+            <input
+              id="gold-grams"
+              type="text"
+              inputMode="decimal"
+              className={`field text-amount font-semibold ${errors.grams ? 'field-error' : ''}`}
+              value={draft.grams}
+              placeholder="5"
+              onChange={(event) => patch({ grams: event.target.value })}
+            />
+          </div>
+
+          <div>
+            <label className="label" htmlFor="gold-date">
+              Tanggal beli
+            </label>
+            <input
+              id="gold-date"
+              type="date"
+              max={todayIso()}
+              className={`field ${errors.date ? 'field-error' : ''}`}
+              value={draft.date}
+              onChange={(event) => patch({ date: event.target.value })}
+            />
+          </div>
         </div>
+        {(errors.grams || errors.date) && (
+          <p className="hint-error">{errors.grams || errors.date}</p>
+        )}
 
         <div>
           <label className="label" htmlFor="gold-cost">
@@ -100,7 +112,7 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
             id="gold-cost"
             type="text"
             inputMode="decimal"
-            className={`field text-lg font-semibold ${errors.cost ? 'field-error' : ''}`}
+            className={`field text-amount font-semibold ${errors.cost ? 'field-error' : ''}`}
             value={draft.cost}
             placeholder="0"
             onChange={(event) => patch({ cost: event.target.value })}
@@ -109,7 +121,7 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
             <p className="hint-error">{errors.cost}</p>
           ) : (
             perGram && (
-              <p className="mt-1.5 text-sm text-slate-500">
+              <p className="hint">
                 {formatCurrency(cost, settings.currency)} ·{' '}
                 {formatCurrency(perGram, settings.currency)} per gram
               </p>
@@ -118,23 +130,8 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
         </div>
 
         <div>
-          <label className="label" htmlFor="gold-date">
-            Tanggal beli
-          </label>
-          <input
-            id="gold-date"
-            type="date"
-            max={todayIso()}
-            className={`field ${errors.date ? 'field-error' : ''}`}
-            value={draft.date}
-            onChange={(event) => patch({ date: event.target.value })}
-          />
-          {errors.date && <p className="hint-error">{errors.date}</p>}
-        </div>
-
-        <div>
           <label className="label" htmlFor="gold-account">
-            Dibayar dari akun <span className="font-normal text-slate-400">(opsional)</span>
+            Dibayar dari akun <span className="font-normal text-subtitle">(opsional)</span>
           </label>
           <select
             id="gold-account"
@@ -149,7 +146,7 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
               </option>
             ))}
           </select>
-          <p className="mt-1.5 text-sm text-slate-500">
+          <p className="hint">
             Kalau diisi, saldo akun itu berkurang sebesar harga beli — tidak perlu mencatat
             pengeluaran terpisah.
           </p>
@@ -157,7 +154,7 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
 
         <div>
           <label className="label" htmlFor="gold-description">
-            Keterangan <span className="font-normal text-slate-400">(opsional)</span>
+            Keterangan <span className="font-normal text-subtitle">(opsional)</span>
           </label>
           <input
             id="gold-description"
@@ -171,7 +168,7 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
           {errors.description && <p className="hint-error">{errors.description}</p>}
         </div>
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-gap pt-1">
           <Button variant="secondary" className="flex-1 justify-center" onClick={onClose}>
             Batal
           </Button>
@@ -180,6 +177,6 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
           </Button>
         </div>
       </form>
-    </Modal>
+    </Sheet>
   )
 }

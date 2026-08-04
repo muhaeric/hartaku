@@ -5,7 +5,7 @@ const ToastContext = createContext(null)
 const TONES = {
   success: 'bg-income text-white',
   error: 'bg-expense text-white',
-  info: 'bg-slate-800 text-white dark:bg-slate-700'
+  info: 'bg-ink text-white dark:bg-surface-dark dark:text-ink-dark'
 }
 
 export function ToastProvider ({ children }) {
@@ -38,7 +38,7 @@ export function ToastProvider ({ children }) {
     <ToastContext.Provider value={value}>
       {children}
       <div
-        className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex flex-col items-center gap-2 px-4 lg:bottom-6"
+        className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex flex-col items-center gap-2 px-page lg:bottom-6"
         role="status"
         aria-live="polite"
       >
@@ -47,7 +47,7 @@ export function ToastProvider ({ children }) {
             key={toast.id}
             type="button"
             onClick={() => dismiss(toast.id)}
-            className={`pointer-events-auto max-w-md animate-slide-up rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${TONES[toast.tone]}`}
+            className={`pointer-events-auto max-w-md animate-slide-up rounded-control px-4 py-2.5 text-body font-medium shadow-lg ${TONES[toast.tone]}`}
           >
             {toast.message}
           </button>
