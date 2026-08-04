@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { PAGE_SIZE, PAGINATION_THRESHOLD } from '../../lib/constants.js'
@@ -29,8 +29,14 @@ export default function TransactionList () {
   const { transactions, categories, accounts, loading, error, reload, removeTransactions } =
     useData()
 
+  // Arriving from an account row: ?account=<name> preselects that filter.
+  const [params] = useSearchParams()
+  const accountParam = params.get('account') || ''
+
   const [month, setMonth] = useState(currentMonthKey)
-  const [filters, setFilters] = useState(INITIAL_FILTERS)
+  const [filters, setFilters] = useState(() => ({ ...INITIAL_FILTERS, account: accountParam }))
+  // Null so the month jump still runs once the transactions have loaded.
+  const appliedAccount = useRef(null)
   const [selecting, setSelecting] = useState(false)
   const [selected, setSelected] = useState([])
   const [pendingDelete, setPendingDelete] = useState(null)
@@ -91,6 +97,28 @@ export default function TransactionList () {
 
   useEffect(() => setPage(1), [month, filters])
   useEffect(() => setSelected([]), [month, filters])
+
+  /**
+   * Landing on an account whose current month happens to be empty would look
+   * like the account has no history at all, so jump to the newest month it does
+   * have. The ref keeps this to once per arrival - otherwise it would yank the
+   * month back every time the user picked a different one.
+   */
+  useEffect(() => {
+    if (!accountParam || !transactions.length) return
+    if (appliedAccount.current === accountParam) return
+
+    appliedAccount.current = accountParam
+    setFilters((current) => ({ ...current, account: accountParam }))
+
+    const owned = transactions.filter(
+      (transaction) =>
+        transaction.account === accountParam || transaction.toAccount === accountParam
+    )
+    const months = monthsWithData(owned).sort().reverse()
+
+    setMonth((current) => (months.length && !months.includes(current) ? months[0] : current))
+  }, [accountParam, transactions])
 
   const toggleSelected = (id) =>
     setSelected((current) =>

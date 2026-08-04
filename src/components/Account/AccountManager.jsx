@@ -4,6 +4,7 @@ import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { ACCOUNT_KINDS } from '../../lib/constants.js'
 import { formatCurrency } from '../../lib/format.js'
+import { accountTransactionsPath } from '../../lib/links.js'
 import { accountBalances } from '../../lib/summary.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
@@ -110,6 +111,7 @@ export default function AccountManager () {
             return (
               <li key={account.id}>
                 <ListRow
+                  to={accountTransactionsPath(account.name)}
                   leading={<RowIcon icon={account.icon} color={account.color} />}
                   title={account.name}
                   subtitle={ACCOUNT_KINDS.find((kind) => kind.value === account.kind)?.label}

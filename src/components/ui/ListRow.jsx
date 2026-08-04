@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { ChevronRightIcon } from './icons.jsx'
 
 /**
  * The one row shape used by accounts, transactions, categories and gold.
@@ -45,6 +46,13 @@ export default function ListRow ({
               {trailingSub}
             </span>
           )}
+        </span>
+      )}
+
+      {/* Rows that navigate say so - there is no hover state on a phone. */}
+      {to && (
+        <span className="-mr-1 shrink-0 text-subtitle/70" aria-hidden="true">
+          <ChevronRightIcon className="h-4 w-4" />
         </span>
       )}
     </>

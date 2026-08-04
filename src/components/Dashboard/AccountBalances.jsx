@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { ACCOUNT_KINDS } from '../../lib/constants.js'
 import { formatCurrency, formatGrams, formatPercent } from '../../lib/format.js'
+import { accountTransactionsPath } from '../../lib/links.js'
 import { Card, GroupLabel, SectionHeader } from '../ui/Card.jsx'
 import ListRow, { RowIcon } from '../ui/ListRow.jsx'
 
@@ -57,6 +58,7 @@ export default function AccountBalances ({ balances, gold }) {
               {group.entries.map(({ account, balance }) => (
                 <ListRow
                   key={account.id}
+                  to={accountTransactionsPath(account.name)}
                   leading={<RowIcon icon={account.icon} color={account.color} />}
                   title={account.name}
                   subtitle={group.label}

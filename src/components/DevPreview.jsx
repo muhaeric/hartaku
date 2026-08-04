@@ -1,4 +1,5 @@
 import { ACCOUNT_KINDS } from '../lib/constants.js'
+import { accountTransactionsPath } from '../lib/links.js'
 import { accountBalances, groupByDay, netWorth, summarize } from '../lib/summary.js'
 import DayGroupHeader from './Transaction/DayGroup.jsx'
 import PeriodSummary from './Transaction/PeriodSummary.jsx'
@@ -132,6 +133,7 @@ export default function DevPreview () {
                 {group.entries.map(({ account, balance }) => (
                   <ListRow
                     key={account.id}
+                    to={accountTransactionsPath(account.name)}
                     leading={<RowIcon icon={account.icon} color={account.color} />}
                     title={account.name}
                     subtitle={group.label}
@@ -165,6 +167,7 @@ export default function DevPreview () {
           {balances.map(({ account, balance }) => (
             <li key={account.id}>
               <ListRow
+                to={accountTransactionsPath(account.name)}
                 leading={<RowIcon icon={account.icon} color={account.color} />}
                 title={account.name}
                 subtitle={ACCOUNT_KINDS.find((k) => k.value === account.kind)?.label}
