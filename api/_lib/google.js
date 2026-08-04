@@ -8,12 +8,22 @@ const REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
  * `drive.file` is the narrowest scope that still lets the app create and then
  * read/write its own spreadsheet - it grants no access to the rest of Drive.
  */
-export const SCOPES = [
-  'openid',
-  'email',
-  'profile',
-  'https://www.googleapis.com/auth/drive.file'
-].join(' ')
+export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
+
+export const SCOPES = ['openid', 'email', 'profile', DRIVE_SCOPE].join(' ')
+
+/**
+ * Google's granular consent screen lets the user untick the Drive permission and
+ * still finish signing in. Catching that here turns a later, cryptic
+ * "insufficient authentication scopes" from the Sheets API into an actionable
+ * message at login time.
+ */
+export function hasDriveScope (grantedScopes) {
+  return String(grantedScopes || '').split(/\s+/).includes(DRIVE_SCOPE)
+}
+
+export const DRIVE_SCOPE_MESSAGE =
+  'Izin Google Drive belum diberikan. Login lagi, lalu centang izin "Lihat, ubah, dan hapus hanya file Google Drive tertentu yang kamu pakai di aplikasi ini" pada layar persetujuan Google.'
 
 export function createPkcePair () {
   const verifier = crypto.randomBytes(32).toString('base64url')

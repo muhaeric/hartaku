@@ -40,6 +40,9 @@ export function AuthProvider ({ children }) {
       })
       .catch((err) => {
         clearSession()
+        // "No session yet" is the normal first-visit case and stays silent;
+        // a rejected permission needs to be explained on the login screen.
+        if (err.code && err.code !== 'no_session') setError(err.message)
         throw err
       })
       .finally(() => {

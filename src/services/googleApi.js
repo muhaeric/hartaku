@@ -18,6 +18,19 @@ export class GoogleApiError extends Error {
   }
 }
 
+/** Turns the two Google errors users actually hit into something they can act on. */
+function friendlyMessage (status, message) {
+  if (status === 403 && /insufficient authentication scopes/i.test(message)) {
+    return 'Izin Google Drive belum diberikan saat login. Keluar lalu login lagi, dan centang izin Drive di layar persetujuan Google.'
+  }
+
+  if (status === 403 && /has not been used|is disabled/i.test(message)) {
+    return `${message} — aktifkan API tersebut di Google Cloud Console, lalu coba lagi.`
+  }
+
+  return message
+}
+
 export async function googleFetch (url, options = {}, allowRetry = true) {
   const token = await provideToken()
   if (!token) throw new GoogleApiError('Sesi Google tidak ditemukan.', { status: 401 })
@@ -40,7 +53,9 @@ export async function googleFetch (url, options = {}, allowRetry = true) {
 
   if (!response.ok) {
     const detail = payload.error || {}
-    throw new GoogleApiError(detail.message || `Google API error (${response.status})`, {
+    const message = detail.message || `Google API error (${response.status})`
+
+    throw new GoogleApiError(friendlyMessage(response.status, message), {
       status: response.status,
       reason: detail.status || detail.errors?.[0]?.reason
     })

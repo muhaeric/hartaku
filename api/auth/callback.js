@@ -1,5 +1,12 @@
 import crypto from 'node:crypto'
-import { decodeIdToken, exchangeCode, toUser } from '../_lib/google.js'
+import {
+  DRIVE_SCOPE_MESSAGE,
+  decodeIdToken,
+  exchangeCode,
+  hasDriveScope,
+  revokeToken,
+  toUser
+} from '../_lib/google.js'
 import { requireEnv, requireMethod, requireSameOrigin, redirectUri } from '../_lib/http.js'
 import {
   OAUTH_COOKIE,
@@ -49,6 +56,12 @@ export default async function handler (req, res) {
       error: 'missing_refresh_token',
       message: 'Google tidak mengirim refresh token. Cabut akses aplikasi di akun Google lalu login ulang.'
     })
+  }
+
+  if (!hasDriveScope(tokens.scope)) {
+    // Drop the half-granted grant so the next attempt shows the consent screen again.
+    await revokeToken(tokens.refresh_token)
+    return res.status(403).json({ error: 'missing_drive_scope', message: DRIVE_SCOPE_MESSAGE })
   }
 
   const user = toUser(decodeIdToken(tokens.id_token))

@@ -1,4 +1,4 @@
-import { refreshAccessToken } from '../_lib/google.js'
+import { DRIVE_SCOPE_MESSAGE, hasDriveScope, refreshAccessToken } from '../_lib/google.js'
 import { requireEnv, requireMethod, requireSameOrigin } from '../_lib/http.js'
 import {
   SESSION_COOKIE,
@@ -38,6 +38,13 @@ export default async function handler (req, res) {
           ? 'Sesi kamu sudah tidak berlaku. Silakan login lagi.'
           : err.message
     })
+  }
+
+  // A grant made without the Drive permission keeps refreshing happily and only
+  // fails once the Sheets API is called - catch it here instead.
+  if (!hasDriveScope(tokens.scope)) {
+    clearCookie(req, res, SESSION_COOKIE)
+    return res.status(403).json({ error: 'missing_drive_scope', message: DRIVE_SCOPE_MESSAGE })
   }
 
   // Sliding expiry: every visit pushes the 7-day logout window forward.
