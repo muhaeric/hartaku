@@ -8,7 +8,7 @@ import { PAGE_TITLES } from './navigation.js'
 export default function Navbar () {
   const { pathname } = useLocation()
   const { user, signOut } = useAuth()
-  const { workbook, reload, loading } = useData()
+  const { workbook, reload, loading, staleSince } = useData()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
 
@@ -35,10 +35,17 @@ export default function Navbar () {
           type="button"
           onClick={() => reload()}
           disabled={loading}
-          aria-label="Muat ulang data"
-          className="tap flex items-center justify-center rounded-control text-subtitle transition hover:bg-black/5 disabled:opacity-40 dark:text-subtitle-dark dark:hover:bg-white/5"
+          aria-label={staleSince ? 'Data tersimpan, coba muat ulang' : 'Muat ulang data'}
+          className="tap relative flex items-center justify-center rounded-control text-subtitle transition hover:bg-black/5 disabled:opacity-40 dark:text-subtitle-dark dark:hover:bg-white/5"
         >
           <RefreshIcon className={loading ? 'h-[19px] w-[19px] animate-spin' : 'h-[19px] w-[19px]'} />
+          {/* Cached numbers are on screen and the refresh failed - say so quietly. */}
+          {staleSince && !loading && (
+            <span
+              className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-warning ring-2 ring-canvas dark:ring-canvas-dark"
+              aria-hidden="true"
+            />
+          )}
         </button>
 
         <div className="relative" ref={menuRef}>

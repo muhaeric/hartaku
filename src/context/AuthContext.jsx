@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { authApi } from '../services/appApi.js'
+import { clearCache } from '../services/cache.js'
 import { setAccessTokenProvider } from '../services/googleApi.js'
 
 const AuthContext = createContext(null)
@@ -100,6 +101,8 @@ export function AuthProvider ({ children }) {
     try {
       await authApi.logout()
     } finally {
+      // The cached workbook belongs to the account that just left.
+      clearCache()
       clearSession()
     }
   }, [clearSession])

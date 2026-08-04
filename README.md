@@ -199,11 +199,15 @@ bisa berkurang.
 
 ## Import dari screenshot (OCR)
 
-**Tambah → Import dari screenshot**, ambil dari kamera atau galeri. Nominal, tanggal, jam, jenis
-transaksi, nama merchant, dan nomor referensi dibaca otomatis, lalu diserahkan ke form transaksi
-biasa untuk diperiksa dan disimpan.
+**Tambah → Import dari screenshot**, ambil dari kamera atau galeri. Bisa bukti transfer tunggal
+maupun **daftar mutasi berisi banyak transaksi** — semuanya dibaca, ditampilkan sebagai daftar
+bercentang, dan bisa diperbaiki satu per satu sebelum disimpan sekaligus dalam satu penulisan.
 
-**Akun dan kategori tetap dipilih manual.** Menebaknya dari nama merchant persis jenis perilaku
+**Akun dipilih di awal, sebelum gambarnya diproses.** Satu screenshot selalu berasal dari satu
+akun, jadi menanyakannya sekali lebih cepat daripada mengulang pilihan di tiap baris — dan
+membuat OCR-nya tidak perlu menebak ini bank apa sama sekali.
+
+**Kategori tetap dipilih manual.** Menebaknya dari nama merchant persis jenis perilaku
 percaya-diri-tapi-salah yang merusak kepercayaan pada angkanya.
 
 OCR-nya **Tesseract.js, berjalan di perangkat** — tanpa API key, tanpa biaya per-scan, dan gambar
@@ -222,10 +226,26 @@ pengujian:
 - Tanggal, jam, dan nomor rekening juga berupa angka panjang. Semuanya dibuang sebelum
   pencarian nominal, dan deretan 10+ digit tanpa tanda "Rp" ditolak.
 
+Struk atau mutasi ditentukan **dari datanya**, bukan dari pilihan pengguna: struk hanya punya
+satu nominal transaksi (baris biaya dan saldonya dikenali lalu disisihkan), mutasi punya banyak.
+Pada mutasi, tanggal biasanya dicetak sekali sebagai heading grup, jadi tanggal terakhir yang
+terlihat diturunkan ke baris-baris di bawahnya.
+
 Skor keyakinan menggabungkan seberapa jernih gambar terbaca dengan seberapa banyak kolom yang
 berhasil dipahami — scan tajam yang tidak bisa ditafsirkan bukan hasil yang meyakinkan.
 
-Yang **belum** ada: satu screenshot berisi banyak transaksi (mutasi rekening) hanya diambil satu.
+## Cache lokal
+
+Isi spreadsheet disalin ke `localStorage` setiap kali berubah, dan dipakai untuk menggambar
+layar begitu aplikasi dibuka — tidak ada skeleton selama menunggu Sheets. Refresh tetap jalan di
+latar dan menimpa isinya; cache ini kenyamanan tampilan, bukan sumber kebenaran.
+
+Kalau refresh gagal padahal data lama sudah tampil, datanya **dibiarkan** dan tombol muat ulang
+diberi titik oranye. Mengosongkan layar yang sedang berfungsi hanya karena satu permintaan gagal
+tidak menolong siapa pun.
+
+Cache dihapus saat keluar akun dan saat berganti spreadsheet. Batas 2MB; di atas itu cache
+dibuang, karena error kuota akan ikut merusak penyimpanan pengaturan.
 
 ## Desain
 
@@ -292,7 +312,8 @@ Mengacu ke spesifikasi MVP:
 | — | Transaksi transfer antar akun | ✅ tambahan di luar spec |
 | — | Aset / kewajiban / total kekayaan | ✅ tambahan di luar spec |
 | — | Investasi emas + harga pasar + untung/rugi | ✅ tambahan di luar spec (jual emas belum) |
-| — | Import transaksi dari screenshot (OCR) | ✅ satu transaksi per gambar |
+| — | Import transaksi dari screenshot (OCR) | ✅ termasuk mutasi berisi banyak transaksi |
+| — | Cache lokal agar buka aplikasi instan | ✅ |
 | — | PWA installable | ✅ tanpa service worker / offline |
 
 ### Migrasi skema (kolom `merchant` → `account`)

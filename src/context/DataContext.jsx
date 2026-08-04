@@ -12,6 +12,7 @@ import {
   createCategory,
   createGoldLot,
   createTransaction,
+  createTransactions,
   deleteAccount,
   deleteCategory,
   deleteGoldLot,
@@ -28,6 +29,7 @@ import {
   updateTransaction
 } from '../services/repository.js'
 import { ensureWorkbook, rememberSpreadsheetId } from '../services/workbook.js'
+import { clearCache, readCache, writeCache } from '../services/cache.js'
 import WorkbookSetup from '../components/Setup/WorkbookSetup.jsx'
 import { useAuth } from './AuthContext.jsx'
 
@@ -41,12 +43,29 @@ const EMPTY = {
   goldLots: [],
   loading: true,
   error: null,
-  errorCode: null
+  errorCode: null,
+  // Set when a background refresh failed but cached data is still on screen.
+  staleSince: null
+}
+
+/** Cached contents render immediately; the network refresh then replaces them. */
+function initialState () {
+  const cached = readCache()
+  if (!cached) return EMPTY
+
+  return {
+    ...EMPTY,
+    workbook: cached.workbook,
+    transactions: cached.transactions,
+    categories: cached.categories,
+    accounts: cached.accounts,
+    goldLots: cached.goldLots
+  }
 }
 
 export function DataProvider ({ children }) {
   const { status } = useAuth()
-  const [state, setState] = useState(EMPTY)
+  const [state, setState] = useState(initialState)
 
   // Mutations need to read the current lists (to spot renames) without turning
   // every list change into a new callback identity.
@@ -72,17 +91,40 @@ export function DataProvider ({ children }) {
         goldLots,
         loading: false,
         error: null,
-        errorCode: null
+        errorCode: null,
+        staleSince: null
       })
     } catch (err) {
-      setState((current) => ({
-        ...current,
-        loading: false,
-        error: err.message,
-        errorCode: err.code || null
-      }))
+      setState((current) => {
+        // With data already on screen a failed refresh is a warning, not a wall:
+        // blanking a working view because one fetch failed helps nobody.
+        const hasData = Boolean(current.workbook)
+
+        return {
+          ...current,
+          loading: false,
+          error: hasData ? null : err.message,
+          errorCode: hasData ? null : err.code || null,
+          staleSince: hasData ? err.message : null
+        }
+      })
     }
   }, [])
+
+  /**
+   * One writer for the cache rather than a call at every mutation site - the
+   * kind of thing that silently rots the moment a new mutation is added.
+   */
+  useEffect(() => {
+    if (!state.workbook) return
+    writeCache(state)
+  }, [
+    state.workbook,
+    state.transactions,
+    state.categories,
+    state.accounts,
+    state.goldLots
+  ])
 
   useEffect(() => {
     if (status !== 'authenticated') return
@@ -102,6 +144,15 @@ export function DataProvider ({ children }) {
     withWorkbook(async (workbook, input) => {
       const created = await createTransaction(workbook, input)
       setState((current) => ({ ...current, transactions: [created, ...current.transactions] }))
+      return created
+    }),
+    [withWorkbook]
+  )
+
+  const addTransactionsBatch = useCallback(
+    withWorkbook(async (workbook, inputs) => {
+      const created = await createTransactions(workbook, inputs)
+      setState((current) => ({ ...current, transactions: [...created, ...current.transactions] }))
       return created
     }),
     [withWorkbook]
@@ -263,6 +314,10 @@ export function DataProvider ({ children }) {
 
   const useSpreadsheet = useCallback(
     async (spreadsheetId) => {
+      // The cache belongs to the old workbook; keeping it would show the wrong
+      // numbers for however long the first fetch takes.
+      clearCache()
+      setState(EMPTY)
       rememberSpreadsheetId(spreadsheetId || null)
       await load({ spreadsheetId })
     },
@@ -271,6 +326,8 @@ export function DataProvider ({ children }) {
 
   /** Only reachable from the setup screen, where the user asked for a fresh one. */
   const createFreshWorkbook = useCallback(async () => {
+    clearCache()
+    setState(EMPTY)
     rememberSpreadsheetId(null)
     await load({ allowCreate: true })
   }, [load])
@@ -280,6 +337,7 @@ export function DataProvider ({ children }) {
       ...state,
       reload: load,
       addTransaction,
+      addTransactions: addTransactionsBatch,
       editTransaction,
       removeTransactions,
       addCategory,
@@ -298,6 +356,7 @@ export function DataProvider ({ children }) {
       state,
       load,
       addTransaction,
+      addTransactionsBatch,
       editTransaction,
       removeTransactions,
       addCategory,

@@ -24,8 +24,10 @@ const MONTHS = {
 }
 
 /** Lines mentioning these describe a balance, a fee or an id - never the amount moved. */
+// `\bref\b` deliberately: a bare `ref` also matches "Refund", which is a real
+// transaction description.
 const NOT_THE_AMOUNT =
-  /saldo|sisa|limit|tabungan|bunga|poin|cashback tersedia|biaya|admin|ref|no\.?\s*transaksi|id\s*transaksi|rekening|kartu/i
+  /saldo|sisa|limit|tabungan|bunga|poin|cashback tersedia|biaya|admin|\bref\b|referensi|no\.?\s*transaksi|id\s*transaksi|rekening|kartu/i
 const AMOUNT_LABEL = /nominal|jumlah|total|amount|nilai transaksi|dibayar|pembayaran/i
 
 const INCOME_HINTS =
@@ -43,16 +45,103 @@ const MERCHANT_LABEL_ONLY =
 const REFERENCE_LABEL =
   /(?:no\.?\s*ref(?:erensi)?|ref(?:erence)?\s*(?:no|id)?|id\s*transaksi|no\.?\s*transaksi|kode\s*transaksi|trx\s*id)\s*[:\-]?\s*([A-Z0-9][A-Z0-9\-/]{5,})/i
 
+/** A line that is nothing but a field label or a screen heading. */
+const BARE_LABEL =
+  /^(nominal|jumlah|total|saldo(?: akhir)?|tanggal|waktu|jam|status|berhasil|sukses|selesai|catatan|keterangan|biaya(?: admin)?|admin|metode|sumber dana|jenis|detail|ref(?:erensi)?|mutasi(?: rekening)?|riwayat(?: transaksi)?|transaksi|ke|dari|kepada|tujuan|penerima|untuk)\s*:?$/i
+
 /** Labels and headings that are never a merchant name, skipped when guessing. */
 const LABEL_LINE =
   /^(nominal|jumlah|total|saldo|tanggal|waktu|jam|status|berhasil|sukses|selesai|catatan|keterangan|biaya|admin|metode|sumber dana|jenis|detail|transaksi|ref|referensi|no\.?|transfer|pembayaran|pembelian|uang (masuk|keluar)|dana (masuk|keluar)|top ?up|isi ulang|tarik tunai|penarikan|ke|dari|kepada|tujuan|penerima|untuk)\b/i
 
-export function parseReceipt (text, { ocrConfidence = 0 } = {}) {
-  const lines = text
+/**
+ * Entry point. A payment receipt yields one transaction; a mutation list yields
+ * one per row. Which it is comes from the data - a receipt shows a single
+ * transaction amount (its fee and balance lines are recognised and set aside),
+ * a statement shows several - rather than from asking the user to declare it.
+ */
+export function parseTransactions (text, { ocrConfidence = 0 } = {}) {
+  const lines = toLines(text)
+  const entries = statementEntries(lines)
+
+  if (entries.length >= 2) {
+    return entries.map((entry) => ({
+      ...entry,
+      confidence: round2(0.5 * ocrConfidence + 0.5 * (entry.date ? 1 : 0.6)),
+      rawText: text
+    }))
+  }
+
+  const single = parseReceipt(text, { ocrConfidence })
+  return single.amount ? [single] : []
+}
+
+/**
+ * One row per amount that looks like a transaction. Dates in these lists are
+ * usually printed once as a group heading, so the last one seen carries down.
+ */
+function statementEntries (lines) {
+  const entries = []
+  let currentDate = null
+
+  lines.forEach((line, index) => {
+    const dateHere = findDate([line])
+    if (dateHere) currentDate = dateHere
+
+    const previous = index > 0 ? lines[index - 1] : ''
+    // "Biaya" / "Saldo" often head their own line with the figure underneath;
+    // without this a receipt reads as three separate transactions.
+    const excluded =
+      NOT_THE_AMOUNT.test(line) || (NOT_THE_AMOUNT.test(previous) && !/\d/.test(previous))
+    if (excluded) return
+
+    const amounts = amountsIn(line)
+    if (amounts.length !== 1) return
+
+    const amount = amounts[0]
+    const label = describeLine(line) || describeLine(lines[index - 1] || '') || ''
+
+    entries.push({
+      amount,
+      date: dateHere || currentDate,
+      time: findTime([line]),
+      type: signOf(line),
+      merchant: label,
+      reference: ''
+    })
+  })
+
+  return entries
+}
+
+/** Strips the money, the date and the time, leaving whatever named the row. */
+function describeLine (line) {
+  const rest = stripNonAmounts(line)
+    .replace(/[-−–+]?\s*rp\.?\s*\d[\d.,]*/gi, ' ')
+    .replace(/[-−–+]?\s*\b\d[\d.,]{3,}\b/g, ' ')
+    .replace(/[|•·]+/g, ' ')
+    .trim()
+
+  // Only a bare label is rejected: "Transfer ke Budi" starts with a label word
+  // but is exactly the description we want to keep.
+  if (!rest || BARE_LABEL.test(rest)) return ''
+  return cleanName(rest)
+}
+
+function signOf (line) {
+  if (/[-−–]\s*(?:rp\.?\s*)?\d/i.test(line)) return 'expense'
+  if (/\+\s*(?:rp\.?\s*)?\d/i.test(line)) return 'income'
+  return findType(line)
+}
+
+function toLines (text) {
+  return text
     .split(/\r?\n/)
     .map((line) => line.replace(/\s+/g, ' ').trim())
     .filter(Boolean)
+}
 
+export function parseReceipt (text, { ocrConfidence = 0 } = {}) {
+  const lines = toLines(text)
   const amount = findAmount(lines)
   const date = findDate(lines)
   const time = findTime(lines)

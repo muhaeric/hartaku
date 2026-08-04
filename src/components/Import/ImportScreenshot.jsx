@@ -1,35 +1,38 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { todayIso } from '../../lib/dates.js'
-import { parseReceipt } from '../../lib/receiptParser.js'
+import { parseAmount } from '../../lib/format.js'
+import { parseTransactions } from '../../lib/receiptParser.js'
 import { readImageText, releaseOcr } from '../../services/ocr.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
-import { ErrorState } from '../ui/Feedback.jsx'
-import TransactionForm from '../Transaction/TransactionForm.jsx'
+import { EmptyState, ErrorState } from '../ui/Feedback.jsx'
 import { CameraIcon, ImageIcon, ScanIcon } from '../ui/icons.jsx'
+import ImportRow from './ImportRow.jsx'
 
 /**
- * Reads a payment screenshot and hands the result to the normal transaction
- * form. Account and category are picked by hand - guessing them from a merchant
- * name is exactly the kind of confident-but-wrong behaviour that erodes trust in
- * the numbers.
+ * Reads a payment screenshot or a mutation list and turns it into transactions.
+ *
+ * The account is chosen before scanning rather than after: one screenshot always
+ * comes from one account, so asking once beats repeating the choice on every
+ * detected row - and it means nothing here has to guess which bank it is.
  */
 export default function ImportScreenshot () {
   const navigate = useNavigate()
   const toast = useToast()
   const { settings } = useSettings()
-  const { categories, accounts, addTransaction } = useData()
+  const { categories, accounts, addTransactions } = useData()
 
-  const [stage, setStage] = useState('pick')
+  const [account, setAccount] = useState(settings.defaultAccount || '')
+  const [stage, setStage] = useState('setup')
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState(null)
   const [preview, setPreview] = useState(null)
-  const [result, setResult] = useState(null)
-  const [draft, setDraft] = useState(null)
+  const [rawText, setRawText] = useState('')
+  const [items, setItems] = useState([])
   const [busy, setBusy] = useState(false)
 
   const cameraInput = useRef(null)
@@ -37,6 +40,16 @@ export default function ImportScreenshot () {
 
   useEffect(() => () => releaseOcr(), [])
   useEffect(() => () => preview && URL.revokeObjectURL(preview), [preview])
+
+  const selected = items.filter((item) => item.selected)
+  const ready = useMemo(
+    () =>
+      selected.filter((item) => {
+        const amount = parseAmount(item.amount)
+        return Number.isFinite(amount) && amount > 0 && item.category && item.date
+      }),
+    [selected]
+  )
 
   const handleFile = async (event) => {
     const file = event.target.files?.[0]
@@ -57,29 +70,49 @@ export default function ImportScreenshot () {
         onProgress: ({ progress: value }) => setProgress(value || 0)
       })
 
-      const parsed = parseReceipt(text, { ocrConfidence: confidence })
-      setResult(parsed)
-      setDraft({
-        date: parsed.date || todayIso(),
-        account: settings.defaultAccount || '',
-        toAccount: '',
-        amount: parsed.amount ? String(parsed.amount) : '',
-        type: parsed.type,
-        category: settings.defaultCategory || '',
-        description: parsed.merchant || ''
-      })
+      const parsed = parseTransactions(text, { ocrConfidence: confidence })
+      setRawText(text)
+      setItems(
+        parsed.map((entry, index) => ({
+          key: `${index}-${entry.amount}`,
+          selected: true,
+          amount: entry.amount ? String(entry.amount) : '',
+          date: entry.date || todayIso(),
+          type: entry.type,
+          category: settings.defaultCategory || '',
+          description: entry.merchant || '',
+          confidence: entry.confidence
+        }))
+      )
       setStage('review')
     } catch (err) {
       setError(err.message || 'Gagal membaca gambar.')
-      setStage('pick')
+      setStage('setup')
     }
   }
 
-  const handleSubmit = async (values) => {
+  const patchItem = (key, changes) =>
+    setItems((current) =>
+      current.map((item) => (item.key === key ? { ...item, ...changes } : item))
+    )
+
+  const handleSave = async () => {
     setBusy(true)
     try {
-      await addTransaction(values)
-      toast.success('Transaksi ditambahkan!')
+      await addTransactions(
+        ready.map((item) => ({
+          date: item.date,
+          account,
+          toAccount: '',
+          amount: parseAmount(item.amount),
+          type: item.type,
+          category: item.category,
+          description: item.description.trim()
+        }))
+      )
+      toast.success(
+        ready.length > 1 ? `${ready.length} transaksi ditambahkan!` : 'Transaksi ditambahkan!'
+      )
       navigate('/transactions')
     } catch (err) {
       toast.error(err.message)
@@ -87,6 +120,8 @@ export default function ImportScreenshot () {
       setBusy(false)
     }
   }
+
+  const blocked = selected.length - ready.length
 
   return (
     <>
@@ -108,31 +143,66 @@ export default function ImportScreenshot () {
 
       {error && <ErrorState message={error} onRetry={() => setError(null)} />}
 
-      {stage === 'pick' && (
-        <Card className="text-center">
-          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-card bg-brand-50 text-brand-500 dark:bg-brand-500/15">
-            <ScanIcon className="h-6 w-6" />
-          </span>
-          <h2 className="mt-3 text-card-title font-semibold">Import dari screenshot</h2>
-          <p className="mx-auto mt-1 max-w-sm text-caption text-subtitle dark:text-subtitle-dark">
-            Ambil bukti transfer atau notifikasi pembayaran. Nominal, tanggal, dan nama merchant
-            dibaca otomatis — akun dan kategori tetap kamu pilih sendiri.
-          </p>
+      {stage === 'setup' && (
+        <Card>
+          <div className="text-center">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-card bg-brand-50 text-brand-500 dark:bg-brand-500/15">
+              <ScanIcon className="h-6 w-6" />
+            </span>
+            <h2 className="mt-3 text-card-title font-semibold">Import dari screenshot</h2>
+            <p className="mx-auto mt-1 max-w-sm text-caption text-subtitle dark:text-subtitle-dark">
+              Bukti transfer atau daftar mutasi. Kalau ada beberapa transaksi dalam satu gambar,
+              semuanya dibaca dan bisa kamu pilih.
+            </p>
+          </div>
+
+          <div className="mt-4">
+            <label className="label" htmlFor="import-account">
+              Masuk ke akun
+            </label>
+            <select
+              id="import-account"
+              className="field"
+              value={account}
+              onChange={(event) => setAccount(event.target.value)}
+            >
+              <option value="">Pilih akun…</option>
+              {accounts.map((item) => (
+                <option key={item.id} value={item.name}>
+                  {item.icon} {item.name}
+                </option>
+              ))}
+            </select>
+            <p className="hint">
+              Satu screenshot berasal dari satu akun, jadi cukup dipilih sekali di sini.
+            </p>
+          </div>
 
           <div className="mt-4 flex gap-gap">
-            <Button className="flex-1 justify-center" onClick={() => cameraInput.current?.click()}>
+            <Button
+              className="flex-1 justify-center"
+              disabled={!account}
+              onClick={() => cameraInput.current?.click()}
+            >
               <CameraIcon className="h-[18px] w-[18px]" />
               Kamera
             </Button>
             <Button
               variant="secondary"
               className="flex-1 justify-center"
+              disabled={!account}
               onClick={() => galleryInput.current?.click()}
             >
               <ImageIcon className="h-[18px] w-[18px]" />
               Galeri
             </Button>
           </div>
+
+          {!account && (
+            <p className="mt-2 text-center text-caption text-subtitle dark:text-subtitle-dark">
+              Pilih akun dulu untuk melanjutkan.
+            </p>
+          )}
         </Card>
       )}
 
@@ -165,41 +235,92 @@ export default function ImportScreenshot () {
         </Card>
       )}
 
-      {stage === 'review' && draft && (
+      {stage === 'review' && (
         <>
-          <ExtractionSummary result={result} preview={preview} />
-
-          <SectionHeader
-            title="Periksa & simpan"
-            hint="Semua kolom masih bisa diubah"
-            action={
-              <Button variant="ghost" size="sm" onClick={() => setStage('pick')}>
-                Ganti gambar
-              </Button>
-            }
+          <ScanSummary
+            items={items}
+            account={account}
+            preview={preview}
+            rawText={rawText}
+            onRescan={() => setStage('setup')}
           />
 
-          <Card>
-            <TransactionForm
-              draft={draft}
-              setDraft={setDraft}
-              categories={categories}
-              accounts={accounts}
-              busy={busy}
-              submitLabel="Simpan transaksi"
-              onSubmit={handleSubmit}
-              onCancel={() => navigate('/add')}
-            />
-          </Card>
+          {!items.length ? (
+            <Card flush as="div">
+              <EmptyState
+                icon="🔍"
+                title="Tidak ada transaksi terbaca"
+                description="Coba screenshot yang lebih jelas, atau masukkan manual."
+                actionLabel="Input manual"
+                onAction={() => navigate('/add')}
+              />
+            </Card>
+          ) : (
+            <>
+              <SectionHeader
+                title={`${items.length} transaksi terbaca`}
+                hint="Centang yang mau disimpan, perbaiki seperlunya"
+                action={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setItems((current) => {
+                        const turnOn = current.some((item) => !item.selected)
+                        return current.map((item) => ({ ...item, selected: turnOn }))
+                      })
+                    }
+                  >
+                    {items.some((item) => !item.selected) ? 'Pilih semua' : 'Kosongkan'}
+                  </Button>
+                }
+              />
+
+              <ul className="space-y-gap">
+                {items.map((item) => (
+                  <ImportRow
+                    key={item.key}
+                    item={item}
+                    categories={categories}
+                    selected={item.selected}
+                    onToggle={() => patchItem(item.key, { selected: !item.selected })}
+                    onChange={(changes) => patchItem(item.key, changes)}
+                  />
+                ))}
+              </ul>
+
+              {blocked > 0 && (
+                <p className="text-caption text-expense">
+                  {blocked} transaksi belum bisa disimpan — lengkapi kategori dan jumlahnya.
+                </p>
+              )}
+
+              <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] lg:bottom-4">
+                <Button
+                  size="lg"
+                  className="w-full justify-center shadow-lg"
+                  disabled={!ready.length}
+                  loading={busy}
+                  onClick={handleSave}
+                >
+                  Simpan {ready.length} transaksi
+                </Button>
+              </div>
+            </>
+          )}
         </>
       )}
     </>
   )
 }
 
-function ExtractionSummary ({ result, preview }) {
+function ScanSummary ({ items, account, preview, rawText, onRescan }) {
   const [showText, setShowText] = useState(false)
-  const percent = Math.round((result?.confidence ?? 0) * 100)
+
+  const confidence = items.length
+    ? items.reduce((sum, item) => sum + (item.confidence || 0), 0) / items.length
+    : 0
+  const percent = Math.round(confidence * 100)
 
   const tone =
     percent >= 75
@@ -211,12 +332,12 @@ function ExtractionSummary ({ result, preview }) {
   return (
     <Card>
       <div className="flex items-start gap-3">
-        {preview && (
-          <img src={preview} alt="" className="h-16 w-16 rounded-control object-cover" />
-        )}
+        {preview && <img src={preview} alt="" className="h-16 w-16 rounded-control object-cover" />}
 
         <div className="min-w-0 flex-1">
-          <p className="text-caption text-subtitle dark:text-subtitle-dark">Keyakinan hasil baca</p>
+          <p className="text-caption text-subtitle dark:text-subtitle-dark">
+            Keyakinan hasil baca · masuk ke {account}
+          </p>
           <p className={`text-amount font-semibold ${tone}`}>{percent}%</p>
           <p className="mt-0.5 text-caption text-subtitle dark:text-subtitle-dark">
             {percent >= 75
@@ -224,14 +345,11 @@ function ExtractionSummary ({ result, preview }) {
               : 'Kurang yakin — periksa setiap kolom sebelum menyimpan.'}
           </p>
         </div>
-      </div>
 
-      {result?.reference && (
-        <p className="mt-2 truncate border-t border-hairline pt-2 text-caption text-subtitle dark:border-hairline-dark dark:text-subtitle-dark">
-          Ref: <span className="font-mono">{result.reference}</span>
-          {result.time && ` · ${result.time}`}
-        </p>
-      )}
+        <Button variant="ghost" size="sm" onClick={onRescan}>
+          Ganti
+        </Button>
+      </div>
 
       <button
         type="button"
@@ -243,7 +361,7 @@ function ExtractionSummary ({ result, preview }) {
 
       {showText && (
         <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-black/[0.04] p-2.5 text-caption text-subtitle dark:bg-white/[0.06] dark:text-subtitle-dark">
-          {result?.rawText || '(kosong)'}
+          {rawText || '(kosong)'}
         </pre>
       )}
     </Card>

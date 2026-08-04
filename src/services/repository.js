@@ -183,6 +183,26 @@ export async function createTransaction (workbook, input) {
   return transaction
 }
 
+/** Bulk insert in one append - importing 12 rows should not be 12 round trips. */
+export async function createTransactions (workbook, inputs) {
+  if (!inputs.length) return []
+
+  const now = new Date().toISOString()
+  const transactions = inputs.map((input) => ({
+    ...input,
+    id: newId(),
+    createdAt: now,
+    updatedAt: now
+  }))
+
+  await appendValues(
+    workbook.spreadsheetId,
+    `${SHEET.transactions}!A1`,
+    transactions.map(transactionToRow)
+  )
+  return transactions
+}
+
 export async function updateTransaction (workbook, input) {
   const rowNumber = await resolveRowNumber(workbook, TX_RANGE, input.id, input.rowNumber)
   if (!rowNumber) throw new Error('Transaksi tidak ditemukan - mungkin sudah dihapus.')
