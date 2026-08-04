@@ -8,7 +8,8 @@ const DEFAULT_SETTINGS = {
   currency: 'IDR',
   dateFormat: 'DD/MM/YYYY',
   defaultType: 'expense',
-  defaultCategory: ''
+  defaultCategory: '',
+  defaultAccount: ''
 }
 
 const SettingsContext = createContext(null)

@@ -119,9 +119,12 @@ Dibuat otomatis saat login pertama, dengan nama `Hartaku - Expense Tracker`.
 
 **Sheet `Transactions`**
 
-| id | date | merchant | amount | type | category | description | created_at | updated_at |
-|----|------|----------|--------|------|----------|-------------|------------|------------|
-| uuid | `YYYY-MM-DD` | teks | angka | `expense` \| `income` | nama kategori | teks | ISO | ISO |
+| id | date | account | amount | type | category | description | created_at | updated_at | to_account |
+|----|------|---------|--------|------|----------|-------------|------------|------------|------------|
+| uuid | `YYYY-MM-DD` | nama akun | angka | `expense` \| `income` \| `transfer` | nama kategori | teks | ISO | ISO | nama akun tujuan |
+
+`to_account` hanya terisi pada baris `transfer`; `category` justru selalu kosong di baris
+transfer. Satu transfer = satu baris, bukan dua baris double-entry.
 
 **Sheet `Categories`**
 
@@ -129,9 +132,23 @@ Dibuat otomatis saat login pertama, dengan nama `Hartaku - Expense Tracker`.
 |----|------|------|-------|------|-------------|------------|
 | uuid | teks | `expense` \| `income` \| `both` | hex | emoji | teks | angka |
 
+**Sheet `Accounts`**
+
+| id | name | kind | color | icon | opening_balance | description | sort_order |
+|----|------|------|-------|------|-----------------|-------------|------------|
+| uuid | teks | `cash` \| `bank` \| `ewallet` \| `receivable` \| `debt` \| `other` | hex | emoji | angka | teks | angka |
+
+Saldo akun dihitung di aplikasi, tidak disimpan: `opening_balance` + pemasukan − pengeluaran
+− transfer keluar + transfer masuk. Boleh minus (utang, atau akun yang kelebihan pakai).
+
 Baris diidentifikasi lewat kolom `id`. Sebelum setiap update/delete, nomor barisnya
 diverifikasi ulang ke spreadsheet, jadi mengurutkan atau menyisipkan baris manual di Google
 Sheets tidak akan membuat aplikasi menimpa baris yang salah.
+
+Transaksi menyimpan **nama** akun dan kategori, bukan id-nya, supaya spreadsheet tetap enak
+dibaca manusia. Konsekuensinya, mengganti nama akun/kategori lewat aplikasi ikut memperbarui
+seluruh transaksi lama dalam satu batched write. Mengganti namanya langsung di Google Sheets
+tidak — lakukan lewat aplikasi.
 
 Preferensi (tema, mata uang, format tanggal, default form) disimpan di `localStorage`, bukan di
 spreadsheet.
@@ -161,20 +178,38 @@ Mengacu ke spesifikasi MVP:
 | # | Fitur | Status |
 |---|-------|--------|
 | 1 | Autentikasi Google | ✅ |
-| 2 | Form transaksi (validasi, autocomplete merchant) | ✅ |
-| 3 | Dashboard (ringkasan, pemilih bulan, top pengeluaran) | ✅ |
+| 2 | Form transaksi (validasi inline) | ✅ |
+| 3 | Dashboard (saldo akun, ringkasan bulan, top pengeluaran) | ✅ |
 | 4 | Daftar transaksi (filter, cari, edit, hapus, bulk, paginasi) | ✅ |
 | 5 | Manajer kategori | ✅ (kecuali drag & drop urutan) |
 | 6 | Monthly Claude Review | ⬜ belum dikerjakan |
-| 7 | Merchant learning (sheet `Merchants`) | ⬜ belum — autocomplete sementara diturunkan dari riwayat transaksi |
+| 7 | Merchant learning | ❌ dibatalkan — kolom `merchant` diganti `account` |
 | 8 | Settings & preferensi | ✅ (field Claude API key menyusul bersama fitur 6) |
 | 9 | Mobile responsiveness | ✅ |
+| — | Manajer akun + saldo per akun | ✅ tambahan di luar spec |
+| — | Transaksi transfer antar akun | ✅ tambahan di luar spec |
+
+### Migrasi skema (kolom `merchant` → `account`)
+
+Spreadsheet yang dibuat sebelum akun diperkenalkan akan menyesuaikan sendiri saat dibuka:
+sheet `Accounts` ditambahkan dan diisi tiga akun default, header kolom C berubah dari
+`merchant` menjadi `account`, dan kolom `to_account` ditambahkan di ujung kanan.
+
+Yang **tidak** otomatis: isi kolom C. Baris lama masih berisi nama merchant (misal
+`Indomaret`), yang sekarang dibaca sebagai nama akun. Transaksi itu tetap terhitung di
+pemasukan/pengeluaran bulanan, tapi tidak masuk ke saldo akun mana pun karena namanya tidak
+cocok dengan akun yang ada. Perbaiki dengan mengedit transaksinya lewat aplikasi dan memilih
+akun yang benar — nama merchant-nya bisa dipindah ke kolom Keterangan.
 
 ### Catatan penyimpangan dari spec
 
 - **Vite, bukan create-react-app.** CRA sudah tidak dimaintain.
 - **Tanpa `axios`, `react-icons`, `date-fns`.** Diganti `fetch`, SVG inline, dan util tanggal
   sendiri (~40 baris) demi bundle yang lebih kecil.
+- **Field `merchant` diganti dropdown `account`**, plus jenis transaksi ketiga: transfer antar
+  akun. Nama merchant kini ditulis di kolom Keterangan.
+- **Akun dan kategori berbagi satu slot navigasi** (menu "Kelola", dua tab). Enam item tidak
+  muat di tab bar HP tanpa memotong setiap labelnya.
 - **Token disimpan di cookie httpOnly** seperti di security checklist spec, dengan tambahan PKCE
   dan pengecekan `Origin`.
 

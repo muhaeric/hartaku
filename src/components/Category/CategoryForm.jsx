@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { CATEGORY_COLORS, CATEGORY_TYPES, LIMITS } from '../../lib/constants.js'
 import Button from '../ui/Button.jsx'
+import ColorPicker, { HEX_PATTERN } from '../ui/ColorPicker.jsx'
 import Modal from '../ui/Modal.jsx'
-
-const HEX_PATTERN = /^#[0-9a-f]{6}$/i
 
 export function emptyCategory () {
   return {
@@ -108,42 +107,11 @@ export default function CategoryForm ({ open, initial, takenNames, onSubmit, onC
           </select>
         </div>
 
-        <fieldset>
-          <legend className="label">Warna</legend>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORY_COLORS.map((color) => (
-              <button
-                key={color}
-                type="button"
-                aria-label={`Pilih warna ${color}`}
-                aria-pressed={draft.color.toLowerCase() === color}
-                onClick={() => patch({ color })}
-                className={`h-10 w-10 rounded-full ring-offset-2 ring-offset-white transition dark:ring-offset-slate-900 ${
-                  draft.color.toLowerCase() === color ? 'ring-2 ring-slate-900 dark:ring-white' : ''
-                }`}
-                style={{ backgroundColor: color }}
-              />
-            ))}
-          </div>
-
-          <div className="mt-3 flex items-center gap-2">
-            <input
-              type="color"
-              aria-label="Warna khusus"
-              className="h-11 w-14 cursor-pointer rounded-lg border border-slate-300 bg-white p-1 dark:border-slate-700 dark:bg-slate-900"
-              value={HEX_PATTERN.test(draft.color) ? draft.color : '#2a78d6'}
-              onChange={(event) => patch({ color: event.target.value })}
-            />
-            <input
-              type="text"
-              aria-label="Kode hex warna"
-              className={`field flex-1 font-mono ${errors.color ? 'field-error' : ''}`}
-              value={draft.color}
-              onChange={(event) => patch({ color: event.target.value })}
-            />
-          </div>
-          {errors.color && <p className="hint-error">{errors.color}</p>}
-        </fieldset>
+        <ColorPicker
+          value={draft.color}
+          error={errors.color}
+          onChange={(color) => patch({ color })}
+        />
 
         <div>
           <label className="label" htmlFor="category-description">

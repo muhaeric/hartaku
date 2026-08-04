@@ -2,34 +2,34 @@ import { useSettings } from '../../context/SettingsContext.jsx'
 import { formatCurrency } from '../../lib/format.js'
 
 /**
- * One hero figure (net balance) plus two stat tiles. Values stay in text ink;
- * the small coloured dot beside each label carries the income/expense polarity,
- * so the meaning never rests on colour alone.
+ * Month totals. Values stay in text ink; the small coloured dot beside each
+ * label carries the income/expense polarity, so meaning never rests on colour
+ * alone. Transfers are excluded - they move money, they do not create it.
  */
 export default function SummaryCards ({ summary }) {
   const { settings } = useSettings()
   const money = (value) => formatCurrency(value, settings.currency)
-  const negative = summary.net < 0
 
   return (
     <section aria-label="Ringkasan bulan ini" className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <Tile label="Pemasukan" value={money(summary.income)} dotClass="bg-income" />
+        <Tile label="Pengeluaran" value={money(summary.expense)} dotClass="bg-expense" />
+      </div>
+
       <div className="card">
-        <p className="text-sm text-slate-500 dark:text-slate-400">Saldo bersih</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Selisih bulan ini</p>
         <p
-          className={`mt-1 text-3xl font-semibold tracking-tight sm:text-4xl ${
-            negative ? 'text-expense dark:text-red-400' : 'text-slate-900 dark:text-slate-50'
+          className={`mt-1 text-2xl font-semibold tracking-tight ${
+            summary.net < 0 ? 'text-expense dark:text-red-400' : ''
           }`}
         >
           {money(summary.net)}
         </p>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-          {summary.count} transaksi bulan ini
+          {summary.count} transaksi
+          {summary.transfers > 0 && ` · ${summary.transfers} di antaranya transfer`}
         </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Tile label="Pemasukan" value={money(summary.income)} dotClass="bg-income" />
-        <Tile label="Pengeluaran" value={money(summary.expense)} dotClass="bg-expense" />
       </div>
     </section>
   )

@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react'
 import { useSettings } from '../../context/SettingsContext.jsx'
-import { LIMITS } from '../../lib/constants.js'
+import { LIMITS, TRANSACTION_TYPES } from '../../lib/constants.js'
 import { isFutureDate, todayIso } from '../../lib/dates.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
 import Button from '../ui/Button.jsx'
-import MerchantInput from './MerchantInput.jsx'
 
 export function emptyDraft (settings) {
   return {
     date: todayIso(),
-    merchant: '',
+    account: settings.defaultAccount || '',
+    toAccount: '',
     amount: '',
     type: settings.defaultType || 'expense',
     category: settings.defaultCategory || '',
@@ -19,22 +19,26 @@ export function emptyDraft (settings) {
 
 export function validate (draft) {
   const errors = {}
+  const transfer = draft.type === 'transfer'
 
   if (!draft.date) errors.date = 'Tanggal wajib diisi.'
   else if (isFutureDate(draft.date)) errors.date = 'Tanggal tidak boleh di masa depan.'
 
-  const merchant = draft.merchant.trim()
-  if (!merchant) errors.merchant = 'Nama merchant wajib diisi.'
-  else if (merchant.length > LIMITS.merchant) {
-    errors.merchant = `Maksimal ${LIMITS.merchant} karakter.`
+  if (!draft.account) errors.account = transfer ? 'Akun asal wajib dipilih.' : 'Akun wajib dipilih.'
+
+  if (transfer) {
+    if (!draft.toAccount) errors.toAccount = 'Akun tujuan wajib dipilih.'
+    else if (draft.toAccount === draft.account) {
+      errors.toAccount = 'Akun tujuan harus berbeda dari akun asal.'
+    }
+  } else if (!draft.category) {
+    errors.category = 'Kategori wajib dipilih.'
   }
 
   const amount = parseAmount(draft.amount)
   if (!draft.amount && draft.amount !== 0) errors.amount = 'Jumlah wajib diisi.'
   else if (!Number.isFinite(amount)) errors.amount = 'Jumlah harus berupa angka.'
   else if (amount <= 0) errors.amount = 'Jumlah harus lebih besar dari 0.'
-
-  if (!draft.category) errors.category = 'Kategori wajib dipilih.'
 
   if (draft.description.length > LIMITS.description) {
     errors.description = `Maksimal ${LIMITS.description} karakter.`
@@ -47,7 +51,7 @@ export default function TransactionForm ({
   draft,
   setDraft,
   categories,
-  merchants = [],
+  accounts,
   onSubmit,
   onCancel,
   submitLabel = 'Simpan',
@@ -56,6 +60,8 @@ export default function TransactionForm ({
   const { settings } = useSettings()
   const [errors, setErrors] = useState({})
   const [touched, setTouched] = useState(false)
+
+  const transfer = draft.type === 'transfer'
 
   const visibleCategories = useMemo(
     () => categories.filter((category) => category.type === draft.type || category.type === 'both'),
@@ -78,30 +84,31 @@ export default function TransactionForm ({
 
     onSubmit({
       date: draft.date,
-      merchant: draft.merchant.trim(),
+      account: draft.account,
+      // A transfer carries no category, and only a transfer has a destination.
+      toAccount: transfer ? draft.toAccount : '',
       amount: parseAmount(draft.amount),
       type: draft.type,
-      category: draft.category,
+      category: transfer ? '' : draft.category,
       description: draft.description.trim()
     })
   }
 
-  const amountPreview = Number.isFinite(parseAmount(draft.amount)) && draft.amount !== ''
-    ? formatCurrency(parseAmount(draft.amount), settings.currency)
-    : null
+  const parsedAmount = parseAmount(draft.amount)
+  const amountPreview =
+    draft.amount !== '' && Number.isFinite(parsedAmount)
+      ? formatCurrency(parsedAmount, settings.currency)
+      : null
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit} noValidate>
       <fieldset>
         <legend className="label">Jenis</legend>
-        <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
-          {[
-            { value: 'expense', label: 'Pengeluaran' },
-            { value: 'income', label: 'Pemasukan' }
-          ].map((option) => (
+        <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+          {TRANSACTION_TYPES.map((option) => (
             <label
               key={option.value}
-              className={`tap flex cursor-pointer items-center justify-center rounded-lg px-3 text-sm font-semibold transition ${
+              className={`tap flex cursor-pointer items-center justify-center rounded-lg px-2 text-center text-sm font-semibold transition ${
                 draft.type === option.value
                   ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-50'
                   : 'text-slate-500 dark:text-slate-400'
@@ -143,6 +150,36 @@ export default function TransactionForm ({
       </div>
 
       <div>
+        <label className="label" htmlFor="account">
+          {transfer ? 'Dari akun' : 'Akun'}
+        </label>
+        <AccountSelect
+          id="account"
+          value={draft.account}
+          accounts={accounts}
+          invalid={Boolean(errors.account)}
+          onChange={(account) => patch({ account })}
+        />
+        {errors.account && <p className="hint-error">{errors.account}</p>}
+      </div>
+
+      {transfer && (
+        <div>
+          <label className="label" htmlFor="to-account">
+            Ke akun
+          </label>
+          <AccountSelect
+            id="to-account"
+            value={draft.toAccount}
+            accounts={accounts.filter((account) => account.name !== draft.account)}
+            invalid={Boolean(errors.toAccount)}
+            onChange={(toAccount) => patch({ toAccount })}
+          />
+          {errors.toAccount && <p className="hint-error">{errors.toAccount}</p>}
+        </div>
+      )}
+
+      <div>
         <label className="label" htmlFor="date">
           Tanggal
         </label>
@@ -157,54 +194,32 @@ export default function TransactionForm ({
         {errors.date && <p className="hint-error">{errors.date}</p>}
       </div>
 
-      <div>
-        <label className="label" htmlFor="merchant">
-          Merchant
-        </label>
-        <MerchantInput
-          value={draft.merchant}
-          merchants={merchants}
-          invalid={Boolean(errors.merchant)}
-          onChange={(merchant) => patch({ merchant })}
-          onPick={(merchant) =>
-            patch({
-              merchant: merchant.name,
-              // Reuse the category last used for this merchant when it still fits.
-              category:
-                draft.category ||
-                (visibleCategories.some((item) => item.name === merchant.category)
-                  ? merchant.category
-                  : '')
-            })
-          }
-        />
-        {errors.merchant && <p className="hint-error">{errors.merchant}</p>}
-      </div>
-
-      <div>
-        <label className="label" htmlFor="category">
-          Kategori
-        </label>
-        <select
-          id="category"
-          className={`field ${errors.category ? 'field-error' : ''}`}
-          value={draft.category}
-          onChange={(event) => patch({ category: event.target.value })}
-        >
-          <option value="">Pilih kategori…</option>
-          {visibleCategories.map((category) => (
-            <option key={category.id} value={category.name}>
-              {category.icon} {category.name}
-            </option>
-          ))}
-        </select>
-        {errors.category && <p className="hint-error">{errors.category}</p>}
-        {!visibleCategories.length && (
-          <p className="mt-1.5 text-sm text-slate-500">
-            Belum ada kategori untuk jenis ini. Tambahkan dulu di menu Kategori.
-          </p>
-        )}
-      </div>
+      {!transfer && (
+        <div>
+          <label className="label" htmlFor="category">
+            Kategori
+          </label>
+          <select
+            id="category"
+            className={`field ${errors.category ? 'field-error' : ''}`}
+            value={draft.category}
+            onChange={(event) => patch({ category: event.target.value })}
+          >
+            <option value="">Pilih kategori…</option>
+            {visibleCategories.map((category) => (
+              <option key={category.id} value={category.name}>
+                {category.icon} {category.name}
+              </option>
+            ))}
+          </select>
+          {errors.category && <p className="hint-error">{errors.category}</p>}
+          {!visibleCategories.length && (
+            <p className="mt-1.5 text-sm text-slate-500">
+              Belum ada kategori untuk jenis ini. Tambahkan dulu di menu Kelola.
+            </p>
+          )}
+        </div>
+      )}
 
       <div>
         <label className="label" htmlFor="description">
@@ -215,6 +230,7 @@ export default function TransactionForm ({
           rows={2}
           maxLength={LIMITS.description}
           className={`field resize-none ${errors.description ? 'field-error' : ''}`}
+          placeholder={transfer ? 'Contoh: tarik tunai' : 'Contoh: belanja mingguan di Indomaret'}
           value={draft.description}
           onChange={(event) => patch({ description: event.target.value })}
         />
@@ -237,5 +253,30 @@ export default function TransactionForm ({
         </Button>
       </div>
     </form>
+  )
+}
+
+function AccountSelect ({ id, value, accounts, invalid, onChange }) {
+  return (
+    <>
+      <select
+        id={id}
+        className={`field ${invalid ? 'field-error' : ''}`}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        <option value="">Pilih akun…</option>
+        {accounts.map((account) => (
+          <option key={account.id} value={account.name}>
+            {account.icon} {account.name}
+          </option>
+        ))}
+      </select>
+      {!accounts.length && (
+        <p className="mt-1.5 text-sm text-slate-500">
+          Belum ada akun. Tambahkan dulu di menu Kelola.
+        </p>
+      )}
+    </>
   )
 }

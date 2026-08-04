@@ -1,11 +1,24 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react'
+import {
+  createAccount,
   createCategory,
   createTransaction,
+  deleteAccount,
   deleteCategory,
   deleteTransactions,
+  listAccounts,
   listCategories,
   listTransactions,
+  renameReferences,
+  updateAccount,
   updateCategory,
   updateTransaction
 } from '../services/repository.js'
@@ -18,6 +31,7 @@ const EMPTY = {
   workbook: null,
   transactions: [],
   categories: [],
+  accounts: [],
   loading: true,
   error: null
 }
@@ -26,16 +40,22 @@ export function DataProvider ({ children }) {
   const { status } = useAuth()
   const [state, setState] = useState(EMPTY)
 
+  // Mutations need to read the current lists (to spot renames) without turning
+  // every list change into a new callback identity.
+  const latest = useRef(state)
+  latest.current = state
+
   const load = useCallback(async ({ spreadsheetId } = {}) => {
     setState((current) => ({ ...current, loading: true, error: null }))
 
     try {
       const workbook = await ensureWorkbook({ spreadsheetId })
-      const [transactions, categories] = await Promise.all([
+      const [transactions, categories, accounts] = await Promise.all([
         listTransactions(workbook),
-        listCategories(workbook)
+        listCategories(workbook),
+        listAccounts(workbook)
       ])
-      setState({ workbook, transactions, categories, loading: false, error: null })
+      setState({ workbook, transactions, categories, accounts, loading: false, error: null })
     } catch (err) {
       setState((current) => ({ ...current, loading: false, error: err.message }))
     }
@@ -100,10 +120,20 @@ export function DataProvider ({ children }) {
 
   const editCategory = useCallback(
     withWorkbook(async (workbook, input) => {
+      const previous = latest.current.categories.find((item) => item.id === input.id)
       const saved = await updateCategory(workbook, input)
+
+      const renamedFrom = previous && previous.name !== saved.name ? previous.name : null
+      if (renamedFrom) await renameReferences(workbook, 'category', renamedFrom, saved.name)
+
       setState((current) => ({
         ...current,
-        categories: current.categories.map((item) => (item.id === saved.id ? saved : item))
+        categories: current.categories.map((item) => (item.id === saved.id ? saved : item)),
+        transactions: renamedFrom
+          ? current.transactions.map((item) =>
+              item.category === renamedFrom ? { ...item, category: saved.name } : item
+            )
+          : current.transactions
       }))
       return saved
     }),
@@ -121,6 +151,54 @@ export function DataProvider ({ children }) {
     [withWorkbook]
   )
 
+  const addAccount = useCallback(
+    withWorkbook(async (workbook, input) => {
+      const created = await createAccount(workbook, input)
+      setState((current) => ({ ...current, accounts: [...current.accounts, created] }))
+      return created
+    }),
+    [withWorkbook]
+  )
+
+  const editAccount = useCallback(
+    withWorkbook(async (workbook, input) => {
+      const previous = latest.current.accounts.find((item) => item.id === input.id)
+      const saved = await updateAccount(workbook, input)
+
+      const renamedFrom = previous && previous.name !== saved.name ? previous.name : null
+      if (renamedFrom) {
+        // Both legs: an account can be the source or the destination of a transfer.
+        await renameReferences(workbook, 'account', renamedFrom, saved.name)
+        await renameReferences(workbook, 'toAccount', renamedFrom, saved.name)
+      }
+
+      setState((current) => ({
+        ...current,
+        accounts: current.accounts.map((item) => (item.id === saved.id ? saved : item)),
+        transactions: renamedFrom
+          ? current.transactions.map((item) => ({
+              ...item,
+              account: item.account === renamedFrom ? saved.name : item.account,
+              toAccount: item.toAccount === renamedFrom ? saved.name : item.toAccount
+            }))
+          : current.transactions
+      }))
+      return saved
+    }),
+    [withWorkbook]
+  )
+
+  const removeAccount = useCallback(
+    withWorkbook(async (workbook, id) => {
+      await deleteAccount(workbook, id)
+      setState((current) => ({
+        ...current,
+        accounts: current.accounts.filter((item) => item.id !== id)
+      }))
+    }),
+    [withWorkbook]
+  )
+
   const useSpreadsheet = useCallback(
     async (spreadsheetId) => {
       rememberSpreadsheetId(spreadsheetId || null)
@@ -129,25 +207,9 @@ export function DataProvider ({ children }) {
     [load]
   )
 
-  /** Distinct merchant names, most recently used first - powers the autocomplete. */
-  const merchants = useMemo(() => {
-    const seen = new Map()
-    for (const transaction of [...state.transactions].sort((a, b) => b.date.localeCompare(a.date))) {
-      const name = transaction.merchant?.trim()
-      if (!name) continue
-
-      const key = name.toLowerCase()
-      const entry = seen.get(key)
-      if (entry) entry.count += 1
-      else seen.set(key, { name, count: 1, category: transaction.category, lastUsed: transaction.date })
-    }
-    return [...seen.values()]
-  }, [state.transactions])
-
   const value = useMemo(
     () => ({
       ...state,
-      merchants,
       reload: load,
       addTransaction,
       editTransaction,
@@ -155,11 +217,13 @@ export function DataProvider ({ children }) {
       addCategory,
       editCategory,
       removeCategory,
+      addAccount,
+      editAccount,
+      removeAccount,
       useSpreadsheet
     }),
     [
       state,
-      merchants,
       load,
       addTransaction,
       editTransaction,
@@ -167,6 +231,9 @@ export function DataProvider ({ children }) {
       addCategory,
       editCategory,
       removeCategory,
+      addAccount,
+      editAccount,
+      removeAccount,
       useSpreadsheet
     ]
   )

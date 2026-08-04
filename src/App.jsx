@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AuthCallback from './components/Auth/AuthCallback.jsx'
 import LoginScreen from './components/Auth/LoginScreen.jsx'
-import CategoryManager from './components/Category/CategoryManager.jsx'
 import Dashboard from './components/Dashboard/Dashboard.jsx'
 import AppLayout from './components/Layout/AppLayout.jsx'
+import ManagePage from './components/Manage/ManagePage.jsx'
 import SettingsPage from './components/Settings/SettingsPage.jsx'
 import TransactionFormPage from './components/Transaction/TransactionFormPage.jsx'
 import TransactionList from './components/Transaction/TransactionList.jsx'
@@ -49,7 +49,8 @@ function AuthenticatedApp () {
           <Route path="transactions" element={<TransactionList />} />
           <Route path="add" element={<TransactionFormPage />} />
           <Route path="transactions/:id/edit" element={<TransactionFormPage />} />
-          <Route path="categories" element={<CategoryManager />} />
+          <Route path="manage" element={<ManagePage />} />
+          <Route path="categories" element={<Navigate to="/manage?tab=categories" replace />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

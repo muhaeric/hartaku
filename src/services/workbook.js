@@ -1,5 +1,7 @@
 import {
+  ACCOUNT_HEADERS,
   CATEGORY_HEADERS,
+  DEFAULT_ACCOUNTS,
   DEFAULT_CATEGORIES,
   SHEET,
   SPREADSHEET_NAME,
@@ -57,7 +59,7 @@ export async function ensureWorkbook ({ spreadsheetId } = {}) {
   if (!meta) {
     meta = await createSpreadsheet({
       title: SPREADSHEET_NAME,
-      sheets: [SHEET.transactions, SHEET.categories]
+      sheets: [SHEET.transactions, SHEET.categories, SHEET.accounts]
     })
   }
 
@@ -73,6 +75,7 @@ export async function ensureWorkbook ({ spreadsheetId } = {}) {
 
   await ensureHeaders(workbook)
   await seedCategories(workbook)
+  await seedAccounts(workbook)
 
   rememberSpreadsheetId(workbook.spreadsheetId)
   return workbook
@@ -113,7 +116,8 @@ async function ensureSheets (meta) {
 async function ensureHeaders (workbook) {
   const specs = [
     { sheet: SHEET.transactions, headers: TRANSACTION_HEADERS },
-    { sheet: SHEET.categories, headers: CATEGORY_HEADERS }
+    { sheet: SHEET.categories, headers: CATEGORY_HEADERS },
+    { sheet: SHEET.accounts, headers: ACCOUNT_HEADERS }
   ]
 
   for (const { sheet, headers } of specs) {
@@ -124,6 +128,24 @@ async function ensureHeaders (workbook) {
     const lastColumn = String.fromCharCode(64 + headers.length)
     await updateValues(workbook.spreadsheetId, `${sheet}!A1:${lastColumn}1`, [headers])
   }
+}
+
+async function seedAccounts (workbook) {
+  const rows = await getValues(workbook.spreadsheetId, `${SHEET.accounts}!A2:H`)
+  if (rows.some((row) => row[0])) return
+
+  const seeded = DEFAULT_ACCOUNTS.map((account, index) => [
+    newId(),
+    account.name,
+    account.kind,
+    account.color,
+    account.icon,
+    account.openingBalance,
+    '',
+    index
+  ])
+
+  await appendValues(workbook.spreadsheetId, `${SHEET.accounts}!A1`, seeded)
 }
 
 async function seedCategories (workbook) {

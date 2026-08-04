@@ -2,11 +2,12 @@ import { SearchIcon } from '../ui/icons.jsx'
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'Semua' },
-  { value: 'expense', label: 'Pengeluaran' },
-  { value: 'income', label: 'Pemasukan' }
+  { value: 'expense', label: 'Keluar' },
+  { value: 'income', label: 'Masuk' },
+  { value: 'transfer', label: 'Transfer' }
 ]
 
-export default function TransactionFilters ({ filters, categories, onChange }) {
+export default function TransactionFilters ({ filters, categories, accounts, onChange }) {
   const toggleCategory = (name) => {
     const selected = new Set(filters.categories)
     if (selected.has(name)) selected.delete(name)
@@ -16,23 +17,42 @@ export default function TransactionFilters ({ filters, categories, onChange }) {
 
   return (
     <div className="space-y-3">
-      <div className="relative">
-        <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-        <label className="sr-only" htmlFor="search">
-          Cari merchant
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+          <label className="sr-only" htmlFor="search">
+            Cari keterangan atau kategori
+          </label>
+          <input
+            id="search"
+            type="search"
+            className="field pl-11"
+            placeholder="Cari keterangan…"
+            value={filters.search}
+            onChange={(event) => onChange({ search: event.target.value })}
+          />
+        </div>
+
+        <label className="sr-only" htmlFor="account-filter">
+          Filter akun
         </label>
-        <input
-          id="search"
-          type="search"
-          className="field pl-11"
-          placeholder="Cari merchant…"
-          value={filters.search}
-          onChange={(event) => onChange({ search: event.target.value })}
-        />
+        <select
+          id="account-filter"
+          className="field w-36 shrink-0"
+          value={filters.account}
+          onChange={(event) => onChange({ account: event.target.value })}
+        >
+          <option value="">Semua akun</option>
+          {accounts.map((account) => (
+            <option key={account.id} value={account.name}>
+              {account.icon} {account.name}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div
-        className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
+        className="grid grid-cols-4 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
         role="group"
         aria-label="Filter jenis"
       >
@@ -42,7 +62,7 @@ export default function TransactionFilters ({ filters, categories, onChange }) {
             type="button"
             aria-pressed={filters.type === option.value}
             onClick={() => onChange({ type: option.value })}
-            className={`min-h-[40px] rounded-lg px-2 text-sm font-semibold transition ${
+            className={`min-h-[40px] rounded-lg px-1 text-sm font-semibold transition ${
               filters.type === option.value
                 ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-slate-50'
                 : 'text-slate-500 dark:text-slate-400'
@@ -53,7 +73,8 @@ export default function TransactionFilters ({ filters, categories, onChange }) {
         ))}
       </div>
 
-      {categories.length > 0 && (
+      {/* Transfers carry no category, so the chips would filter them all out. */}
+      {categories.length > 0 && filters.type !== 'transfer' && (
         <div className="-mx-4 overflow-x-auto px-4">
           <div className="flex gap-2 pb-1" role="group" aria-label="Filter kategori">
             {categories.map((category) => {

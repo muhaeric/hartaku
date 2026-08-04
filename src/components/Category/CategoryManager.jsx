@@ -4,22 +4,13 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { CATEGORY_TYPES } from '../../lib/constants.js'
 import Button from '../ui/Button.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
-import { EmptyState, ErrorState, LoadingBlock } from '../ui/Feedback.jsx'
+import { EmptyState } from '../ui/Feedback.jsx'
 import { PencilIcon, PlusIcon, TrashIcon } from '../ui/icons.jsx'
 import CategoryForm, { emptyCategory } from './CategoryForm.jsx'
 
 export default function CategoryManager () {
   const toast = useToast()
-  const {
-    categories,
-    transactions,
-    loading,
-    error,
-    reload,
-    addCategory,
-    editCategory,
-    removeCategory
-  } = useData()
+  const { categories, transactions, addCategory, editCategory, removeCategory } = useData()
 
   const [editingCategory, setEditingCategory] = useState(null)
   const [pendingDelete, setPendingDelete] = useState(null)
@@ -64,9 +55,6 @@ export default function CategoryManager () {
       toast.error(err.message)
     }
   }
-
-  if (error) return <ErrorState message={error} onRetry={() => reload()} />
-  if (loading && !categories.length) return <LoadingBlock />
 
   return (
     <div className="space-y-4">
@@ -153,7 +141,7 @@ export default function CategoryManager () {
       <ConfirmDialog
         open={Boolean(pendingDelete?.inUse)}
         title="Kategori masih dipakai"
-        message={`"${pendingDelete?.name}" dipakai oleh ${pendingDelete?.inUse} transaksi. Pindahkan transaksi tersebut ke kategori lain dulu sebelum menghapusnya.`}
+        message={`"${pendingDelete?.name}" dipakai oleh ${pendingDelete?.inUse} transaksi. Pindahkan transaksi tersebut ke kategori lain dulu sebelum menghapusnya. Kalau cuma mau ganti nama, pakai tombol ubah — transaksi lamanya ikut diperbarui otomatis.`}
         confirmLabel="Mengerti"
         cancelLabel="Tutup"
         destructive={false}

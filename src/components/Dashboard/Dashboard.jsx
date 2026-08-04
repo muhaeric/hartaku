@@ -6,13 +6,14 @@ import { categoryBreakdown, filterByMonth, monthsWithData, summarize } from '../
 import Button from '../ui/Button.jsx'
 import { ErrorState, SkeletonCard } from '../ui/Feedback.jsx'
 import { ListIcon, PlusIcon } from '../ui/icons.jsx'
+import AccountBalances from './AccountBalances.jsx'
 import MonthSelector from './MonthSelector.jsx'
 import SummaryCards from './SummaryCards.jsx'
 import TopExpenses from './TopExpenses.jsx'
 
 export default function Dashboard () {
   const navigate = useNavigate()
-  const { transactions, categories, loading, error, reload } = useData()
+  const { transactions, categories, accounts, loading, error, reload } = useData()
   const [month, setMonth] = useState(currentMonthKey)
 
   const monthOptions = useMemo(
@@ -27,21 +28,24 @@ export default function Dashboard () {
 
   if (error) return <ErrorState message={error} onRetry={() => reload()} />
 
+  if (loading && !transactions.length && !accounts.length) {
+    return (
+      <div className="space-y-3">
+        <SkeletonCard />
+        <div className="grid grid-cols-2 gap-3">
+          <SkeletonCard />
+          <SkeletonCard />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-5">
-      <MonthSelector value={month} options={monthOptions} onChange={setMonth} />
+      <AccountBalances accounts={accounts} transactions={transactions} />
 
-      {loading && !transactions.length ? (
-        <div className="space-y-3">
-          <SkeletonCard />
-          <div className="grid grid-cols-2 gap-3">
-            <SkeletonCard />
-            <SkeletonCard />
-          </div>
-        </div>
-      ) : (
-        <SummaryCards summary={summary} />
-      )}
+      <MonthSelector value={month} options={monthOptions} onChange={setMonth} />
+      <SummaryCards summary={summary} />
 
       <section className="card" aria-labelledby="top-expenses-heading">
         <h2 id="top-expenses-heading" className="mb-4 text-base font-semibold">

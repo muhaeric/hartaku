@@ -17,7 +17,7 @@ export default function SettingsPage () {
   const toast = useToast()
   const { user, signOut } = useAuth()
   const { settings, updateSettings, resetSettings } = useSettings()
-  const { categories, workbook, useSpreadsheet } = useData()
+  const { categories, accounts, workbook, useSpreadsheet } = useData()
 
   const [sheetId, setSheetId] = useState('')
   const [switching, setSwitching] = useState(false)
@@ -97,6 +97,22 @@ export default function SettingsPage () {
           >
             <option value="expense">Pengeluaran</option>
             <option value="income">Pemasukan</option>
+          </select>
+        </Field>
+
+        <Field label="Akun default" htmlFor="default-account">
+          <select
+            id="default-account"
+            className="field"
+            value={settings.defaultAccount}
+            onChange={(event) => updateSettings({ defaultAccount: event.target.value })}
+          >
+            <option value="">Tidak ada</option>
+            {accounts.map((account) => (
+              <option key={account.id} value={account.name}>
+                {account.icon} {account.name}
+              </option>
+            ))}
           </select>
         </Field>
 

@@ -1,11 +1,26 @@
-import { CATEGORY_HEADERS, SHEET, TRANSACTION_HEADERS } from '../lib/constants.js'
+import {
+  ACCOUNT_HEADERS,
+  CATEGORY_HEADERS,
+  SHEET,
+  TRANSACTION_HEADERS
+} from '../lib/constants.js'
 import { newId } from '../lib/id.js'
-import { appendValues, deleteRows, getValues, updateValues } from './sheets.js'
+import {
+  appendValues,
+  batchUpdateValues,
+  deleteRows,
+  getValues,
+  updateValues
+} from './sheets.js'
 
-const TX_RANGE = `${SHEET.transactions}!A2:I`
+const TX_RANGE = `${SHEET.transactions}!A2:J`
 const CAT_RANGE = `${SHEET.categories}!A2:G`
-const TX_LAST_COLUMN = 'I'
+const ACC_RANGE = `${SHEET.accounts}!A2:H`
+const TX_LAST_COLUMN = 'J'
 const CAT_LAST_COLUMN = 'G'
+const ACC_LAST_COLUMN = 'H'
+
+const TRANSACTION_TYPE_VALUES = ['expense', 'income', 'transfer']
 
 /* ---------------------------------------------------------------- mapping */
 
@@ -13,13 +28,15 @@ function rowToTransaction (row, index) {
   return {
     id: row[0] || '',
     date: normalizeDate(row[1]),
-    merchant: row[2] ?? '',
+    account: row[2] ?? '',
     amount: Number(row[3]) || 0,
-    type: row[4] === 'income' ? 'income' : 'expense',
+    type: TRANSACTION_TYPE_VALUES.includes(row[4]) ? row[4] : 'expense',
     category: row[5] ?? '',
     description: row[6] ?? '',
     createdAt: row[7] ?? '',
     updatedAt: row[8] ?? '',
+    // Destination account; only set on transfers.
+    toAccount: row[9] ?? '',
     rowNumber: index + 2
   }
 }
@@ -28,13 +45,41 @@ function transactionToRow (transaction) {
   return [
     transaction.id,
     transaction.date,
-    transaction.merchant,
+    transaction.account,
     Number(transaction.amount),
     transaction.type,
-    transaction.category,
+    transaction.category || '',
     transaction.description || '',
     transaction.createdAt,
-    transaction.updatedAt
+    transaction.updatedAt,
+    transaction.toAccount || ''
+  ]
+}
+
+function rowToAccount (row, index) {
+  return {
+    id: row[0] || '',
+    name: row[1] ?? '',
+    kind: row[2] || 'other',
+    color: row[3] || '#6b7280',
+    icon: row[4] || '👛',
+    openingBalance: Number(row[5]) || 0,
+    description: row[6] ?? '',
+    sortOrder: Number(row[7]) || 0,
+    rowNumber: index + 2
+  }
+}
+
+function accountToRow (account) {
+  return [
+    account.id,
+    account.name,
+    account.kind,
+    account.color,
+    account.icon,
+    Number(account.openingBalance) || 0,
+    account.description || '',
+    account.sortOrder ?? 0
   ]
 }
 
@@ -126,6 +171,36 @@ export async function deleteTransactions (workbook, ids) {
   return rowNumbers.length
 }
 
+/**
+ * Transactions reference categories and accounts by name, so renaming one has to
+ * follow through or every existing row silently points at nothing. Sent as a
+ * single batched write covering only the affected cells.
+ */
+const REFERENCE_COLUMNS = {
+  account: { letter: 'C', index: 2 },
+  category: { letter: 'F', index: 5 },
+  toAccount: { letter: 'J', index: 9 }
+}
+
+export async function renameReferences (workbook, field, from, to) {
+  if (!from || from === to) return 0
+
+  const column = REFERENCE_COLUMNS[field]
+  const rows = await getValues(workbook.spreadsheetId, TX_RANGE)
+
+  const data = rows.flatMap((row, index) =>
+    row[column.index] === from
+      ? [{
+          range: `${SHEET.transactions}!${column.letter}${index + 2}`,
+          values: [[to]]
+        }]
+      : []
+  )
+
+  await batchUpdateValues(workbook.spreadsheetId, data)
+  return data.length
+}
+
 /* ------------------------------------------------------------- categories */
 
 export async function listCategories (workbook) {
@@ -163,6 +238,43 @@ export async function deleteCategory (workbook, id) {
   return 1
 }
 
+/* --------------------------------------------------------------- accounts */
+
+export async function listAccounts (workbook) {
+  const rows = await getValues(workbook.spreadsheetId, ACC_RANGE)
+  return rows
+    .map(rowToAccount)
+    .filter((account) => account.id && account.name)
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
+}
+
+export async function createAccount (workbook, input) {
+  const account = { ...input, id: newId() }
+
+  await appendValues(workbook.spreadsheetId, `${SHEET.accounts}!A1`, [accountToRow(account)])
+  return account
+}
+
+export async function updateAccount (workbook, input) {
+  const rowNumber = await resolveRowNumber(workbook, ACC_RANGE, input.id, input.rowNumber)
+  if (!rowNumber) throw new Error('Akun tidak ditemukan - mungkin sudah dihapus.')
+
+  await updateValues(
+    workbook.spreadsheetId,
+    `${SHEET.accounts}!A${rowNumber}:${ACC_LAST_COLUMN}${rowNumber}`,
+    [accountToRow({ ...input, rowNumber })]
+  )
+  return { ...input, rowNumber }
+}
+
+export async function deleteAccount (workbook, id) {
+  const rowNumber = await resolveRowNumber(workbook, ACC_RANGE, id)
+  if (!rowNumber) return 0
+
+  await deleteRows(workbook.spreadsheetId, workbook.sheetIds[SHEET.accounts], [rowNumber])
+  return 1
+}
+
 /**
  * Re-reads the id column right before a write so a stale row number from an
  * earlier fetch can never clobber or delete somebody else's row.
@@ -176,4 +288,4 @@ async function resolveRowNumber (workbook, range, id, hint) {
   return index === -1 ? null : index + 2
 }
 
-export const HEADERS = { TRANSACTION_HEADERS, CATEGORY_HEADERS }
+export const HEADERS = { TRANSACTION_HEADERS, CATEGORY_HEADERS, ACCOUNT_HEADERS }

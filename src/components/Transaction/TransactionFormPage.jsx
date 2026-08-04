@@ -13,7 +13,7 @@ export default function TransactionFormPage () {
   const navigate = useNavigate()
   const toast = useToast()
   const { settings } = useSettings()
-  const { transactions, categories, merchants, loading, addTransaction, editTransaction } = useData()
+  const { transactions, categories, accounts, loading, addTransaction, editTransaction } = useData()
 
   const editing = Boolean(id)
   const existing = editing ? transactions.find((transaction) => transaction.id === id) : null
@@ -26,7 +26,8 @@ export default function TransactionFormPage () {
 
     setDraft({
       date: existing.date,
-      merchant: existing.merchant,
+      account: existing.account,
+      toAccount: existing.toAccount,
       amount: formatAmountInput(existing.amount, settings.currency),
       type: existing.type,
       category: existing.category,
@@ -72,7 +73,7 @@ export default function TransactionFormPage () {
         draft={draft}
         setDraft={setDraft}
         categories={categories}
-        merchants={merchants}
+        accounts={accounts}
         busy={busy}
         submitLabel={editing ? 'Simpan perubahan' : 'Tambah transaksi'}
         onSubmit={handleSubmit}

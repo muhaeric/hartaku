@@ -14,13 +14,34 @@ import { PencilIcon, TrashIcon } from '../ui/icons.jsx'
 import MonthSelector from '../Dashboard/MonthSelector.jsx'
 import TransactionFilters from './TransactionFilters.jsx'
 
-const INITIAL_FILTERS = { type: 'all', categories: [], search: '' }
+const INITIAL_FILTERS = { type: 'all', categories: [], account: '', search: '' }
+
+/** What identifies a row at a glance. */
+function primaryLabel (transaction) {
+  if (transaction.description) return transaction.description
+  if (transaction.type === 'transfer') return 'Transfer'
+  return transaction.category || 'Tanpa kategori'
+}
+
+function accountLabel (transaction) {
+  return transaction.type === 'transfer'
+    ? `${transaction.account} → ${transaction.toAccount}`
+    : transaction.account || '—'
+}
 
 export default function TransactionList () {
   const navigate = useNavigate()
   const toast = useToast()
   const { settings } = useSettings()
-  const { transactions, categories, loading, error, reload, removeTransactions } = useData()
+  const {
+    transactions,
+    categories,
+    accounts,
+    loading,
+    error,
+    reload,
+    removeTransactions
+  } = useData()
 
   const [month, setMonth] = useState(currentMonthKey)
   const [filters, setFilters] = useState(INITIAL_FILTERS)
@@ -40,9 +61,23 @@ export default function TransactionList () {
     return filterByMonth(transactions, month)
       .filter((transaction) => filters.type === 'all' || transaction.type === filters.type)
       .filter(
-        (transaction) => !wantedCategories.size || wantedCategories.has(transaction.category)
+        (transaction) =>
+          !wantedCategories.size ||
+          (transaction.type !== 'transfer' && wantedCategories.has(transaction.category))
       )
-      .filter((transaction) => !search || transaction.merchant.toLowerCase().includes(search))
+      .filter(
+        (transaction) =>
+          !filters.account ||
+          transaction.account === filters.account ||
+          transaction.toAccount === filters.account
+      )
+      .filter(
+        (transaction) =>
+          !search ||
+          [transaction.description, transaction.category, transaction.account, transaction.toAccount]
+            .filter(Boolean)
+            .some((field) => field.toLowerCase().includes(search))
+      )
       .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
   }, [transactions, month, filters])
 
@@ -79,17 +114,14 @@ export default function TransactionList () {
       <TransactionFilters
         filters={filters}
         categories={categories}
+        accounts={accounts}
         onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))}
       />
 
       <div className="flex items-center justify-between gap-3 text-sm text-slate-500 dark:text-slate-400">
         <span>{visible.length} transaksi</span>
         {selected.length > 0 && (
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => setPendingDelete({ ids: selected })}
-          >
+          <Button variant="danger" size="sm" onClick={() => setPendingDelete({ ids: selected })}>
             <TrashIcon className="h-4 w-4" />
             Hapus {selected.length} terpilih
           </Button>
@@ -163,7 +195,7 @@ export default function TransactionList () {
         title="Hapus transaksi?"
         message={
           pendingDelete?.transaction
-            ? `"${pendingDelete.transaction.merchant}" akan dihapus dari spreadsheet. Tindakan ini tidak bisa dibatalkan.`
+            ? `"${primaryLabel(pendingDelete.transaction)}" akan dihapus dari spreadsheet. Tindakan ini tidak bisa dibatalkan.`
             : `${pendingDelete?.ids.length || 0} transaksi akan dihapus dari spreadsheet. Tindakan ini tidak bisa dibatalkan.`
         }
         onConfirm={confirmDelete}
@@ -173,17 +205,22 @@ export default function TransactionList () {
   )
 }
 
+/** Transfers get no sign: the money never left the books. */
 function Amount ({ transaction, currency, className = '' }) {
-  const income = transaction.type === 'income'
+  const { type, amount } = transaction
+  const prefix = type === 'income' ? '+' : type === 'transfer' ? '' : '−'
+
+  const tone =
+    type === 'income'
+      ? 'text-income dark:text-emerald-400'
+      : type === 'transfer'
+        ? 'text-slate-500 dark:text-slate-400'
+        : 'text-slate-900 dark:text-slate-100'
 
   return (
-    <span
-      className={`font-semibold tabular-nums ${className} ${
-        income ? 'text-income dark:text-emerald-400' : 'text-slate-900 dark:text-slate-100'
-      }`}
-    >
-      {income ? '+' : '−'}
-      {formatCurrency(transaction.amount, currency)}
+    <span className={`font-semibold tabular-nums ${tone} ${className}`}>
+      {prefix}
+      {formatCurrency(amount, currency)}
     </span>
   )
 }
@@ -202,7 +239,7 @@ function TransactionCard ({
       className={`card flex gap-3 p-3 ${selected ? 'border-brand-500 ring-1 ring-brand-500' : ''}`}
     >
       <label className="flex items-start pt-1">
-        <span className="sr-only">Pilih transaksi {transaction.merchant}</span>
+        <span className="sr-only">Pilih transaksi {primaryLabel(transaction)}</span>
         <input
           type="checkbox"
           checked={selected}
@@ -213,17 +250,14 @@ function TransactionCard ({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
-          <p className="truncate font-medium">{transaction.merchant}</p>
+          <p className="truncate font-medium">{primaryLabel(transaction)}</p>
           <Amount transaction={transaction} currency={currency} />
         </div>
 
         <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">
-          {formatDate(transaction.date, dateFormat)} · {transaction.category || 'Tanpa kategori'}
+          {formatDate(transaction.date, dateFormat)} · {accountLabel(transaction)}
+          {transaction.type !== 'transfer' && transaction.category && ` · ${transaction.category}`}
         </p>
-
-        {transaction.description && (
-          <p className="mt-1 line-clamp-2 text-sm text-slate-400">{transaction.description}</p>
-        )}
 
         <div className="mt-2 flex gap-1">
           <button
@@ -273,7 +307,8 @@ function TransactionTable ({
               />
             </th>
             <th scope="col" className="px-3 py-3 font-semibold">Tanggal</th>
-            <th scope="col" className="px-3 py-3 font-semibold">Merchant</th>
+            <th scope="col" className="px-3 py-3 font-semibold">Keterangan</th>
+            <th scope="col" className="px-3 py-3 font-semibold">Akun</th>
             <th scope="col" className="px-3 py-3 font-semibold">Kategori</th>
             <th scope="col" className="px-3 py-3 text-right font-semibold">Jumlah</th>
             <th scope="col" className="px-3 py-3 text-right font-semibold">Aksi</th>
@@ -284,15 +319,13 @@ function TransactionTable ({
             <tr
               key={transaction.id}
               className={
-                index % 2
-                  ? 'bg-slate-50 dark:bg-slate-900/40'
-                  : 'bg-white dark:bg-slate-900'
+                index % 2 ? 'bg-slate-50 dark:bg-slate-900/40' : 'bg-white dark:bg-slate-900'
               }
             >
               <td className="px-3 py-3">
                 <input
                   type="checkbox"
-                  aria-label={`Pilih ${transaction.merchant}`}
+                  aria-label={`Pilih ${primaryLabel(transaction)}`}
                   checked={selected.includes(transaction.id)}
                   onChange={() => onToggle(transaction.id)}
                   className="h-4 w-4 rounded border-slate-300 text-brand-600"
@@ -301,16 +334,12 @@ function TransactionTable ({
               <td className="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600 dark:text-slate-300">
                 {formatDate(transaction.date, dateFormat)}
               </td>
-              <td className="px-3 py-3">
-                <span className="font-medium">{transaction.merchant}</span>
-                {transaction.description && (
-                  <span className="block truncate text-xs text-slate-400">
-                    {transaction.description}
-                  </span>
-                )}
+              <td className="px-3 py-3 font-medium">{primaryLabel(transaction)}</td>
+              <td className="whitespace-nowrap px-3 py-3 text-slate-600 dark:text-slate-300">
+                {accountLabel(transaction)}
               </td>
               <td className="px-3 py-3 text-slate-600 dark:text-slate-300">
-                {transaction.category || '—'}
+                {transaction.type === 'transfer' ? '—' : transaction.category || '—'}
               </td>
               <td className="px-3 py-3 text-right">
                 <Amount transaction={transaction} currency={currency} />
@@ -320,7 +349,7 @@ function TransactionTable ({
                   <button
                     type="button"
                     onClick={() => onEdit(transaction)}
-                    aria-label={`Ubah ${transaction.merchant}`}
+                    aria-label={`Ubah ${primaryLabel(transaction)}`}
                     className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
                   >
                     <PencilIcon className="h-4 w-4" />
@@ -328,7 +357,7 @@ function TransactionTable ({
                   <button
                     type="button"
                     onClick={() => onDelete(transaction)}
-                    aria-label={`Hapus ${transaction.merchant}`}
+                    aria-label={`Hapus ${primaryLabel(transaction)}`}
                     className="rounded-lg p-2 text-expense hover:bg-expense/10"
                   >
                     <TrashIcon className="h-4 w-4" />

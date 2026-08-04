@@ -2,19 +2,26 @@ export const SPREADSHEET_NAME = 'Hartaku - Expense Tracker'
 
 export const SHEET = {
   transactions: 'Transactions',
-  categories: 'Categories'
+  categories: 'Categories',
+  accounts: 'Accounts'
 }
 
+/**
+ * `to_account` is appended rather than slotted next to `account` on purpose:
+ * columns are positional, so inserting one in the middle would shift every
+ * existing row's data one cell to the right.
+ */
 export const TRANSACTION_HEADERS = [
   'id',
   'date',
-  'merchant',
+  'account',
   'amount',
   'type',
   'category',
   'description',
   'created_at',
-  'updated_at'
+  'updated_at',
+  'to_account'
 ]
 
 export const CATEGORY_HEADERS = [
@@ -27,10 +34,28 @@ export const CATEGORY_HEADERS = [
   'sort_order'
 ]
 
+export const ACCOUNT_HEADERS = [
+  'id',
+  'name',
+  'kind',
+  'color',
+  'icon',
+  'opening_balance',
+  'description',
+  'sort_order'
+]
+
 export const TYPE = {
   expense: 'expense',
-  income: 'income'
+  income: 'income',
+  transfer: 'transfer'
 }
+
+export const TRANSACTION_TYPES = [
+  { value: 'expense', label: 'Pengeluaran' },
+  { value: 'income', label: 'Pemasukan' },
+  { value: 'transfer', label: 'Transfer' }
+]
 
 /** Categories can be limited to one flow, or usable by both. */
 export const CATEGORY_TYPES = [
@@ -66,6 +91,22 @@ export const DEFAULT_CATEGORIES = [
   { name: 'Other', type: 'both', color: '#4a3aa7', icon: '📝' }
 ]
 
+/** Where the money physically sits. `receivable`/`debt` can go negative. */
+export const ACCOUNT_KINDS = [
+  { value: 'cash', label: 'Tunai', icon: '💵' },
+  { value: 'bank', label: 'Bank', icon: '🏦' },
+  { value: 'ewallet', label: 'E-wallet', icon: '📱' },
+  { value: 'receivable', label: 'Piutang', icon: '🤝' },
+  { value: 'debt', label: 'Utang', icon: '📉' },
+  { value: 'other', label: 'Lainnya', icon: '👛' }
+]
+
+export const DEFAULT_ACCOUNTS = [
+  { name: 'Cash', kind: 'cash', color: '#008300', icon: '💵', openingBalance: 0 },
+  { name: 'Bank', kind: 'bank', color: '#2a78d6', icon: '🏦', openingBalance: 0 },
+  { name: 'Piutang', kind: 'receivable', color: '#eda100', icon: '🤝', openingBalance: 0 }
+]
+
 export const CURRENCIES = [
   { code: 'IDR', label: 'Rupiah (Rp)', locale: 'id-ID', fractionDigits: 0 },
   { code: 'USD', label: 'US Dollar ($)', locale: 'en-US', fractionDigits: 2 },
@@ -84,7 +125,7 @@ export const PAGE_SIZE = 20
 export const PAGINATION_THRESHOLD = 50
 
 export const LIMITS = {
-  merchant: 50,
   description: 200,
-  categoryName: 30
+  categoryName: 30,
+  accountName: 30
 }

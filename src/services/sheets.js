@@ -70,6 +70,16 @@ export async function updateValues (spreadsheetId, range, rows) {
   )
 }
 
+/** Writes several disjoint ranges in one request. */
+export async function batchUpdateValues (spreadsheetId, data) {
+  if (!data.length) return null
+
+  return googleFetch(`${SHEETS_API}/${spreadsheetId}/values:batchUpdate`, {
+    method: 'POST',
+    body: JSON.stringify({ valueInputOption: 'RAW', data })
+  })
+}
+
 export async function batchUpdate (spreadsheetId, requests) {
   if (!requests.length) return null
 
