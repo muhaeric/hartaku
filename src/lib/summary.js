@@ -29,7 +29,7 @@ export function summarize (transactions) {
  * Running balance per account across all time: opening balance, plus what came
  * in, minus what went out, with transfers moving between the two sides.
  */
-export function accountBalances (accounts, transactions) {
+export function accountBalances (accounts, transactions, goldLots = []) {
   const balances = new Map(
     accounts.map((account) => [account.name, { account, balance: account.openingBalance || 0 }])
   )
@@ -51,11 +51,62 @@ export function accountBalances (accounts, transactions) {
     }
   }
 
+  // Buying gold moves money out of the funding account and into the metal.
+  for (const lot of goldLots) {
+    const from = balances.get(lot.fromAccount)
+    if (from) from.balance -= lot.cost
+  }
+
   return [...balances.values()]
 }
 
 export function totalBalance (balances) {
   return balances.reduce((sum, entry) => sum + entry.balance, 0)
+}
+
+/**
+ * Gold position. `value` uses the dealer's buyback price - what the metal would
+ * actually fetch today - so the profit shown is the profit you could realise,
+ * not the paper figure the higher retail price would suggest.
+ */
+export function goldSummary (goldLots, buybackPerGram) {
+  let grams = 0
+  let invested = 0
+
+  for (const lot of goldLots) {
+    grams += lot.grams
+    invested += lot.cost
+  }
+
+  const priced = Number(buybackPerGram) > 0
+  const value = priced ? grams * buybackPerGram : null
+  const profit = priced ? value - invested : null
+
+  return {
+    grams,
+    invested,
+    value,
+    profit,
+    profitPct: priced && invested > 0 ? (profit / invested) * 100 : null,
+    averageCost: grams > 0 ? invested / grams : 0,
+    lots: goldLots.length
+  }
+}
+
+/**
+ * Split by sign rather than by account kind: an overdrawn wallet is a liability
+ * whatever it was labelled, and a debt account that has been paid off is not.
+ */
+export function netWorth (balances, goldValue = 0) {
+  let assets = goldValue || 0
+  let liabilities = 0
+
+  for (const { balance } of balances) {
+    if (balance >= 0) assets += balance
+    else liabilities += Math.abs(balance)
+  }
+
+  return { assets, liabilities, total: assets - liabilities }
 }
 
 /** Totals per category for one flow, largest first. */

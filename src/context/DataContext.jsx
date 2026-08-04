@@ -10,16 +10,21 @@ import {
 import {
   createAccount,
   createCategory,
+  createGoldLot,
   createTransaction,
   deleteAccount,
   deleteCategory,
+  deleteGoldLot,
   deleteTransactions,
   listAccounts,
   listCategories,
+  listGoldLots,
   listTransactions,
+  renameGoldAccountReferences,
   renameReferences,
   updateAccount,
   updateCategory,
+  updateGoldLot,
   updateTransaction
 } from '../services/repository.js'
 import { ensureWorkbook, rememberSpreadsheetId } from '../services/workbook.js'
@@ -32,6 +37,7 @@ const EMPTY = {
   transactions: [],
   categories: [],
   accounts: [],
+  goldLots: [],
   loading: true,
   error: null
 }
@@ -50,12 +56,21 @@ export function DataProvider ({ children }) {
 
     try {
       const workbook = await ensureWorkbook({ spreadsheetId })
-      const [transactions, categories, accounts] = await Promise.all([
+      const [transactions, categories, accounts, goldLots] = await Promise.all([
         listTransactions(workbook),
         listCategories(workbook),
-        listAccounts(workbook)
+        listAccounts(workbook),
+        listGoldLots(workbook)
       ])
-      setState({ workbook, transactions, categories, accounts, loading: false, error: null })
+      setState({
+        workbook,
+        transactions,
+        categories,
+        accounts,
+        goldLots,
+        loading: false,
+        error: null
+      })
     } catch (err) {
       setState((current) => ({ ...current, loading: false, error: err.message }))
     }
@@ -167,9 +182,11 @@ export function DataProvider ({ children }) {
 
       const renamedFrom = previous && previous.name !== saved.name ? previous.name : null
       if (renamedFrom) {
-        // Both legs: an account can be the source or the destination of a transfer.
+        // Both legs: an account can be the source or the destination of a
+        // transfer, and it can also be what funded a gold purchase.
         await renameReferences(workbook, 'account', renamedFrom, saved.name)
         await renameReferences(workbook, 'toAccount', renamedFrom, saved.name)
+        await renameGoldAccountReferences(workbook, renamedFrom, saved.name)
       }
 
       setState((current) => ({
@@ -181,7 +198,12 @@ export function DataProvider ({ children }) {
               account: item.account === renamedFrom ? saved.name : item.account,
               toAccount: item.toAccount === renamedFrom ? saved.name : item.toAccount
             }))
-          : current.transactions
+          : current.transactions,
+        goldLots: renamedFrom
+          ? current.goldLots.map((item) =>
+              item.fromAccount === renamedFrom ? { ...item, fromAccount: saved.name } : item
+            )
+          : current.goldLots
       }))
       return saved
     }),
@@ -194,6 +216,38 @@ export function DataProvider ({ children }) {
       setState((current) => ({
         ...current,
         accounts: current.accounts.filter((item) => item.id !== id)
+      }))
+    }),
+    [withWorkbook]
+  )
+
+  const addGoldLot = useCallback(
+    withWorkbook(async (workbook, input) => {
+      const created = await createGoldLot(workbook, input)
+      setState((current) => ({ ...current, goldLots: [created, ...current.goldLots] }))
+      return created
+    }),
+    [withWorkbook]
+  )
+
+  const editGoldLot = useCallback(
+    withWorkbook(async (workbook, input) => {
+      const saved = await updateGoldLot(workbook, input)
+      setState((current) => ({
+        ...current,
+        goldLots: current.goldLots.map((item) => (item.id === saved.id ? saved : item))
+      }))
+      return saved
+    }),
+    [withWorkbook]
+  )
+
+  const removeGoldLot = useCallback(
+    withWorkbook(async (workbook, id) => {
+      await deleteGoldLot(workbook, id)
+      setState((current) => ({
+        ...current,
+        goldLots: current.goldLots.filter((item) => item.id !== id)
       }))
     }),
     [withWorkbook]
@@ -220,6 +274,9 @@ export function DataProvider ({ children }) {
       addAccount,
       editAccount,
       removeAccount,
+      addGoldLot,
+      editGoldLot,
+      removeGoldLot,
       useSpreadsheet
     }),
     [
@@ -234,6 +291,9 @@ export function DataProvider ({ children }) {
       addAccount,
       editAccount,
       removeAccount,
+      addGoldLot,
+      editGoldLot,
+      removeGoldLot,
       useSpreadsheet
     ]
   )

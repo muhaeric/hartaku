@@ -2,12 +2,20 @@ import { useSearchParams } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import AccountManager from '../Account/AccountManager.jsx'
 import CategoryManager from '../Category/CategoryManager.jsx'
+import GoldManager from '../Gold/GoldManager.jsx'
 import { ErrorState, LoadingBlock } from '../ui/Feedback.jsx'
 
 const TABS = [
   { id: 'accounts', label: 'Akun' },
+  { id: 'gold', label: 'Emas' },
   { id: 'categories', label: 'Kategori' }
 ]
+
+const PANELS = {
+  accounts: AccountManager,
+  gold: GoldManager,
+  categories: CategoryManager
+}
 
 /**
  * Accounts and categories share one nav slot: six items do not fit a phone tab
@@ -21,13 +29,15 @@ export default function ManagePage () {
     ? params.get('tab')
     : TABS[0].id
 
+  const Panel = PANELS[active]
+
   if (error) return <ErrorState message={error} onRetry={() => reload()} />
   if (loading && !accounts.length && !categories.length) return <LoadingBlock />
 
   return (
     <div className="space-y-4">
       <div
-        className="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
+        className="grid grid-cols-3 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
         role="tablist"
       >
         {TABS.map((tab) => (
@@ -48,7 +58,7 @@ export default function ManagePage () {
         ))}
       </div>
 
-      {active === 'accounts' ? <AccountManager /> : <CategoryManager />}
+      <Panel />
     </div>
   )
 }

@@ -1,4 +1,21 @@
-import { CURRENCIES } from './constants.js'
+import { CURRENCIES, GRAM_DECIMALS } from './constants.js'
+
+export function formatGrams (grams) {
+  return `${new Intl.NumberFormat('id-ID', {
+    maximumFractionDigits: GRAM_DECIMALS
+  }).format(Number(grams) || 0)} gr`
+}
+
+export function formatPercent (value) {
+  if (value === null || !Number.isFinite(value)) return '—'
+
+  const formatted = new Intl.NumberFormat('id-ID', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  }).format(Math.abs(value))
+
+  return `${value >= 0 ? '+' : '−'}${formatted}%`
+}
 
 function currencyConfig (code) {
   return CURRENCIES.find((item) => item.code === code) || CURRENCIES[0]

@@ -14,26 +14,31 @@ import AccountForm, { emptyAccount } from './AccountForm.jsx'
 export default function AccountManager () {
   const toast = useToast()
   const { settings } = useSettings()
-  const { accounts, transactions, addAccount, editAccount, removeAccount } = useData()
+  const { accounts, transactions, goldLots, addAccount, editAccount, removeAccount } = useData()
 
   const [editing, setEditing] = useState(null)
   const [pendingDelete, setPendingDelete] = useState(null)
 
   const balances = useMemo(
-    () => accountBalances(accounts, transactions),
-    [accounts, transactions]
+    () => accountBalances(accounts, transactions, goldLots),
+    [accounts, transactions, goldLots]
   )
 
-  /** An account is in use if it is either side of any transaction. */
+  /** In use = either side of a transaction, or the funding side of a gold purchase. */
   const usage = useMemo(() => {
     const counts = new Map()
-    for (const transaction of transactions) {
-      for (const name of [transaction.account, transaction.toAccount]) {
-        if (name) counts.set(name, (counts.get(name) || 0) + 1)
-      }
+    const bump = (name) => {
+      if (name) counts.set(name, (counts.get(name) || 0) + 1)
     }
+
+    for (const transaction of transactions) {
+      bump(transaction.account)
+      bump(transaction.toAccount)
+    }
+    for (const lot of goldLots) bump(lot.fromAccount)
+
     return counts
-  }, [transactions])
+  }, [transactions, goldLots])
 
   const takenNames = useMemo(
     () =>

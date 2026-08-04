@@ -138,8 +138,22 @@ transfer. Satu transfer = satu baris, bukan dua baris double-entry.
 |----|------|------|-------|------|-----------------|-------------|------------|
 | uuid | teks | `cash` \| `bank` \| `ewallet` \| `receivable` \| `debt` \| `other` | hex | emoji | angka | teks | angka |
 
+**Sheet `Gold`** — satu baris per pembelian emas
+
+| id | date | grams | cost | price_per_gram | from_account | description | created_at | updated_at |
+|----|------|-------|------|----------------|--------------|-------------|------------|------------|
+| uuid | `YYYY-MM-DD` | angka | angka | angka (turunan) | nama akun (opsional) | teks | ISO | ISO |
+
+`price_per_gram` disimpan supaya spreadsheet enak dibaca, tapi aplikasi selalu menghitung
+ulang dari `cost / grams` — sheet ini bisa diedit tangan.
+
 Saldo akun dihitung di aplikasi, tidak disimpan: `opening_balance` + pemasukan − pengeluaran
-− transfer keluar + transfer masuk. Boleh minus (utang, atau akun yang kelebihan pakai).
+− transfer keluar + transfer masuk − pembelian emas yang didanai akun itu. Boleh minus
+(utang, atau akun yang kelebihan pakai).
+
+**Aset vs kewajiban** dipisah berdasarkan tanda saldo, bukan jenis akun: saldo ≥ 0 masuk aset,
+saldo negatif masuk kewajiban. Dompet yang kebobolan tetap terhitung kewajiban apa pun
+labelnya, dan akun utang yang sudah lunas tidak. Total = aset − kewajiban.
 
 Baris diidentifikasi lewat kolom `id`. Sebelum setiap update/delete, nomor barisnya
 diverifikasi ulang ke spreadsheet, jadi mengurutkan atau menyisipkan baris manual di Google
@@ -153,16 +167,46 @@ tidak — lakukan lewat aplikasi.
 Preferensi (tema, mata uang, format tanggal, default form) disimpan di `localStorage`, bukan di
 spreadsheet.
 
+## Investasi emas & harga pasar
+
+Harga emas diambil dari [logam-mulia-api](https://github.com/iamutaki/logam-mulia-api)
+(gratis, sumber `anekalogam`) lewat endpoint sendiri `GET /api/gold-price`. Diproksi, tidak
+dipanggil langsung dari browser, karena dua alasan: API pihak ketiga tidak mengizinkan CORS,
+dan lewat proxy responsnya bisa di-cache sekali untuk semua pengunjung (30 menit; harga emas
+cuma berubah sekali sehari).
+
+**Penilaian memakai harga buyback, bukan harga jual dealer.** Buyback adalah uang yang
+benar-benar kamu terima kalau emasnya dijual hari ini; harga jual dealer sekitar 3% lebih
+tinggi dan akan melebih-lebihkan profit. Keduanya tetap ditampilkan.
+
+Dua kehati-hatian terhadap kualitas data feed-nya:
+
+- Harga buyback per gram diambil dari **median** `buybackPrice / weight` seluruh baris ≥1gr,
+  bukan dari satu baris, supaya satu baris rusak tidak menggeser hasilnya. Batangan di bawah
+  1 gram dibuang — spread-nya jauh lebih lebar.
+- Feed-nya memuat baris batangan besar yang `weight`-nya salah tulis jadi `1` (batangan 100
+  gram dikutip per gram). Untuk harga beli 1 gram dipilih baris 1gr dengan `sellPrice`
+  **tertinggi**, karena eceran 1 gram selalu paling mahal per gramnya.
+
+Kalau feed-nya mati, kutipan terakhir yang berhasil dipakai dari `localStorage` dan diberi
+label "harga tersimpan, gagal memperbarui" — angka basi tidak pernah disajikan seolah harga
+hari ini.
+
+Yang **belum** ada: pencatatan penjualan emas. Saat ini hanya pembelian, jadi total gram tidak
+bisa berkurang.
+
 ## Struktur kode
 
 ```
 api/
   _lib/{session,google,http}.js   enkripsi cookie, OAuth helper, guard request
   auth/{start,callback,session,logout}.js
+  gold-price.js                   proxy + normalisasi feed harga emas
 src/
-  components/{Auth,Dashboard,Transaction,Category,Settings,Layout,ui}/
+  components/{Auth,Dashboard,Transaction,Account,Gold,Category,Manage,Settings,Layout,ui}/
   context/{Auth,Data,Settings,Toast}Context.jsx
-  services/  appApi · googleApi · sheets · workbook · repository
+  hooks/     useGoldPrice · useLocalStorage
+  services/  appApi · googleApi · sheets · workbook · repository · goldPrice
   lib/       constants · dates · format · summary · id
 ```
 
@@ -188,6 +232,8 @@ Mengacu ke spesifikasi MVP:
 | 9 | Mobile responsiveness | ✅ |
 | — | Manajer akun + saldo per akun | ✅ tambahan di luar spec |
 | — | Transaksi transfer antar akun | ✅ tambahan di luar spec |
+| — | Aset / kewajiban / total kekayaan | ✅ tambahan di luar spec |
+| — | Investasi emas + harga pasar + untung/rugi | ✅ tambahan di luar spec (jual emas belum) |
 
 ### Migrasi skema (kolom `merchant` → `account`)
 

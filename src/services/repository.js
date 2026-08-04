@@ -1,6 +1,7 @@
 import {
   ACCOUNT_HEADERS,
   CATEGORY_HEADERS,
+  GOLD_HEADERS,
   SHEET,
   TRANSACTION_HEADERS
 } from '../lib/constants.js'
@@ -16,9 +17,11 @@ import {
 const TX_RANGE = `${SHEET.transactions}!A2:J`
 const CAT_RANGE = `${SHEET.categories}!A2:G`
 const ACC_RANGE = `${SHEET.accounts}!A2:H`
+const GOLD_RANGE = `${SHEET.gold}!A2:I`
 const TX_LAST_COLUMN = 'J'
 const CAT_LAST_COLUMN = 'G'
 const ACC_LAST_COLUMN = 'H'
+const GOLD_LAST_COLUMN = 'I'
 
 const TRANSACTION_TYPE_VALUES = ['expense', 'income', 'transfer']
 
@@ -105,6 +108,42 @@ function categoryToRow (category) {
     category.icon,
     category.description || '',
     category.sortOrder ?? 0
+  ]
+}
+
+function rowToGoldLot (row, index) {
+  const grams = Number(row[2]) || 0
+  const cost = Number(row[3]) || 0
+
+  return {
+    id: row[0] || '',
+    date: normalizeDate(row[1]),
+    grams,
+    cost,
+    // Recomputed rather than trusted: the sheet is hand-editable.
+    pricePerGram: grams ? cost / grams : 0,
+    fromAccount: row[5] ?? '',
+    description: row[6] ?? '',
+    createdAt: row[7] ?? '',
+    updatedAt: row[8] ?? '',
+    rowNumber: index + 2
+  }
+}
+
+function goldLotToRow (lot) {
+  const grams = Number(lot.grams) || 0
+  const cost = Number(lot.cost) || 0
+
+  return [
+    lot.id,
+    lot.date,
+    grams,
+    cost,
+    grams ? Math.round(cost / grams) : 0,
+    lot.fromAccount || '',
+    lot.description || '',
+    lot.createdAt,
+    lot.updatedAt
   ]
 }
 
@@ -275,6 +314,55 @@ export async function deleteAccount (workbook, id) {
   return 1
 }
 
+/* ------------------------------------------------------------------- gold */
+
+export async function listGoldLots (workbook) {
+  const rows = await getValues(workbook.spreadsheetId, GOLD_RANGE)
+  return rows.map(rowToGoldLot).filter((lot) => lot.id && lot.grams > 0)
+}
+
+export async function createGoldLot (workbook, input) {
+  const now = new Date().toISOString()
+  const lot = { ...input, id: newId(), createdAt: now, updatedAt: now }
+
+  await appendValues(workbook.spreadsheetId, `${SHEET.gold}!A1`, [goldLotToRow(lot)])
+  return { ...lot, pricePerGram: lot.grams ? lot.cost / lot.grams : 0 }
+}
+
+export async function updateGoldLot (workbook, input) {
+  const rowNumber = await resolveRowNumber(workbook, GOLD_RANGE, input.id, input.rowNumber)
+  if (!rowNumber) throw new Error('Catatan emas tidak ditemukan - mungkin sudah dihapus.')
+
+  const lot = { ...input, rowNumber, updatedAt: new Date().toISOString() }
+  await updateValues(
+    workbook.spreadsheetId,
+    `${SHEET.gold}!A${rowNumber}:${GOLD_LAST_COLUMN}${rowNumber}`,
+    [goldLotToRow(lot)]
+  )
+  return { ...lot, pricePerGram: lot.grams ? lot.cost / lot.grams : 0 }
+}
+
+export async function deleteGoldLot (workbook, id) {
+  const rowNumber = await resolveRowNumber(workbook, GOLD_RANGE, id)
+  if (!rowNumber) return 0
+
+  await deleteRows(workbook.spreadsheetId, workbook.sheetIds[SHEET.gold], [rowNumber])
+  return 1
+}
+
+/** Gold lots point at their funding account by name too, so renames must reach them. */
+export async function renameGoldAccountReferences (workbook, from, to) {
+  if (!from || from === to) return 0
+
+  const rows = await getValues(workbook.spreadsheetId, GOLD_RANGE)
+  const data = rows.flatMap((row, index) =>
+    row[5] === from ? [{ range: `${SHEET.gold}!F${index + 2}`, values: [[to]] }] : []
+  )
+
+  await batchUpdateValues(workbook.spreadsheetId, data)
+  return data.length
+}
+
 /**
  * Re-reads the id column right before a write so a stale row number from an
  * earlier fetch can never clobber or delete somebody else's row.
@@ -288,4 +376,9 @@ async function resolveRowNumber (workbook, range, id, hint) {
   return index === -1 ? null : index + 2
 }
 
-export const HEADERS = { TRANSACTION_HEADERS, CATEGORY_HEADERS, ACCOUNT_HEADERS }
+export const HEADERS = {
+  TRANSACTION_HEADERS,
+  CATEGORY_HEADERS,
+  ACCOUNT_HEADERS,
+  GOLD_HEADERS
+}

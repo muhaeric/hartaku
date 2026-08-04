@@ -3,7 +3,8 @@ export const SPREADSHEET_NAME = 'Hartaku - Expense Tracker'
 export const SHEET = {
   transactions: 'Transactions',
   categories: 'Categories',
-  accounts: 'Accounts'
+  accounts: 'Accounts',
+  gold: 'Gold'
 }
 
 /**
@@ -32,6 +33,19 @@ export const CATEGORY_HEADERS = [
   'icon',
   'description',
   'sort_order'
+]
+
+/** One row per gold purchase. `price_per_gram` is derived, stored for readability. */
+export const GOLD_HEADERS = [
+  'id',
+  'date',
+  'grams',
+  'cost',
+  'price_per_gram',
+  'from_account',
+  'description',
+  'created_at',
+  'updated_at'
 ]
 
 export const ACCOUNT_HEADERS = [
@@ -129,3 +143,6 @@ export const LIMITS = {
   categoryName: 30,
   accountName: 30
 }
+
+/** Gold is quoted per gram; three decimals covers the smallest bars sold. */
+export const GRAM_DECIMALS = 3

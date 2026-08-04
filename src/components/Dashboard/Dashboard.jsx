@@ -13,7 +13,7 @@ import TopExpenses from './TopExpenses.jsx'
 
 export default function Dashboard () {
   const navigate = useNavigate()
-  const { transactions, categories, accounts, loading, error, reload } = useData()
+  const { transactions, categories, accounts, goldLots, loading, error, reload } = useData()
   const [month, setMonth] = useState(currentMonthKey)
 
   const monthOptions = useMemo(
@@ -42,7 +42,7 @@ export default function Dashboard () {
 
   return (
     <div className="space-y-5">
-      <AccountBalances accounts={accounts} transactions={transactions} />
+      <AccountBalances accounts={accounts} transactions={transactions} goldLots={goldLots} />
 
       <MonthSelector value={month} options={monthOptions} onChange={setMonth} />
       <SummaryCards summary={summary} />
