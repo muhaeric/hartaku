@@ -2,8 +2,25 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MoreIcon } from './icons.jsx'
 
-/** Roughly one menu row. Only used to decide whether the menu opens up or down. */
+/** One menu row: 20px of line box plus `py-2.5`. Rounded up, so the estimate
+ *  errs towards flipping the menu rather than towards letting it overflow. */
 const ROW_HEIGHT = 42
+
+/** Breathing room kept between the menu and whatever bounds it. */
+const MARGIN = 8
+
+/**
+ * Where the usable screen ends.
+ *
+ * `window.innerHeight` is not it on a phone: the tab bar is fixed over the
+ * bottom of the viewport, and a menu measured against the full height happily
+ * places itself underneath it. The bar marks itself so this can ask; when it is
+ * hidden - `lg` and up - it measures zero and the full height is right again.
+ */
+function usableBottom () {
+  const bar = document.querySelector('[data-bottom-bar]')?.getBoundingClientRect()
+  return bar && bar.height > 0 ? bar.top : window.innerHeight
+}
 
 /**
  * Row actions live behind this instead of sitting on every row - the brief's
@@ -31,15 +48,27 @@ export default function KebabMenu ({ label = 'Aksi lainnya', items }) {
     const rect = trigger.current?.getBoundingClientRect()
     if (!rect) return
 
-    const height = items.length * ROW_HEIGHT + 8
-    const below = window.innerHeight - rect.bottom
-    const right = Math.max(8, window.innerWidth - rect.right)
+    const height = items.length * ROW_HEIGHT + 2
+    const right = Math.max(MARGIN, window.innerWidth - rect.right)
+    const limit = usableBottom()
 
-    // Flip above the button when the space underneath cannot hold the menu and
-    // the space above can - the bottom row of a list is exactly that case.
+    // Flip above the button when the space underneath cannot hold the menu -
+    // the bottom rows of a list are exactly that case - unless there is no room
+    // up there either, which is what happens on a very short screen.
+    const fitsBelow = rect.bottom + 4 + height <= limit - MARGIN
+    const fitsAbove = rect.top - 4 - height >= MARGIN
+
     setPlacement(
-      below < height && rect.top > below
-        ? { right, bottom: window.innerHeight - rect.top + 4 }
+      !fitsBelow && fitsAbove
+        ? {
+            right,
+            // Clamped, so a button that is itself under the bar still gets a
+            // menu above it rather than one hidden alongside it.
+            bottom: Math.max(
+              window.innerHeight - rect.top + 4,
+              window.innerHeight - limit + MARGIN
+            )
+          }
         : { right, top: rect.bottom + 4 }
     )
   }

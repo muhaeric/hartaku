@@ -370,10 +370,18 @@ kebab, bukan tombol yang selalu tampil.
 Menu kebab itu dirender ke `document.body`, bukan di sebelah tombolnya. Kartu daftarnya
 memangkas isinya supaya latar baris tidak bocor melewati sudut membulat kartu, dan pemangkasan
 yang sama dulu menelan menu ini bulat-bulat di baris paling bawah — yang di daftar berisi satu
-baris berarti menunya tidak pernah muncul sama sekali. Menunya juga membalik ke atas kalau ruang
-di bawah tombol tidak cukup, dan menutup sendiri saat halaman digulir atau ukurannya berubah:
-posisinya diukur sekali saat dibuka, jadi apa pun yang bisa menggeser tombolnya lebih baik
-menutup menu daripada membiarkannya melayang jauh dari tombol pemiliknya.
+baris berarti menunya tidak pernah muncul sama sekali.
+
+Menunya membalik ke atas kalau ruang di bawah tombol tidak cukup, dan **batas bawah yang dipakai
+adalah tepi atas tab bar, bukan `window.innerHeight`**. Viewport tetap berjalan terus di bawah
+bar itu, jadi menu yang diukur terhadap tinggi penuh dengan senang hati menempatkan dirinya di
+kolongnya — persis yang terjadi pada baris-baris bawah daftar akun. Tab bar menandai dirinya
+(`data-bottom-bar`) supaya menu bisa menanyakannya; saat bar itu disembunyikan di `lg` ke atas,
+ia terukur nol dan tinggi penuh kembali jadi jawaban yang benar.
+
+Menu juga menutup sendiri saat halaman digulir atau ukurannya berubah: posisinya diukur sekali
+saat dibuka, jadi apa pun yang bisa menggeser tombolnya lebih baik menutup menu daripada
+membiarkannya melayang jauh dari tombol pemiliknya.
 
 **Di daftar akun beranda, jenis akun dan subtotalnya duduk di pita**, sementara nama akun dan
 saldonya ada di barisnya: "berapa uangku di bank" jauh lebih sering ditanyakan daripada "berapa

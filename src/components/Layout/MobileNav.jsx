@@ -6,6 +6,9 @@ export default function MobileNav () {
   return (
     <nav
       aria-label="Navigasi utama"
+      /* Marked so overlays can find where the usable screen actually ends:
+         `window.innerHeight` runs on underneath this bar. */
+      data-bottom-bar=""
       className="fixed inset-x-0 bottom-0 z-30 border-t border-hairline bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-hairline-dark dark:bg-surface-dark/95 lg:hidden"
     >
       <ul className="mx-auto flex max-w-lg items-stretch">
