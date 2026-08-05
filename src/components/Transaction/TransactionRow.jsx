@@ -5,9 +5,28 @@ import Amount from '../ui/Amount.jsx'
  * amount. The category column is fixed width so the eye can scan straight down
  * it; the description gives up width first, and the amount column never shrinks
  * so a figure can neither wrap nor be ellipsised.
+ *
+ * `account` is the account the list is scoped to, if any. A transfer normally
+ * gets no sign because nothing was earned or spent - but seen from one end of
+ * it, money did leave or arrive, and the totals above the list say so. The row
+ * has to agree with them or the column stops adding up in front of the reader.
  */
-export default function TransactionRow ({ transaction, selecting, selected, onSelect, onOpen }) {
+export default function TransactionRow ({
+  transaction,
+  account,
+  selecting,
+  selected,
+  onSelect,
+  onOpen
+}) {
   const transfer = transaction.type === 'transfer'
+
+  const direction =
+    transfer && account
+      ? transaction.account === account
+        ? 'expense'
+        : 'income'
+      : transaction.type
 
   const label = transaction.description || (transfer ? 'Transfer' : transaction.category) || '—'
   const source = transfer
@@ -48,7 +67,7 @@ export default function TransactionRow ({ transaction, selecting, selected, onSe
       {/* Signed as well as coloured: direction should not rest on hue alone. */}
       <Amount
         value={transaction.amount}
-        type={transaction.type}
+        type={direction}
         signed
         className="shrink-0 text-caption font-medium"
       />

@@ -4,15 +4,33 @@ export function filterByMonth (transactions, monthKey) {
   return transactions.filter((transaction) => monthKeyOf(transaction.date) === monthKey)
 }
 
-/** Transfers only move money between accounts, so they are not income or expense. */
-export function summarize (transactions) {
+/**
+ * Income, expense and their difference.
+ *
+ * Across all accounts a transfer creates nothing - it takes from one pocket and
+ * puts it in another - so it is counted but never added. Narrow the view to a
+ * single `account` and that stops being true: from where that account stands,
+ * a transfer out is money gone and a transfer in is money arrived, and leaving
+ * both out gives a "Selisih" that cannot be reconciled against the balance the
+ * same account shows everywhere else in the app.
+ */
+export function summarize (transactions, account = '') {
   let income = 0
   let expense = 0
   let transfers = 0
 
   for (const transaction of transactions) {
+    if (transaction.type === 'transfer') {
+      transfers += 1
+
+      if (account) {
+        if (transaction.account === account) expense += transaction.amount
+        else if (transaction.toAccount === account) income += transaction.amount
+      }
+      continue
+    }
+
     if (transaction.type === 'income') income += transaction.amount
-    else if (transaction.type === 'transfer') transfers += 1
     else expense += transaction.amount
   }
 
@@ -196,8 +214,11 @@ export function categoryBreakdown (transactions, type = 'expense') {
 /**
  * Transactions bucketed by day, newest first, each bucket carrying its own
  * income and expense totals for the day header.
+ *
+ * Takes the same `account` scope as `summarize` for the same reason, and so the
+ * day headings still add up to the period figure above them.
  */
-export function groupByDay (transactions) {
+export function groupByDay (transactions, account = '') {
   const days = new Map()
 
   for (const transaction of transactions) {
@@ -208,9 +229,16 @@ export function groupByDay (transactions) {
     }
 
     day.items.push(transaction)
-    // Transfers move money between accounts, so they belong in neither total.
-    if (transaction.type === 'income') day.income += transaction.amount
-    else if (transaction.type === 'expense') day.expense += transaction.amount
+
+    if (transaction.type === 'transfer') {
+      // Between accounts it is neither; from one account it is both directions.
+      if (account && transaction.account === account) day.expense += transaction.amount
+      else if (account && transaction.toAccount === account) day.income += transaction.amount
+    } else if (transaction.type === 'income') {
+      day.income += transaction.amount
+    } else {
+      day.expense += transaction.amount
+    }
   }
 
   return [...days.values()].sort((a, b) => b.date.localeCompare(a.date))

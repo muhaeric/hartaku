@@ -401,6 +401,19 @@ keterangannya yang mengalah duluan.
 Nominalnya diberi tanda − / + selain warna. Di aplikasi rujukan arah uang hanya dibedakan warna,
 dan itu satu-satunya penanda — tidak terbaca oleh yang buta warna.
 
+**Transfer netral lintas akun, tapi tidak saat dilihat dari satu akun.** Tanpa filter akun,
+transfer cuma memindahkan uang dari kantong ke kantong, jadi ia dihitung jumlahnya tapi tidak
+pernah ditambahkan ke Masuk maupun Keluar. Begitu daftarnya disaring ke satu akun, itu berhenti
+benar: dari tempat akun itu berdiri, transfer keluar adalah uang yang benar-benar pergi dan
+transfer masuk adalah uang yang benar-benar datang. Mengecualikan keduanya membuat "Selisih"
+tidak bisa dicocokkan dengan saldo akun yang sama yang ditampilkan di layar lain.
+
+Jadi `summarize` dan `groupByDay` menerima cakupan akun, dan barisnya ikut: transfer yang biasanya
+tanpa tanda muncul sebagai − atau + ketika dilihat dari salah satu ujungnya. Kalau ringkasannya
+menghitung sesuatu, barisnya harus mengatakan hal yang sama — kolom yang tidak terlihat menjumlah
+di depan mata pembacanya adalah kolom yang tidak dipercaya. Diuji: dengan filter akun, Selisih
+cocok persis dengan saldo akunnya; tanpa filter, angkanya tidak berubah sama sekali.
+
 Ketuk baris untuk mengubah. Mode **Pilih** memunculkan kotak centang dan satu baris aksi yang
 menempel di bawah layar: **pindah ke akun lain, salin, hapus** — ditempel di bawah karena pada
 daftar sepanjang ini, aksi yang duduk di header sudah tergulung jauh dari baris yang barusan

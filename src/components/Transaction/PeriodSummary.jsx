@@ -10,7 +10,7 @@ import { formatCurrency } from '../../lib/format.js'
  * body size the widest was truncating, and a clipped amount is worse than a
  * small one.
  */
-export default function PeriodSummary ({ summary, filtered }) {
+export default function PeriodSummary ({ summary, filtered, account }) {
   const { settings } = useSettings()
   const money = (value) => formatCurrency(value, settings.currency)
 
@@ -36,7 +36,9 @@ export default function PeriodSummary ({ summary, filtered }) {
 
       {filtered && (
         <p className="mt-1.5 border-t border-hairline pt-1.5 text-center text-[11px] text-subtitle dark:border-hairline-dark dark:text-subtitle-dark">
-          Mengikuti filter yang aktif
+          {account && summary.transfers > 0
+            ? `Mengikuti filter yang aktif · transfer dihitung sebagai masuk/keluar ${account}`
+            : 'Mengikuti filter yang aktif'}
         </p>
       )}
     </div>

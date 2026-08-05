@@ -100,7 +100,9 @@ export default function TransactionList () {
       .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
   }, [transactions, month, filters])
 
-  const summary = useMemo(() => summarize(visible), [visible])
+  // Scoped to the filtered account, so a transfer in or out of it counts as
+  // money moving rather than vanishing from the totals.
+  const summary = useMemo(() => summarize(visible, filters.account), [visible, filters.account])
 
   const paginated = visible.length > PAGINATION_THRESHOLD
   const pageCount = paginated ? Math.ceil(visible.length / PAGE_SIZE) : 1
@@ -108,7 +110,7 @@ export default function TransactionList () {
 
   // Grouping happens after paging so a day is never split across two pages
   // without its header.
-  const days = useMemo(() => groupByDay(rows), [rows])
+  const days = useMemo(() => groupByDay(rows, filters.account), [rows, filters.account])
 
   const filtersActive =
     filters.type !== 'all' ||
@@ -248,7 +250,7 @@ export default function TransactionList () {
         onMonthChange={setMonth}
       />
 
-      <PeriodSummary summary={summary} filtered={filtersActive} />
+      <PeriodSummary summary={summary} filtered={filtersActive} account={filters.account} />
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-caption text-subtitle dark:text-subtitle-dark">
@@ -301,6 +303,7 @@ export default function TransactionList () {
                     <li key={transaction.id}>
                       <TransactionRow
                         transaction={transaction}
+                        account={filters.account}
                         selecting={selecting}
                         selected={selected.includes(transaction.id)}
                         onSelect={() => toggleSelected(transaction.id)}
