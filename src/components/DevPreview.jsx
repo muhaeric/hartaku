@@ -10,6 +10,7 @@ import {
 } from '../lib/summary.js'
 import DayGroupHeader from './Transaction/DayGroup.jsx'
 import PeriodSummary from './Transaction/PeriodSummary.jsx'
+import SelectionBar from './Transaction/SelectionBar.jsx'
 import TransactionRow from './Transaction/TransactionRow.jsx'
 import AccountBalances from './Dashboard/AccountBalances.jsx'
 import NetWorthCard from './Dashboard/NetWorthCard.jsx'
@@ -116,9 +117,14 @@ export default function DevPreview () {
       <PeriodSummary summary={summary} filtered />
 
       <div className="flex items-center justify-between">
-        <p className="text-caption text-subtitle dark:text-subtitle-dark">7 transaksi</p>
-        <Button variant="ghost" size="sm">Pilih</Button>
+        <p className="text-caption text-subtitle dark:text-subtitle-dark">2 dipilih</p>
+        <div className="flex items-center gap-1.5">
+          <Button variant="ghost" size="sm">Pilih semua</Button>
+          <Button variant="ghost" size="sm">Selesai</Button>
+        </div>
       </div>
+
+      <SelectionBar count={2} onMove={() => {}} onCopy={() => {}} onDelete={() => {}} />
 
       <Card flush as="div" className="overflow-hidden">
         {days.map((day) => (

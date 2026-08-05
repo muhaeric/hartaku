@@ -219,6 +219,39 @@ export async function updateTransaction (workbook, input) {
   return transaction
 }
 
+/**
+ * Re-points a batch of transactions at another account in one write, touching
+ * only the account and updated_at cells rather than rewriting whole rows - a
+ * full-row write would need every other field to still be current, which after
+ * a bulk selection it may not be.
+ *
+ * A transfer already arriving at the target is left alone and reported back:
+ * moving it would make both ends the same account, which is not a transfer at
+ * all. Silently dropping the row or silently corrupting it are both worse than
+ * saying which ones did not move.
+ */
+export async function moveTransactions (workbook, ids, account) {
+  const wanted = new Set(ids)
+  const rows = await getValues(workbook.spreadsheetId, TX_RANGE)
+  const updatedAt = new Date().toISOString()
+
+  const data = []
+  const moved = []
+
+  rows.forEach((row, index) => {
+    if (!wanted.has(row[0]) || row[2] === account) return
+    if (row[4] === 'transfer' && row[9] === account) return
+
+    const rowNumber = index + 2
+    data.push({ range: `${SHEET.transactions}!C${rowNumber}`, values: [[account]] })
+    data.push({ range: `${SHEET.transactions}!I${rowNumber}`, values: [[updatedAt]] })
+    moved.push(row[0])
+  })
+
+  await batchUpdateValues(workbook.spreadsheetId, data)
+  return { moved, updatedAt }
+}
+
 export async function deleteTransactions (workbook, ids) {
   const wanted = new Set(ids)
   const rows = await getValues(workbook.spreadsheetId, TX_RANGE)

@@ -393,8 +393,25 @@ keterangannya yang mengalah duluan.
 Nominalnya diberi tanda − / + selain warna. Di aplikasi rujukan arah uang hanya dibedakan warna,
 dan itu satu-satunya penanda — tidak terbaca oleh yang buta warna.
 
-Ketuk baris untuk mengubah; hapus lewat mode **Pilih**. Tab Calendar/Monthly/Summary/Description
-di aplikasi rujukan belum dibuat — yang ada baru tampilan harian.
+Ketuk baris untuk mengubah. Mode **Pilih** memunculkan kotak centang dan satu baris aksi yang
+menempel di bawah layar: **pindah ke akun lain, salin, hapus** — ditempel di bawah karena pada
+daftar sepanjang ini, aksi yang duduk di header sudah tergulung jauh dari baris yang barusan
+dicentang. "Pilih semua" mencakup seluruh transaksi yang lolos filter, bukan cuma halaman yang
+sedang tampil.
+
+**Pindah** mengubah akun tempat transaksi tercatat — pada transfer, itu akun asalnya. Transfer
+yang tujuannya sudah akun tersebut dilewati (kedua ujungnya akan jadi akun yang sama, dan itu
+bukan transfer lagi), lalu jumlah yang benar-benar pindah itulah yang dilaporkan — bukan jumlah
+yang diminta. Penulisannya menyentuh sel akun dan `updated_at` saja lewat satu batched write,
+bukan menimpa seluruh baris: menulis ulang satu baris utuh mengandaikan semua kolom lain masih
+mutakhir, dan setelah seleksi massal itu belum tentu benar.
+
+**Salin** menggandakan persis — tanggal, akun, kategori, nominal, keterangan — dengan `id` dan
+`created_at` baru. Sengaja tidak mewarisi `created_at` aslinya: salinannya dibuat sekarang, dan
+memberinya stempel waktu yang lama justru menguburkannya tepat di sebelah baris yang disalin.
+
+Tab Calendar/Monthly/Summary/Description di aplikasi rujukan belum dibuat — yang ada baru
+tampilan harian.
 
 ## PWA
 
@@ -434,7 +451,7 @@ Mengacu ke spesifikasi MVP:
 | 1 | Autentikasi Google | ✅ |
 | 2 | Form transaksi (validasi inline) | ✅ |
 | 3 | Dashboard (saldo akun, ringkasan bulan, top pengeluaran) | ✅ donat kategori + riwayat pertumbuhan aset |
-| 4 | Daftar transaksi (filter, cari, edit, hapus, bulk, paginasi) | ✅ pindah bulan lewat panah ‹ › |
+| 4 | Daftar transaksi (filter, cari, edit, hapus, bulk, paginasi) | ✅ panah ‹ › antar bulan; bulk pindah akun / salin / hapus |
 | 5 | Manajer kategori | ✅ (kecuali drag & drop urutan) |
 | 6 | Monthly Claude Review | ⬜ belum dikerjakan |
 | 7 | Merchant learning | ❌ dibatalkan — kolom `merchant` diganti `account` |

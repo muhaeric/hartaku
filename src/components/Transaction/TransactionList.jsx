@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { PAGE_SIZE, PAGINATION_THRESHOLD } from '../../lib/constants.js'
+import { ACCOUNT_KINDS, PAGE_SIZE, PAGINATION_THRESHOLD } from '../../lib/constants.js'
 import { buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
 import { readLastAccount, writeLastAccount } from '../../lib/lastAccount.js'
 import { filterByMonth, groupByDay, monthsWithData, summarize } from '../../lib/summary.js'
@@ -10,9 +10,11 @@ import Button from '../ui/Button.jsx'
 import { Card } from '../ui/Card.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
 import { EmptyState, ErrorState, SkeletonRows } from '../ui/Feedback.jsx'
-import { TrashIcon } from '../ui/icons.jsx'
+import ListRow, { RowIcon } from '../ui/ListRow.jsx'
+import Sheet from '../ui/Sheet.jsx'
 import DayGroupHeader from './DayGroup.jsx'
 import PeriodSummary from './PeriodSummary.jsx'
+import SelectionBar from './SelectionBar.jsx'
 import TransactionFilters from './TransactionFilters.jsx'
 import TransactionRow from './TransactionRow.jsx'
 
@@ -27,8 +29,17 @@ function labelOf (transaction) {
 export default function TransactionList () {
   const navigate = useNavigate()
   const toast = useToast()
-  const { transactions, categories, accounts, loading, error, reload, removeTransactions } =
-    useData()
+  const {
+    transactions,
+    categories,
+    accounts,
+    loading,
+    error,
+    reload,
+    addTransactions,
+    moveTransactions,
+    removeTransactions
+  } = useData()
 
   // Arriving from an account row: ?account=<name> preselects that filter.
   const [params] = useSearchParams()
@@ -47,6 +58,9 @@ export default function TransactionList () {
   const [selecting, setSelecting] = useState(false)
   const [selected, setSelected] = useState([])
   const [pendingDelete, setPendingDelete] = useState(null)
+  const [moving, setMoving] = useState(false)
+  const [copying, setCopying] = useState(false)
+  const [busy, setBusy] = useState(false)
   const [page, setPage] = useState(1)
 
   const monthOptions = useMemo(
@@ -145,13 +159,75 @@ export default function TransactionList () {
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
     )
 
+  const leaveSelection = () => {
+    setSelected([])
+    setSelecting(false)
+  }
+
   const confirmDelete = async () => {
     const ids = pendingDelete.ids
     try {
       await removeTransactions(ids)
-      setSelected([])
-      setSelecting(false)
+      leaveSelection()
       toast.success(ids.length > 1 ? `${ids.length} transaksi dihapus.` : 'Transaksi dihapus.')
+    } catch (err) {
+      toast.error(err.message)
+    }
+  }
+
+  /**
+   * Moving rewrites which account the transaction was recorded on. Transfers
+   * already arriving at the target cannot move - both ends would be the same
+   * account - so the count that actually moved is what gets reported, never the
+   * count that was asked for.
+   */
+  const handleMove = async (account) => {
+    setBusy(true)
+    try {
+      const moved = await moveTransactions(selected, account)
+      const skipped = selected.length - moved.length
+
+      if (!moved.length) {
+        toast.error(`Tidak ada yang bisa dipindah ke ${account} — semuanya sudah di sana.`)
+        return
+      }
+
+      setMoving(false)
+      leaveSelection()
+      toast.success(
+        skipped > 0
+          ? `${moved.length} transaksi pindah ke ${account}, ${skipped} dilewati.`
+          : `${moved.length} transaksi pindah ke ${account}.`
+      )
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleCopy = async () => {
+    const wanted = new Set(selected)
+    const copies = transactions
+      .filter((transaction) => wanted.has(transaction.id))
+      .map((transaction) => ({
+        date: transaction.date,
+        account: transaction.account,
+        toAccount: transaction.toAccount || '',
+        amount: transaction.amount,
+        type: transaction.type,
+        category: transaction.category || '',
+        description: transaction.description || ''
+      }))
+
+    try {
+      // Deliberately no `createdAt`: a copy was made now, and stamping it with
+      // the original's time would bury it next to the row it was copied from.
+      await addTransactions(copies)
+      leaveSelection()
+      toast.success(
+        copies.length > 1 ? `${copies.length} transaksi disalin.` : 'Transaksi disalin.'
+      )
     } catch (err) {
       toast.error(err.message)
     }
@@ -176,30 +252,24 @@ export default function TransactionList () {
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-caption text-subtitle dark:text-subtitle-dark">
-          {visible.length} transaksi
+          {selecting ? `${selected.length} dipilih` : `${visible.length} transaksi`}
         </p>
 
         {/* Checkboxes only appear on demand - they are clutter the rest of the time. */}
         {selecting ? (
           <div className="flex items-center gap-1.5">
-            {selected.length > 0 && (
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => setPendingDelete({ ids: selected })}
-              >
-                <TrashIcon className="h-4 w-4" />
-                Hapus {selected.length}
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => {
-                setSelecting(false)
-                setSelected([])
-              }}
+              onClick={() =>
+                setSelected((current) =>
+                  current.length === visible.length ? [] : visible.map((item) => item.id)
+                )
+              }
             >
+              {selected.length === visible.length ? 'Kosongkan' : 'Pilih semua'}
+            </Button>
+            <Button variant="ghost" size="sm" onClick={leaveSelection}>
               Selesai
             </Button>
           </div>
@@ -266,8 +336,51 @@ export default function TransactionList () {
               </Button>
             </div>
           )}
+
+          {selecting && (
+            <SelectionBar
+              count={selected.length}
+              onMove={() => setMoving(true)}
+              onCopy={() => setCopying(true)}
+              onDelete={() => setPendingDelete({ ids: selected })}
+            />
+          )}
         </>
       )}
+
+      <Sheet
+        open={moving}
+        title="Pindah ke akun"
+        description={`${selected.length} transaksi akan dicatat di akun lain.`}
+        onClose={() => !busy && setMoving(false)}
+      >
+        <div className="divide-hairline">
+          {accounts.map((account) => (
+            <ListRow
+              key={account.id}
+              leading={<RowIcon icon={account.icon} color={account.color} />}
+              title={account.name}
+              subtitle={ACCOUNT_KINDS.find((kind) => kind.value === account.kind)?.label}
+              onClick={() => !busy && handleMove(account.name)}
+              className="!px-0"
+            />
+          ))}
+        </div>
+        <p className="hint">
+          Yang berubah adalah akun tempat transaksinya tercatat — untuk transfer, itu akun
+          asalnya. Transfer yang tujuannya sudah akun ini akan dilewati.
+        </p>
+      </Sheet>
+
+      <ConfirmDialog
+        open={copying}
+        title="Salin transaksi?"
+        message={`${selected.length} transaksi akan digandakan persis — tanggal, akun, kategori, dan nominalnya sama. Salinannya bisa diubah satu per satu setelah ini.`}
+        confirmLabel="Salin"
+        destructive={false}
+        onConfirm={handleCopy}
+        onClose={() => setCopying(false)}
+      />
 
       <ConfirmDialog
         open={Boolean(pendingDelete)}

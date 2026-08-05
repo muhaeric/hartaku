@@ -23,6 +23,7 @@ import {
   listCategories,
   listGoldLots,
   listTransactions,
+  moveTransactions,
   renameGoldAccountReferences,
   renameReferences,
   updateAccount,
@@ -168,6 +169,22 @@ export function DataProvider ({ children }) {
         transactions: current.transactions.map((item) => (item.id === saved.id ? saved : item))
       }))
       return saved
+    }),
+    [withWorkbook]
+  )
+
+  const moveTransactionsToAccount = useCallback(
+    withWorkbook(async (workbook, ids, account) => {
+      const { moved, updatedAt } = await moveTransactions(workbook, ids, account)
+      const changed = new Set(moved)
+
+      setState((current) => ({
+        ...current,
+        transactions: current.transactions.map((item) =>
+          changed.has(item.id) ? { ...item, account, updatedAt } : item
+        )
+      }))
+      return moved
     }),
     [withWorkbook]
   )
@@ -359,6 +376,7 @@ export function DataProvider ({ children }) {
       addTransaction,
       addTransactions: addTransactionsBatch,
       editTransaction,
+      moveTransactions: moveTransactionsToAccount,
       removeTransactions,
       addCategory,
       addCategories: addCategoriesBatch,
@@ -380,6 +398,7 @@ export function DataProvider ({ children }) {
       addTransaction,
       addTransactionsBatch,
       editTransaction,
+      moveTransactionsToAccount,
       removeTransactions,
       addCategory,
       addCategoriesBatch,
