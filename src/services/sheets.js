@@ -19,9 +19,26 @@ export async function createSpreadsheet ({ title, sheets }) {
  * Looks for a spreadsheet this app created earlier. The `drive.file` scope only
  * ever returns files created by this app, so the listing stays private.
  */
-export async function findSpreadsheetsByName (name) {
+/**
+ * A marker written onto the spreadsheet's Drive metadata. Searching by this
+ * rather than by filename means the workbook is still found after the user
+ * renames it - which, with a name-only search, silently orphaned their data.
+ * `appProperties` are private to this OAuth client and invisible to the user.
+ */
+const WORKBOOK_TAG = { key: 'hartakuWorkbook', value: 'v1' }
+
+export async function tagSpreadsheet (spreadsheetId) {
+  const params = new URLSearchParams({ fields: 'id' })
+
+  return googleFetch(`${DRIVE_API}/${spreadsheetId}?${params}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ appProperties: { [WORKBOOK_TAG.key]: WORKBOOK_TAG.value } })
+  })
+}
+
+async function queryDrive (q) {
   const params = new URLSearchParams({
-    q: `name='${name.replace(/'/g, "\\'")}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`,
+    q,
     fields: 'files(id,name,createdTime)',
     // Oldest first: if duplicates exist, the original is the one to reopen.
     orderBy: 'createdTime',
@@ -30,6 +47,29 @@ export async function findSpreadsheetsByName (name) {
 
   const { files = [] } = await googleFetch(`${DRIVE_API}?${params}`)
   return files
+}
+
+/**
+ * Finds this app's workbooks: by marker first, then by name for spreadsheets
+ * created before the marker existed. Results are merged so an older untagged
+ * file is never missed.
+ */
+export async function findWorkbooks (name) {
+  const escaped = name.replace(/'/g, "\\'")
+
+  const tagged = await queryDrive(
+    `appProperties has { key='${WORKBOOK_TAG.key}' and value='${WORKBOOK_TAG.value}' } and trashed=false`
+  )
+  const named = await queryDrive(
+    `name='${escaped}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`
+  )
+
+  const seen = new Set()
+  return [...tagged, ...named].filter((file) => {
+    if (seen.has(file.id)) return false
+    seen.add(file.id)
+    return true
+  })
 }
 
 export async function getSpreadsheet (spreadsheetId) {

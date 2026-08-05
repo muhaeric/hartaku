@@ -376,8 +376,9 @@ export function DataProvider ({ children }) {
   return (
     <DataContext.Provider value={value}>
       {/* Without a workbook nothing in the app can render, so this takes over. */}
-      {state.errorCode === 'workbook_lookup_failed' ? (
+      {state.errorCode === 'workbook_lookup_failed' || state.errorCode === 'workbook_not_found' ? (
         <WorkbookSetup
+          reason={state.errorCode}
           message={state.error}
           busy={state.loading}
           onRetry={() => load()}

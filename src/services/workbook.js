@@ -13,10 +13,11 @@ import {
   appendValues,
   batchUpdate,
   createSpreadsheet,
-  findSpreadsheetsByName,
+  findWorkbooks,
   getSpreadsheet,
   getValues,
   spreadsheetUrl,
+  tagSpreadsheet,
   updateValues
 } from './sheets.js'
 
@@ -29,6 +30,15 @@ export class WorkbookLookupError extends Error {
     this.name = 'WorkbookLookupError'
     this.code = 'workbook_lookup_failed'
     this.cause = cause
+  }
+}
+
+/** Raised when the search ran cleanly and turned up nothing. */
+export class WorkbookNotFoundError extends Error {
+  constructor (message) {
+    super(message)
+    this.name = 'WorkbookNotFoundError'
+    this.code = 'workbook_not_found'
   }
 }
 
@@ -51,12 +61,14 @@ export function rememberSpreadsheetId (id) {
 
 /**
  * Resolves the spreadsheet backing this account.
- * Order: explicitly chosen id -> remembered id -> Drive lookup -> create new.
+ * Order: explicitly chosen id -> remembered id -> Drive lookup -> ask.
  *
- * A new workbook is only created when the Drive lookup ran and genuinely found
- * nothing. If the lookup itself fails we refuse and throw, because creating
- * blind is how a second device ends up with its own empty copy of the data.
- * Pass `allowCreate` once the user has explicitly asked for a fresh one.
+ * Creating is never automatic. An empty search result does not prove the user
+ * is new - it also happens when the file was renamed, when the app's per-file
+ * Drive grant was revoked and re-issued, or when the search simply misses. On a
+ * second browser those all look identical to a first run, and guessing wrong
+ * splits the user's data across two spreadsheets. So the decision is handed
+ * back: `allowCreate` is only set once someone has actually asked for a new one.
  */
 export async function ensureWorkbook ({ spreadsheetId, allowCreate = false } = {}) {
   let meta = null
@@ -70,7 +82,7 @@ export async function ensureWorkbook ({ spreadsheetId, allowCreate = false } = {
   if (!meta && !spreadsheetId) {
     let existing = []
     try {
-      existing = await findSpreadsheetsByName(SPREADSHEET_NAME)
+      existing = await findWorkbooks(SPREADSHEET_NAME)
     } catch (err) {
       if (!allowCreate) {
         throw new WorkbookLookupError(
@@ -85,6 +97,13 @@ export async function ensureWorkbook ({ spreadsheetId, allowCreate = false } = {
       meta = await loadSpreadsheet(file.id)
       if (meta) break
     }
+  }
+
+  if (!meta && !allowCreate) {
+    throw new WorkbookNotFoundError(
+      'Tidak ditemukan spreadsheet Hartaku di akun Google ini. Kalau kamu sudah punya ' +
+        'catatan di perangkat lain, tempel ID spreadsheet-nya supaya datanya tidak terbelah.'
+    )
   }
 
   if (!meta) {
@@ -107,6 +126,15 @@ export async function ensureWorkbook ({ spreadsheetId, allowCreate = false } = {
   await ensureHeaders(workbook)
   await seedCategories(workbook)
   await seedAccounts(workbook)
+
+  // Marks the file so the next browser finds it by tag rather than by filename.
+  // Applied on every open, not just on create, so workbooks made before the tag
+  // existed pick it up the first time they are used.
+  try {
+    await tagSpreadsheet(workbook.spreadsheetId)
+  } catch {
+    // Discovery falls back to the filename; not worth blocking startup for.
+  }
 
   rememberSpreadsheetId(workbook.spreadsheetId)
   return workbook
