@@ -367,6 +367,14 @@ memuat tiga kolom.
 Satu bentuk baris (`ListRow`) dipakai akun, kategori, dan emas. Aksi edit/hapus ada di menu
 kebab, bukan tombol yang selalu tampil.
 
+Menu kebab itu dirender ke `document.body`, bukan di sebelah tombolnya. Kartu daftarnya
+memangkas isinya supaya latar baris tidak bocor melewati sudut membulat kartu, dan pemangkasan
+yang sama dulu menelan menu ini bulat-bulat di baris paling bawah — yang di daftar berisi satu
+baris berarti menunya tidak pernah muncul sama sekali. Menunya juga membalik ke atas kalau ruang
+di bawah tombol tidak cukup, dan menutup sendiri saat halaman digulir atau ukurannya berubah:
+posisinya diukur sekali saat dibuka, jadi apa pun yang bisa menggeser tombolnya lebih baik
+menutup menu daripada membiarkannya melayang jauh dari tombol pemiliknya.
+
 **Di daftar akun beranda, jenis akun dan subtotalnya duduk di pita**, sementara nama akun dan
 saldonya ada di barisnya: "berapa uangku di bank" jauh lebih sering ditanyakan daripada "berapa
 di rekening yang satu ini". Label jenis di tiap baris ikut dihapus — pitanya sudah
