@@ -20,18 +20,21 @@ export function SectionHeader ({ title, hint, action, className = '' }) {
   )
 }
 
-/** Small caps-ish group label used above dividers inside a card. */
+/**
+ * Group heading used above dividers inside a card, carrying the group's own
+ * total - the same shape as the day heading on the transaction list, and for
+ * the same reason.
+ *
+ * The rank comes from the tinted band and the weight, not from the type size:
+ * a heading that has to be two steps larger than its rows to read as a heading
+ * ends up shouting over the very numbers it introduces. So it sits at the row
+ * size in semibold, on a band, and the rows read as its breakdown.
+ */
 export function GroupLabel ({ children, trailing }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-page pb-1 pt-2.5">
-      <span className="text-[11px] font-medium uppercase tracking-wide text-subtitle dark:text-subtitle-dark">
-        {children}
-      </span>
-      {trailing && (
-        <span className="amount text-[11px] font-semibold text-subtitle dark:text-subtitle-dark">
-          {trailing}
-        </span>
-      )}
+    <div className="flex items-center justify-between gap-3 border-b border-hairline bg-black/[0.02] px-page py-1 dark:border-hairline-dark dark:bg-white/[0.03]">
+      <span className="min-w-0 truncate text-caption font-semibold">{children}</span>
+      {trailing && <span className="amount shrink-0 text-caption font-semibold">{trailing}</span>}
     </div>
   )
 }

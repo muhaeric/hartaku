@@ -6,7 +6,8 @@ sendiri** — aplikasi ini tidak punya database.
 - **Frontend:** Vite + React 18 + Tailwind CSS (tanpa state library, tanpa axios, tanpa icon package)
 - **Backend:** 4 serverless function di `api/` — hanya untuk OAuth. Semua akses Sheets terjadi
   langsung dari browser memakai access token berumur pendek.
-- **Bundle:** ~73 kB gzip.
+- **Bundle:** ~99 kB gzip, tanpa pustaka chart maupun pembaca spreadsheet — keduanya ditulis
+  sendiri dari primitif browser.
 
 ---
 
@@ -169,6 +170,33 @@ tidak — lakukan lewat aplikasi.
 Preferensi (tema, mata uang, format tanggal, default form) disimpan di `localStorage`, bukan di
 spreadsheet.
 
+## Grafik di beranda
+
+Dua grafik, keduanya SVG tulisan tangan — tidak ada pustaka chart, dan tidak akan ada.
+
+**Pengeluaran terbesar: donat.** Bagian-dari-keseluruhan untuk sekali lihat. Lima kategori
+teratas digambar, sisanya dilipat jadi satu irisan "Lainnya" — lewat enam segmen, busurnya
+terlalu tipis untuk dibandingkan dan warnanya mulai berulang. Antar-irisan dipisah **celah
+2px berwarna kartu**, bukan garis tepi, jadi dua kategori yang kebetulan berwarna sama tetap
+terbaca sebagai dua. Di bawahnya tiap irisan didaftar lengkap dengan **persentase dan
+nominalnya**, karena tidak boleh ada angka yang cuma bisa didapat dengan hover: cincinnya untuk
+sekilas, daftarnya untuk jawaban. Menyorot satu baris meredupkan irisan lain dan memindahkan
+detailnya ke tengah cincin.
+
+**Pertumbuhan aset: garis, per minggu/bulan/tahun.** Satu seri, jadi tanpa legenda — judulnya
+sudah menyebut apa yang digambar. Skalanya **tidak dimulai dari nol** (grafik kekayaan yang
+dipaksa mulai dari nol adalah garis datar), dan justru karena itu yang digambar garis, bukan
+area terisi: isian dari dasar yang bukan nol terbaca sebagai jumlah padahal cuma bentuk. Bisa
+disentuh, digeser, dan ditelusuri dengan tombol panah; tombol "Lihat angkanya" membuka daftar
+angka mentahnya.
+
+Riwayatnya dihitung dengan aturan yang sama persis dengan saldo akun, jadi titik terakhirnya
+mendarat di angka besar yang ada di atasnya — dengan satu pengecualian yang disengaja: **emas
+dihitung sebesar modalnya**, bukan harga buyback hari ini. Menerapkan harga hari ini ke gram
+yang dipegang Maret lalu akan mengarang pertumbuhan yang tidak pernah terjadi. Jadi kalau ada
+emas, garisnya berakhir di bawah angka besar persis sebesar keuntungan yang belum direalisasi —
+dan grafiknya mengatakan itu, bukan mendiamkannya.
+
 ## Investasi emas & harga pasar
 
 Harga emas diambil dari [logam-mulia-api](https://github.com/iamutaki/logam-mulia-api)
@@ -234,6 +262,51 @@ terlihat diturunkan ke baris-baris di bawahnya.
 Skor keyakinan menggabungkan seberapa jernih gambar terbaca dengan seberapa banyak kolom yang
 berhasil dipahami — scan tajam yang tidak bisa ditafsirkan bukan hasil yang meyakinkan.
 
+## Import dari Money Manager
+
+**Pengaturan → Import data → Dari Money Manager**, pilih file Excel hasil ekspornya. Akun,
+kategori, dan seluruh transaksinya ikut terbawa dalam satu jalan.
+
+**File-nya dibaca di perangkat, tanpa dependensi baru.** `lib/xlsx.js` (~250 baris) membaca
+daftar isi arsip zip-nya sendiri lalu menyerahkan pembongkarannya ke `DecompressionStream`
+milik browser, dan XML-nya ke `DOMParser`. Pustaka spreadsheet siap pakai berukuran beberapa
+kali lipat seluruh aplikasi ini, sementara yang dibutuhkan cuma "berikan isi selnya". Satu-satunya
+pertanyaan gaya yang diajukan ke sebuah sel adalah apakah dia tanggal — karena tanggal di
+spreadsheet hanyalah angka sampai ada format yang mengatakan sebaliknya.
+
+Pemetaannya (`lib/moneyManager.js`) mengenali kolom **dari nama headernya**, bukan posisinya:
+urutan kolom di ekspor Money Manager berubah mengikuti bahasa aplikasinya dan ada-tidaknya mata
+uang kedua. Empat kehati-hatian yang lahir dari file ekspor sungguhan:
+
+- **Satu transfer tercatat dua kali** di sana — sebagai `Transfer-In` di akun penerima dan
+  `Transfer-Out` di akun pengirim. Pasangannya dicocokkan lalu satu dibuang. Pencocokannya
+  dihitung, bukan ditandai, jadi tiga transfer identik di hari yang sama tetap masuk tiga.
+  Kaki yang tidak menemukan pasangan **tetap diimpor** — ekspor sepotong boleh kehilangan
+  duplikat, tidak boleh kehilangan transaksi.
+- **Kolom nominal yang dipakai adalah kolom berjudul kode mata uang** (`IDR`), bukan `Amount`.
+  Untuk pengguna multi-mata-uang, `Amount` berisi angka dalam mata uang akunnya sedangkan kolom
+  kode berisi angka yang sudah dikonversi — dan aplikasi ini hanya mengenal satu mata uang.
+  Kalau ketemu baris mata uang lain, itu diberitahukan, bukan didiamkan.
+- **Money Manager membolehkan "Utang mba tari" dan "Utang mba Tari" hidup berdampingan.** Ejaan
+  disatukan sebelum apa pun dijalankan, supaya kedua kaki transfer masih bisa dipasangkan dan
+  tidak ada baris yang menunjuk ke akun yang tidak akan pernah dibuat.
+- **Jenis akun ditebak dari namanya, lalu ditampilkan untuk dikoreksi.** Nama adalah satu-satunya
+  petunjuk yang dibawa file-nya; "Mandiri kredit" itu kartu, bukan rekening bank, dan "Piutang"
+  bukan "Utang".
+
+Sebelum menulis apa pun, layarnya menunjukkan berapa transaksi yang akan masuk, akun dan kategori
+apa saja yang akan dibuat, dan **berapa baris yang dilewati karena sudah ada**. Duplikat dikenali
+dari tanggal + jenis + nominal + akun + kategori + keterangan yang sama persis, dan dihitung
+sebagai multiset — jadi mengimpor file yang sama dua kali tidak menggandakan apa pun, tapi dua
+kopi identik di hari yang sama tetap dua transaksi.
+
+Penulisannya dipecah 400 baris per permintaan. Satu permintaan berisi tiga ribu baris juga satu
+permintaan yang bisa hilang; kalau gagal di tengah, yang sudah masuk disebutkan apa adanya dan
+file yang sama bisa diimpor ulang — sisanya saja yang tertulis.
+
+Saldo awal akun baru diisi 0. Money Manager tidak mengekspor saldo awal, dan menebaknya dari
+selisih akan membuat angkanya terlihat pasti padahal karangan.
+
 ## Cache lokal
 
 Isi spreadsheet disalin ke `localStorage` setiap kali berubah, dan dipakai untuk menggambar
@@ -262,8 +335,54 @@ Nominal memakai kelas `.amount` (`whitespace-nowrap` + `tabular-nums`) supaya ti
 dan lebarnya tidak bergoyang saat angkanya berubah. Kolom trailing pada baris daftar tidak boleh
 menyusut — judulnya yang mengalah lebih dulu.
 
+**Nominal seukuran judul barisnya, bobot medium — bukan semibold.** Mengikuti pola aplikasi
+money manager: nama akun dan saldonya sama besar, jadi keduanya terbaca sebagai satu baris,
+bukan sebagai angka yang menempel di label. Yang dihilangkan cuma tebalnya. Angka rupiah sudah
+jadi elemen terlebar di barisnya karena diset dengan tabular figures, yang memberi tiap digit
+lebar `0`; menebalkannya juga membuat kolom nominal berteriak mengalahkan hal yang seharusnya
+ia jelaskan.
+
+**Semua isi daftar 13px; yang membedakan peringkat adalah pita dan bobotnya, bukan ukurannya.**
+Judul grup 13px semibold di atas pita abu tipis, barisnya 13px medium, baris keduanya 11px.
+Peringkat sebuah baris datang dari pita di atasnya, **bukan** dari mengecilkan barisnya, jadi
+daftar akun tidak berubah ukuran tergantung ia mendarat di layar yang mana. Tinggi baris 49px,
+masih di atas batas sentuh 44px.
+
+Dua percobaan yang dibuang sebelum sampai ke sini, keduanya karena mencoba memakai *ukuran*
+untuk menyatakan peringkat:
+
+- Judul grup 16px lalu 15px semibold di atas baris 13px — kepalanya jadi berteriak
+  mengalahkan angka yang justru ia perkenalkan.
+- Baris beranda dikecilkan jadi 10px supaya subtotalnya menonjol — langsung terlalu kecil untuk
+  angka yang paling sering dibaca, dan membuat daftar akun yang sama tampil dua ukuran berbeda
+  di dua layar.
+
+Pita menyelesaikan keduanya sekaligus, dan sebagai bonus membuat kartu akun berbentuk sama
+persis dengan header hari di halaman transaksi.
+
+Nominal di baris transaksi tetap 13px, satu tingkat di bawah keterangannya — di sana angkanya
+dipindai turun sebagai kolom, bukan dibaca berpasangan dengan judulnya, dan barisnya sudah
+memuat tiga kolom.
+
 Satu bentuk baris (`ListRow`) dipakai akun, kategori, dan emas. Aksi edit/hapus ada di menu
 kebab, bukan tombol yang selalu tampil.
+
+**Di daftar akun beranda, jenis akun dan subtotalnya duduk di pita**, sementara nama akun dan
+saldonya ada di barisnya: "berapa uangku di bank" jauh lebih sering ditanyakan daripada "berapa
+di rekening yang satu ini". Label jenis di tiap baris ikut dihapus — pitanya sudah
+mengatakannya.
+
+**Bulan dipilih dengan panah ‹ ›, bukan dropdown.** Gerakan yang benar-benar dilakukan orang
+adalah "mundur satu bulan", dan itu harusnya satu ketukan, bukan tiga plus memindai 16 pilihan.
+Labelnya sendiri masih `<select>` yang tembus pandang di atas teks, jadi lompat setahun ke
+belakang tetap bisa tanpa kontrol kedua. Ditulis singkat ("Agu 2026") supaya "September" tidak
+pernah terpotong di antara kedua panah.
+
+**Filter akun bertahan saat berpindah halaman.** Kalau daftar sedang difilter ke satu akun,
+form transaksi baru membuka akun itu juga — orang yang menyaring ke satu akun hampir selalu
+sedang mau mencatat transaksi lain di akun yang sama. Nilainya disimpan di `localStorage`
+(`lib/lastAccount.js`), bukan di pengaturan: ini jejak aktivitas, bukan preferensi. Akun yang
+sudah dihapus dilupakan begitu daftar akun termuat, supaya tidak ada layar kosong tanpa sebab.
 
 **Halaman transaksi punya bentuk barisnya sendiri**, mengikuti pola aplikasi money manager:
 transaksi dikelompokkan per tanggal, dengan header hari berisi nomor tanggal, nama hari, dan
@@ -297,7 +416,8 @@ src/
   context/{Auth,Data,Settings,Toast}Context.jsx
   hooks/     useGoldPrice · useLocalStorage
   services/  appApi · googleApi · sheets · workbook · repository · goldPrice
-  lib/       constants · dates · format · summary · id
+  lib/       constants · dates · format · summary · id · lastAccount
+             xlsx · moneyManager   pembaca .xlsx + pemetaan ekspor Money Manager
 ```
 
 `services/` berlapis dari bawah ke atas: `googleApi` (fetch + token) → `sheets` (REST Sheets/Drive)
@@ -313,8 +433,8 @@ Mengacu ke spesifikasi MVP:
 |---|-------|--------|
 | 1 | Autentikasi Google | ✅ |
 | 2 | Form transaksi (validasi inline) | ✅ |
-| 3 | Dashboard (saldo akun, ringkasan bulan, top pengeluaran) | ✅ |
-| 4 | Daftar transaksi (filter, cari, edit, hapus, bulk, paginasi) | ✅ |
+| 3 | Dashboard (saldo akun, ringkasan bulan, top pengeluaran) | ✅ donat kategori + riwayat pertumbuhan aset |
+| 4 | Daftar transaksi (filter, cari, edit, hapus, bulk, paginasi) | ✅ pindah bulan lewat panah ‹ › |
 | 5 | Manajer kategori | ✅ (kecuali drag & drop urutan) |
 | 6 | Monthly Claude Review | ⬜ belum dikerjakan |
 | 7 | Merchant learning | ❌ dibatalkan — kolom `merchant` diganti `account` |
@@ -325,6 +445,7 @@ Mengacu ke spesifikasi MVP:
 | — | Aset / kewajiban / total kekayaan | ✅ tambahan di luar spec |
 | — | Investasi emas + harga pasar + untung/rugi | ✅ tambahan di luar spec (jual emas belum) |
 | — | Import transaksi dari screenshot (OCR) | ✅ termasuk mutasi berisi banyak transaksi |
+| — | Import dari Money Manager (.xlsx) | ✅ akun, kategori, transaksi, transfer, deteksi duplikat |
 | — | Cache lokal agar buka aplikasi instan | ✅ |
 | — | PWA installable | ✅ tanpa service worker / offline |
 

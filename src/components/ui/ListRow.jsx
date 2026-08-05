@@ -8,6 +8,17 @@ import { ChevronRightIcon } from './icons.jsx'
  * three-line one at ~64px, which is the budget the brief asks for. The trailing
  * column never shrinks, so an amount can never wrap or be ellipsised - the title
  * gives up width first.
+ *
+ * One scale for every row in the app: **13 title / 13 amount / 11 second line**,
+ * with the group heading above them at 15. Even 2px steps, and each step has a
+ * job - heading, row, qualifier. The rank of a row comes from the heading it
+ * sits under, never from shrinking the row itself, so a list does not change
+ * size depending on which screen it landed on.
+ *
+ * The amount matches its title in size and is set medium, not semibold. A long
+ * rupiah figure is already the widest thing in the row - tabular figures give
+ * every digit the width of a `0` - so bolding it as well made the column shout
+ * down everything it was meant to describe.
  */
 export default function ListRow ({
   leading,
@@ -28,7 +39,7 @@ export default function ListRow ({
       {leading && <span className="shrink-0">{leading}</span>}
 
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-body font-medium">{title}</span>
+        <span className="block truncate text-caption font-medium">{title}</span>
         {(subtitle || meta) && (
           <span className="block truncate text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">
             {subtitle}
@@ -40,7 +51,9 @@ export default function ListRow ({
 
       {(trailing || trailingSub) && (
         <span className="shrink-0 text-right">
-          {trailing && <span className="block text-amount font-semibold amount">{trailing}</span>}
+          {trailing && (
+            <span className="block text-caption font-medium amount">{trailing}</span>
+          )}
           {trailingSub && (
             <span className="block text-[11px] leading-4 amount text-subtitle dark:text-subtitle-dark">
               {trailingSub}

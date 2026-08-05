@@ -61,7 +61,8 @@ export default function AccountBalances ({ balances, gold }) {
                   to={accountTransactionsPath(account.name)}
                   leading={<RowIcon icon={account.icon} color={account.color} />}
                   title={account.name}
-                  subtitle={group.label}
+                  /* The group heading already names the kind - repeating it on
+                     every row was noise competing with the balance. */
                   trailing={
                     <span className={balance < 0 ? 'text-expense dark:text-red-400' : ''}>
                       {money(balance)}

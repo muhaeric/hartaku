@@ -50,7 +50,7 @@ export default function TransactionRow ({ transaction, selecting, selected, onSe
         value={transaction.amount}
         type={transaction.type}
         signed
-        className="shrink-0 text-caption font-semibold"
+        className="shrink-0 text-caption font-medium"
       />
     </button>
   )

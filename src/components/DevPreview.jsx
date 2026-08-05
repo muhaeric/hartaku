@@ -1,14 +1,25 @@
 import { ACCOUNT_KINDS } from '../lib/constants.js'
 import { accountTransactionsPath } from '../lib/links.js'
-import { accountBalances, groupByDay, netWorth, summarize } from '../lib/summary.js'
+import {
+  accountBalances,
+  categoryBreakdown,
+  goldSummary,
+  groupByDay,
+  netWorth,
+  summarize
+} from '../lib/summary.js'
 import DayGroupHeader from './Transaction/DayGroup.jsx'
 import PeriodSummary from './Transaction/PeriodSummary.jsx'
 import TransactionRow from './Transaction/TransactionRow.jsx'
+import AccountBalances from './Dashboard/AccountBalances.jsx'
 import NetWorthCard from './Dashboard/NetWorthCard.jsx'
+import NetWorthTrend from './Dashboard/NetWorthTrend.jsx'
+import TopExpenses from './Dashboard/TopExpenses.jsx'
 import Button from './ui/Button.jsx'
-import { Card, GroupLabel, SectionHeader } from './ui/Card.jsx'
+import { Card, SectionHeader } from './ui/Card.jsx'
 import KebabMenu from './ui/KebabMenu.jsx'
 import ListRow, { RowIcon } from './ui/ListRow.jsx'
+import MonthStepper from './ui/MonthStepper.jsx'
 import SegmentedControl from './ui/SegmentedControl.jsx'
 import SelectPill from './ui/SelectPill.jsx'
 import { PencilIcon, PlusIcon, SearchIcon, TrashIcon } from './ui/icons.jsx'
@@ -36,6 +47,17 @@ const TRANSACTIONS = [
   { id: 'g', date: '2026-08-02', type: 'expense', amount: 58000, category: 'Food & Beverages', account: 'Gopay', description: 'Kopi Kenangan Grand Indonesia', createdAt: '6' }
 ]
 
+/** Eighteen months of salary in, spending out - enough for the trend to have a shape. */
+const HISTORY = Array.from({ length: 18 }, (_, index) => {
+  const offset = 3 + index
+  const date = `${2025 + Math.floor((offset - 1) / 12)}-${String(((offset - 1) % 12) + 1).padStart(2, '0')}`
+
+  return [
+    { id: `h${index}i`, date: `${date}-25`, type: 'income', amount: 8500000, category: 'Salary', account: 'Bank Jago', description: '', createdAt: '' },
+    { id: `h${index}e`, date: `${date}-15`, type: 'expense', amount: 5200000 + index * 80000, category: 'Household', account: 'Bank Mandiri', description: '', createdAt: '' }
+  ]
+}).flat()
+
 const CATEGORIES = [
   { id: 'c1', name: 'Food & Beverages', color: '#eb6834' },
   { id: 'c2', name: 'Transportation', color: '#2a78d6' },
@@ -48,11 +70,6 @@ export default function DevPreview () {
   const worth = netWorth(balances, 0)
   const days = groupByDay(TRANSACTIONS)
   const summary = summarize(TRANSACTIONS)
-
-  const groups = ACCOUNT_KINDS.map((kind) => ({
-    ...kind,
-    entries: balances.filter((entry) => entry.account.kind === kind.value)
-  })).filter((group) => group.entries.length)
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-section px-page py-3">
@@ -68,7 +85,7 @@ export default function DevPreview () {
           <input className="field h-9 py-0 pl-9" placeholder="Cari keterangan…" readOnly />
         </div>
         <div className="grid grid-cols-2 gap-gap">
-          <SelectPill label="Bulan" value="a" onChange={() => {}} options={[{ value: 'a', label: 'Agustus 2026' }]} />
+          <MonthStepper value="2026-08" options={['2026-09', '2026-08', '2026-07']} onChange={() => {}} />
           <SelectPill label="Akun" value="a" onChange={() => {}} options={[{ value: 'a', label: 'Semua akun' }]} />
         </div>
         <SegmentedControl
@@ -119,30 +136,18 @@ export default function DevPreview () {
       </Card>
 
       <h1 className="pt-4 text-page-title font-bold tracking-tight">Beranda</h1>
-      <NetWorthCard worth={worth} />
+      <NetWorthCard worth={worth}>
+        <NetWorthTrend accounts={ACCOUNTS} transactions={HISTORY} goldLots={[]} />
+      </NetWorthCard>
+
+      {/* The real components, not a copy of them: this harness exists to catch
+          density and type-scale regressions, which a copy would not show. */}
+      <AccountBalances balances={balances} gold={goldSummary([], null)} />
 
       <div className="space-y-gap-normal">
-        <SectionHeader title="Akun" action={<span className="text-caption font-semibold text-brand-500">Kelola</span>} />
-        <Card flush as="div" className="overflow-hidden">
-          {groups.map((group) => (
-            <div key={group.value}>
-              <GroupLabel trailing={new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(group.entries.reduce((sum, e) => sum + e.balance, 0))}>
-                {group.label}
-              </GroupLabel>
-              <div className="divide-hairline">
-                {group.entries.map(({ account, balance }) => (
-                  <ListRow
-                    key={account.id}
-                    to={accountTransactionsPath(account.name)}
-                    leading={<RowIcon icon={account.icon} color={account.color} />}
-                    title={account.name}
-                    subtitle={group.label}
-                    trailing={new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(balance)}
-                  />
-                ))}
-              </div>
-            </div>
-          ))}
+        <SectionHeader title="Pengeluaran terbesar" />
+        <Card flush as="div">
+          <TopExpenses breakdown={categoryBreakdown(TRANSACTIONS, 'expense')} categories={CATEGORIES} />
         </Card>
       </div>
 

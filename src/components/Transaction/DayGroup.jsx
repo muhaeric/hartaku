@@ -22,12 +22,12 @@ export default function DayGroupHeader ({ day }) {
 
       <span className="ml-auto flex items-center gap-2.5">
         {day.income > 0 && (
-          <span className="amount text-[11px] font-semibold text-income dark:text-emerald-400">
+          <span className="amount text-[11px] font-medium text-income dark:text-emerald-400">
             {money(day.income)}
           </span>
         )}
         {day.expense > 0 && (
-          <span className="amount text-[11px] font-semibold text-expense dark:text-red-400">
+          <span className="amount text-[11px] font-medium text-expense dark:text-red-400">
             {money(day.expense)}
           </span>
         )}
