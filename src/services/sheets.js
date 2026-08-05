@@ -50,26 +50,36 @@ async function queryDrive (q) {
 }
 
 /**
- * Finds this app's workbooks: by marker first, then by name for spreadsheets
- * created before the marker existed. Results are merged so an older untagged
- * file is never missed.
+ * Every spreadsheet this app can see, most specific match first.
+ *
+ * The last query has no name or tag filter, which sounds broad but is not:
+ * under `drive.file` the API only ever returns files this app created itself,
+ * so the widest possible result is "the spreadsheets Hartaku made". That makes
+ * discovery survive the user renaming the file in Drive - the case that
+ * previously orphaned their data and led to a second, empty workbook.
  */
 export async function findWorkbooks (name) {
   const escaped = name.replace(/'/g, "\\'")
+  const isSpreadsheet = "mimeType='application/vnd.google-apps.spreadsheet' and trashed=false"
 
-  const tagged = await queryDrive(
-    `appProperties has { key='${WORKBOOK_TAG.key}' and value='${WORKBOOK_TAG.value}' } and trashed=false`
-  )
-  const named = await queryDrive(
-    `name='${escaped}' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false`
-  )
+  const queries = [
+    `appProperties has { key='${WORKBOOK_TAG.key}' and value='${WORKBOOK_TAG.value}' } and trashed=false`,
+    `name='${escaped}' and ${isSpreadsheet}`,
+    isSpreadsheet
+  ]
 
   const seen = new Set()
-  return [...tagged, ...named].filter((file) => {
-    if (seen.has(file.id)) return false
-    seen.add(file.id)
-    return true
-  })
+  const found = []
+
+  for (const q of queries) {
+    for (const file of await queryDrive(q)) {
+      if (seen.has(file.id)) continue
+      seen.add(file.id)
+      found.push(file)
+    }
+  }
+
+  return found
 }
 
 export async function getSpreadsheet (spreadsheetId) {

@@ -93,16 +93,29 @@ export async function ensureWorkbook ({ spreadsheetId, allowCreate = false } = {
       }
     }
 
+    // Prefer a spreadsheet that actually carries Hartaku's sheets, so a broad
+    // match cannot adopt something unrelated. Only if none qualifies do we fall
+    // back to the first one that merely opens.
+    let fallback = null
     for (const file of existing) {
-      meta = await loadSpreadsheet(file.id)
-      if (meta) break
+      const candidate = await loadSpreadsheet(file.id)
+      if (!candidate) continue
+
+      if (looksLikeWorkbook(candidate)) {
+        meta = candidate
+        break
+      }
+      fallback ??= candidate
     }
+
+    meta ??= fallback
   }
 
   if (!meta && !allowCreate) {
     throw new WorkbookNotFoundError(
-      'Tidak ditemukan spreadsheet Hartaku di akun Google ini. Kalau kamu sudah punya ' +
-        'catatan di perangkat lain, tempel ID spreadsheet-nya supaya datanya tidak terbelah.'
+      'Tidak ada satu pun spreadsheet buatan Hartaku di akun Google ini. Kalau kamu yakin ' +
+        'catatanmu ada, kemungkinan kamu masuk dengan akun Google yang berbeda, atau akses ' +
+        'aplikasi pernah dicabut sehingga file lamanya tidak lagi terlihat oleh Hartaku.'
     )
   }
 
@@ -138,6 +151,11 @@ export async function ensureWorkbook ({ spreadsheetId, allowCreate = false } = {
 
   rememberSpreadsheetId(workbook.spreadsheetId)
   return workbook
+}
+
+/** A Hartaku workbook always has the transactions sheet; a stray file will not. */
+function looksLikeWorkbook (meta) {
+  return (meta.sheets || []).some((sheet) => sheet.properties?.title === SHEET.transactions)
 }
 
 async function loadSpreadsheet (id) {

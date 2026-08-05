@@ -100,9 +100,9 @@ export default function WorkbookSetup ({
 
         {!lookupFailed && (
           <p className="border-t border-hairline pt-4 text-caption text-subtitle dark:border-hairline-dark dark:text-subtitle-dark">
-            Pencarian sudah berjalan normal dan tidak menemukan apa pun. Kalau kamu yakin
-            spreadsheet-nya ada, kemungkinan namanya pernah diubah, atau kamu sedang masuk dengan
-            akun Google yang berbeda.
+            Pencariannya sudah mencakup seluruh spreadsheet yang pernah dibuat Hartaku di akun ini,
+            apa pun namanya sekarang — dan hasilnya kosong. Periksa email yang tampil di layar
+            login: paling sering penyebabnya akun Google yang berbeda.
           </p>
         )}
       </div>
