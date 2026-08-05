@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { formatAmountInput } from '../../lib/format.js'
+import { readLastAccount } from '../../lib/lastAccount.js'
 import { Card } from '../ui/Card.jsx'
 import { EmptyState, SkeletonRows } from '../ui/Feedback.jsx'
 import { ScanIcon } from '../ui/icons.jsx'
@@ -20,8 +21,36 @@ export default function TransactionFormPage () {
   const editing = Boolean(id)
   const existing = editing ? transactions.find((transaction) => transaction.id === id) : null
 
-  const [draft, setDraft] = useState(() => emptyDraft(settings))
+  /**
+   * Someone filtering the list to one account is almost always about to log
+   * another transaction on that same account, so the filter wins over the
+   * configured default. A remembered account that has since been deleted is
+   * ignored rather than preselected into a field that cannot be saved.
+   */
+  const newDraft = useCallback(() => {
+    const base = emptyDraft(settings)
+    const remembered = readLastAccount()
+    const known = remembered && accounts.some((account) => account.name === remembered)
+
+    return known ? { ...base, account: remembered } : base
+  }, [settings, accounts])
+
+  const [draft, setDraft] = useState(newDraft)
   const [busy, setBusy] = useState(false)
+
+  /**
+   * Accounts arrive from cache before the first paint most of the time, but not
+   * on a cold start - so fill the account in once they land, and only while the
+   * field is still untouched.
+   */
+  const prefilled = useRef(false)
+
+  useEffect(() => {
+    if (editing || prefilled.current || !accounts.length) return
+
+    prefilled.current = true
+    setDraft((current) => (current.account ? current : newDraft()))
+  }, [editing, accounts, newDraft])
 
   useEffect(() => {
     if (!existing) return
@@ -62,7 +91,7 @@ export default function TransactionFormPage () {
         await addTransaction(values)
         toast.success('Transaksi ditambahkan!')
         // Reset so several entries can be logged in a row.
-        setDraft(emptyDraft(settings))
+        setDraft(newDraft())
       }
     } catch (err) {
       toast.error(err.message)

@@ -4,6 +4,7 @@ import { useData } from '../../context/DataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { PAGE_SIZE, PAGINATION_THRESHOLD } from '../../lib/constants.js'
 import { buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
+import { readLastAccount, writeLastAccount } from '../../lib/lastAccount.js'
 import { filterByMonth, groupByDay, monthsWithData, summarize } from '../../lib/summary.js'
 import Button from '../ui/Button.jsx'
 import { Card } from '../ui/Card.jsx'
@@ -34,7 +35,13 @@ export default function TransactionList () {
   const accountParam = params.get('account') || ''
 
   const [month, setMonth] = useState(currentMonthKey)
-  const [filters, setFilters] = useState(() => ({ ...INITIAL_FILTERS, account: accountParam }))
+  // The account filter survives leaving the page: it is what the entry form
+  // preselects, so silently forgetting it here would make that preselection
+  // look random.
+  const [filters, setFilters] = useState(() => ({
+    ...INITIAL_FILTERS,
+    account: accountParam || readLastAccount()
+  }))
   // Null so the month jump still runs once the transactions have loaded.
   const appliedAccount = useRef(null)
   const [selecting, setSelecting] = useState(false)
@@ -97,6 +104,19 @@ export default function TransactionList () {
 
   useEffect(() => setPage(1), [month, filters])
   useEffect(() => setSelected([]), [month, filters])
+
+  useEffect(() => writeLastAccount(filters.account), [filters.account])
+
+  /**
+   * A remembered filter pointing at a deleted account would show an empty list
+   * with no obvious cause, so drop it once the accounts are known.
+   */
+  useEffect(() => {
+    if (!filters.account || !accounts.length) return
+    if (accounts.some((account) => account.name === filters.account)) return
+
+    setFilters((current) => ({ ...current, account: '' }))
+  }, [accounts, filters.account])
 
   /**
    * Landing on an account whose current month happens to be empty would look
