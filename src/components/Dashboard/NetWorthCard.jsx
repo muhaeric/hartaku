@@ -6,7 +6,7 @@ import { formatCurrency } from '../../lib/format.js'
  * the number people come for; the two supporting figures use compact notation
  * so three amounts fit one line on a 375px screen without any of them wrapping.
  */
-export default function NetWorthCard ({ worth }) {
+export default function NetWorthCard ({ worth, children }) {
   const { settings } = useSettings()
   const money = (value, compact = false) => formatCurrency(value, settings.currency, { compact })
 
@@ -31,6 +31,9 @@ export default function NetWorthCard ({ worth }) {
           tone={worth.liabilities > 0 ? 'text-expense dark:text-red-400' : ''}
         />
       </div>
+
+      {/* The history belongs to this figure, so it lives in the same card. */}
+      {children}
     </section>
   )
 }

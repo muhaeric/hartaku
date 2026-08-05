@@ -1,4 +1,4 @@
-import { monthKeyOf } from './dates.js'
+import { PERIODS, monthKeyOf, todayIso } from './dates.js'
 
 export function filterByMonth (transactions, monthKey) {
   return transactions.filter((transaction) => monthKeyOf(transaction.date) === monthKey)
@@ -107,6 +107,74 @@ export function netWorth (balances, goldValue = 0) {
   }
 
   return { assets, liabilities, total: assets - liabilities }
+}
+
+/**
+ * What everything added up to at the close of each period, oldest first.
+ *
+ * Built from the same rules `accountBalances` uses, so the last point lands on
+ * the figure shown above it - with one deliberate exception: **gold is held at
+ * its purchase cost here**, not at today's buyback price. Applying today's
+ * price to the grams held last March would invent growth that never happened,
+ * so when there is gold the series runs below the headline by exactly the
+ * unrealised profit, and the chart says so.
+ *
+ * Rows pointing at an account that no longer exists are ignored, again matching
+ * the balance calculation - a transfer with one missing end therefore does move
+ * the total, because as far as the app can see the money left.
+ */
+export function netWorthHistory (accounts, transactions, goldLots = [], period = 'month', limit = 12) {
+  const bucket = PERIODS[period] || PERIODS.month
+  const known = new Set(accounts.map((account) => account.name))
+
+  const events = []
+
+  for (const transaction of transactions) {
+    if (!transaction.date) continue
+    let delta = 0
+
+    if (transaction.type === 'income') {
+      if (known.has(transaction.account)) delta = transaction.amount
+    } else if (transaction.type === 'transfer') {
+      if (known.has(transaction.account)) delta -= transaction.amount
+      if (known.has(transaction.toAccount)) delta += transaction.amount
+    } else if (known.has(transaction.account)) {
+      delta = -transaction.amount
+    }
+
+    if (delta) events.push({ date: transaction.date, delta })
+  }
+
+  for (const lot of goldLots) {
+    // Cash out, metal in, at the same number: a purchase moves nothing overall
+    // unless the account it was paid from is gone.
+    if (lot.date && !known.has(lot.fromAccount)) events.push({ date: lot.date, delta: lot.cost })
+  }
+
+  if (!events.length) return []
+  events.sort((a, b) => a.date.localeCompare(b.date))
+
+  const today = todayIso()
+  const lastEvent = events[events.length - 1].date
+  const finalKey = bucket.keyOf(lastEvent > today ? lastEvent : today)
+
+  const series = []
+  let running = accounts.reduce((sum, account) => sum + (account.openingBalance || 0), 0)
+  let index = 0
+
+  // The cap is a runaway guard, not a limit anyone should reach: 600 weeks is
+  // eleven years of history.
+  for (let key = bucket.keyOf(events[0].date); key <= finalKey && series.length < 600; ) {
+    while (index < events.length && bucket.keyOf(events[index].date) <= key) {
+      running += events[index].delta
+      index += 1
+    }
+
+    series.push({ key, total: running })
+    key = bucket.next(key)
+  }
+
+  return series.slice(-limit)
 }
 
 /** Totals per category for one flow, largest first. */

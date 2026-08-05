@@ -16,6 +16,7 @@ import { ErrorState, SkeletonRows, SkeletonSummary } from '../ui/Feedback.jsx'
 import AccountBalances from './AccountBalances.jsx'
 import MonthSelector from './MonthSelector.jsx'
 import NetWorthCard from './NetWorthCard.jsx'
+import NetWorthTrend from './NetWorthTrend.jsx'
 import SummaryCards from './SummaryCards.jsx'
 import TopExpenses from './TopExpenses.jsx'
 
@@ -59,7 +60,14 @@ export default function Dashboard () {
 
   return (
     <>
-      <NetWorthCard worth={worth} />
+      <NetWorthCard worth={worth}>
+        <NetWorthTrend
+          accounts={accounts}
+          transactions={transactions}
+          goldLots={goldLots}
+          holdsGold={gold.grams > 0}
+        />
+      </NetWorthCard>
 
       <AccountBalances balances={balances} gold={gold} />
 
