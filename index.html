@@ -43,69 +43,17 @@
   </head>
   <body>
     <!--
-      React replaces everything inside #root on mount. Until then this is what a
-      visitor sees - and, more to the point, it is all a crawler that runs no
-      JavaScript will ever see. Google's OAuth branding review reads this page to
-      check the app name and purpose, so both have to be in the served HTML
-      rather than rendered later.
+      React replaces everything inside #root on mount, so what lands here is only
+      ever seen by something that runs no JavaScript - a crawler, or Google's
+      OAuth branding review, which reads this page to check the app name and
+      purpose.
+
+      The placeholder below is filled at build time from src/lib/landing.js by
+      the landingHtmlPlugin in vite.config.js - the same object the React landing
+      page renders. Keep it a placeholder: two hand-written copies silently
+      disagreeing is what made the review fail in the first place.
     -->
-    <div id="root">
-      <main class="mx-auto flex min-h-dvh w-full max-w-md flex-col px-page py-8">
-        <div class="flex flex-1 flex-col justify-center">
-          <div class="text-center">
-            <div
-              class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-card bg-brand-500 text-[26px]"
-            >
-              💸
-            </div>
-            <h1 class="text-page-title font-bold tracking-tight">Hartaku</h1>
-            <p class="mt-2 text-body text-subtitle dark:text-subtitle-dark">
-              Pencatat keuangan pribadi yang menyimpan datamu di Google Spreadsheet milikmu
-              sendiri — bukan di server kami.
-            </p>
-          </div>
-
-          <h2 class="mt-7 text-caption font-semibold">Apa yang bisa dilakukan Hartaku</h2>
-          <ul class="mt-2 space-y-2.5">
-            <li class="text-caption text-subtitle dark:text-subtitle-dark">
-              📊 Mencatat pemasukan dan pengeluaran harian, lengkap dengan kategori, lalu
-              meringkasnya per bulan.
-            </li>
-            <li class="text-caption text-subtitle dark:text-subtitle-dark">
-              🏦 Mengelola banyak akun — tunai, bank, e-wallet, piutang — beserta transfer
-              antar akun dan total aset serta kewajiban.
-            </li>
-            <li class="text-caption text-subtitle dark:text-subtitle-dark">
-              🥇 Mencatat pembelian emas dan menilainya dengan harga pasar harian, termasuk
-              hitungan untung dan rugi.
-            </li>
-            <li class="text-caption text-subtitle dark:text-subtitle-dark">
-              🧾 Membaca transaksi dari screenshot mutasi bank. Pemrosesan gambar berjalan di
-              perangkatmu sendiri.
-            </li>
-          </ul>
-
-          <div
-            class="mt-6 rounded-card border border-hairline bg-surface p-3.5 dark:border-hairline-dark dark:bg-surface-dark"
-          >
-            <h2 class="text-caption font-semibold">Data kamu tetap milik kamu</h2>
-            <p class="mt-1 text-caption text-subtitle dark:text-subtitle-dark">
-              Hartaku masuk dengan akun Google dan hanya meminta izin
-              <code class="font-mono">drive.file</code> — akses terbatas pada spreadsheet yang
-              dibuatnya sendiri. File lain di Google Drive kamu tidak bisa dilihat maupun
-              disentuh. Tidak ada analytics dan tidak ada pelacakan.
-            </p>
-          </div>
-        </div>
-
-        <footer
-          class="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-hairline pt-4 text-caption text-subtitle dark:border-hairline-dark dark:text-subtitle-dark"
-        >
-          <a class="font-medium text-brand-500" href="/privacy">Kebijakan Privasi</a>
-          <a class="font-medium text-brand-500" href="/terms">Syarat &amp; Ketentuan</a>
-        </footer>
-      </main>
-    </div>
+    <div id="root"><!--landing--></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
