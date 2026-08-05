@@ -6,6 +6,7 @@ import {
   TRANSACTION_HEADERS
 } from '../lib/constants.js'
 import { newId } from '../lib/id.js'
+import { formatTags, mergeTags, normalizeTags, parseTags, sameTags } from '../lib/tags.js'
 import {
   appendValues,
   batchUpdateValues,
@@ -14,13 +15,13 @@ import {
   updateValues
 } from './sheets.js'
 
-const TX_RANGE = `${SHEET.transactions}!A2:J`
+const TX_RANGE = `${SHEET.transactions}!A2:K`
 const CAT_RANGE = `${SHEET.categories}!A2:G`
-const ACC_RANGE = `${SHEET.accounts}!A2:H`
+const ACC_RANGE = `${SHEET.accounts}!A2:I`
 const GOLD_RANGE = `${SHEET.gold}!A2:I`
-const TX_LAST_COLUMN = 'J'
+const TX_LAST_COLUMN = 'K'
 const CAT_LAST_COLUMN = 'G'
-const ACC_LAST_COLUMN = 'H'
+const ACC_LAST_COLUMN = 'I'
 const GOLD_LAST_COLUMN = 'I'
 
 const TRANSACTION_TYPE_VALUES = ['expense', 'income', 'transfer']
@@ -40,6 +41,7 @@ function rowToTransaction (row, index) {
     updatedAt: row[8] ?? '',
     // Destination account; only set on transfers.
     toAccount: row[9] ?? '',
+    tags: parseTags(row[10]),
     rowNumber: index + 2
   }
 }
@@ -55,7 +57,8 @@ function transactionToRow (transaction) {
     transaction.description || '',
     transaction.createdAt,
     transaction.updatedAt,
-    transaction.toAccount || ''
+    transaction.toAccount || '',
+    formatTags(transaction.tags)
   ]
 }
 
@@ -69,6 +72,9 @@ function rowToAccount (row, index) {
     openingBalance: Number(row[5]) || 0,
     description: row[6] ?? '',
     sortOrder: Number(row[7]) || 0,
+    // Hidden from the pickers and lists; its transactions stay exactly where
+    // they are, so every balance and total still counts it.
+    archived: isTrue(row[8]),
     rowNumber: index + 2
   }
 }
@@ -82,8 +88,15 @@ function accountToRow (account) {
     account.icon,
     Number(account.openingBalance) || 0,
     account.description || '',
-    account.sortOrder ?? 0
+    account.sortOrder ?? 0,
+    account.archived ? 'TRUE' : ''
   ]
+}
+
+/** The sheet is hand-editable, so a checkbox, a formula and a typed word all land here. */
+function isTrue (value) {
+  if (typeof value === 'boolean') return value
+  return ['true', 'ya', 'yes', '1'].includes(String(value ?? '').trim().toLowerCase())
 }
 
 function rowToCategory (row, index) {
@@ -173,6 +186,7 @@ export async function createTransaction (workbook, input) {
   const transaction = {
     ...input,
     id: newId(),
+    tags: normalizeTags(input.tags),
     createdAt: now,
     updatedAt: now
   }
@@ -191,6 +205,7 @@ export async function createTransactions (workbook, inputs) {
   const transactions = inputs.map((input) => ({
     ...input,
     id: newId(),
+    tags: normalizeTags(input.tags),
     // An importer knows when the row was really written; without that, rows
     // brought in from another app would all share one timestamp and lose their
     // order within a day.
@@ -210,7 +225,12 @@ export async function updateTransaction (workbook, input) {
   const rowNumber = await resolveRowNumber(workbook, TX_RANGE, input.id, input.rowNumber)
   if (!rowNumber) throw new Error('Transaksi tidak ditemukan - mungkin sudah dihapus.')
 
-  const transaction = { ...input, rowNumber, updatedAt: new Date().toISOString() }
+  const transaction = {
+    ...input,
+    rowNumber,
+    tags: normalizeTags(input.tags),
+    updatedAt: new Date().toISOString()
+  }
   await updateValues(
     workbook.spreadsheetId,
     `${SHEET.transactions}!A${rowNumber}:${TX_LAST_COLUMN}${rowNumber}`,
@@ -250,6 +270,42 @@ export async function moveTransactions (workbook, ids, account) {
 
   await batchUpdateValues(workbook.spreadsheetId, data)
   return { moved, updatedAt }
+}
+
+/**
+ * Puts tags on a batch of transactions, touching only the tag and updated_at
+ * cells for the same reason `moveTransactions` does: after a bulk selection the
+ * rest of the row may already have moved on, and a full-row write would send a
+ * stale copy of it back.
+ *
+ * Adding is the default and merges with whatever the row already carries -
+ * labelling forty rows "reimburse" should not silently strip the tags they were
+ * filed under before. Replacing is the deliberate option, and clearing is just
+ * replacing with nothing.
+ */
+export async function tagTransactions (workbook, ids, tags, { replace = false } = {}) {
+  const wanted = new Set(ids)
+  const rows = await getValues(workbook.spreadsheetId, TX_RANGE)
+  const updatedAt = new Date().toISOString()
+
+  const data = []
+  const tagged = []
+
+  rows.forEach((row, index) => {
+    if (!wanted.has(row[0])) return
+
+    const current = parseTags(row[10])
+    const next = replace ? normalizeTags(tags) : mergeTags(current, tags)
+    if (sameTags(current, next)) return
+
+    const rowNumber = index + 2
+    data.push({ range: `${SHEET.transactions}!K${rowNumber}`, values: [[formatTags(next)]] })
+    data.push({ range: `${SHEET.transactions}!I${rowNumber}`, values: [[updatedAt]] })
+    tagged.push({ id: row[0], tags: next })
+  })
+
+  await batchUpdateValues(workbook.spreadsheetId, data)
+  return { tagged, updatedAt }
 }
 
 export async function deleteTransactions (workbook, ids) {

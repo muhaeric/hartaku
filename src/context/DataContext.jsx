@@ -26,6 +26,7 @@ import {
   moveTransactions,
   renameGoldAccountReferences,
   renameReferences,
+  tagTransactions,
   updateAccount,
   updateCategory,
   updateGoldLot,
@@ -189,6 +190,22 @@ export function DataProvider ({ children }) {
     [withWorkbook]
   )
 
+  const tagTransactionsBatch = useCallback(
+    withWorkbook(async (workbook, ids, tags, options) => {
+      const { tagged, updatedAt } = await tagTransactions(workbook, ids, tags, options)
+      const byId = new Map(tagged.map((entry) => [entry.id, entry.tags]))
+
+      setState((current) => ({
+        ...current,
+        transactions: current.transactions.map((item) =>
+          byId.has(item.id) ? { ...item, tags: byId.get(item.id), updatedAt } : item
+        )
+      }))
+      return tagged
+    }),
+    [withWorkbook]
+  )
+
   const removeTransactions = useCallback(
     withWorkbook(async (workbook, ids) => {
       const deleted = await deleteTransactions(workbook, ids)
@@ -306,6 +323,27 @@ export function DataProvider ({ children }) {
     [withWorkbook]
   )
 
+  /**
+   * Archiving is an edit like any other, but it is worth its own entry point:
+   * the callers that hide an account have the id and nothing else, and asking
+   * them to assemble a whole account record just to flip one flag is how a
+   * stale copy of some other field ends up written back over the good one.
+   */
+  const archiveAccount = useCallback(
+    withWorkbook(async (workbook, id, archived) => {
+      const account = latest.current.accounts.find((item) => item.id === id)
+      if (!account) throw new Error('Akun tidak ditemukan - mungkin sudah dihapus.')
+
+      const saved = await updateAccount(workbook, { ...account, archived })
+      setState((current) => ({
+        ...current,
+        accounts: current.accounts.map((item) => (item.id === saved.id ? saved : item))
+      }))
+      return saved
+    }),
+    [withWorkbook]
+  )
+
   const removeAccount = useCallback(
     withWorkbook(async (workbook, id) => {
       await deleteAccount(workbook, id)
@@ -369,14 +407,27 @@ export function DataProvider ({ children }) {
     await load({ allowCreate: true })
   }, [load])
 
+  /**
+   * What every picker and account list should offer. `accounts` stays the full
+   * set: names are how transactions point at accounts, so anything resolving a
+   * name - balances, renames, the "this filter points at nothing" check - has to
+   * keep seeing the archived ones.
+   */
+  const activeAccounts = useMemo(
+    () => state.accounts.filter((account) => !account.archived),
+    [state.accounts]
+  )
+
   const value = useMemo(
     () => ({
       ...state,
+      activeAccounts,
       reload: load,
       addTransaction,
       addTransactions: addTransactionsBatch,
       editTransaction,
       moveTransactions: moveTransactionsToAccount,
+      tagTransactions: tagTransactionsBatch,
       removeTransactions,
       addCategory,
       addCategories: addCategoriesBatch,
@@ -385,6 +436,7 @@ export function DataProvider ({ children }) {
       addAccount,
       addAccounts: addAccountsBatch,
       editAccount,
+      archiveAccount,
       removeAccount,
       addGoldLot,
       editGoldLot,
@@ -394,11 +446,13 @@ export function DataProvider ({ children }) {
     }),
     [
       state,
+      activeAccounts,
       load,
       addTransaction,
       addTransactionsBatch,
       editTransaction,
       moveTransactionsToAccount,
+      tagTransactionsBatch,
       removeTransactions,
       addCategory,
       addCategoriesBatch,
@@ -407,6 +461,7 @@ export function DataProvider ({ children }) {
       addAccount,
       addAccountsBatch,
       editAccount,
+      archiveAccount,
       removeAccount,
       addGoldLot,
       editGoldLot,

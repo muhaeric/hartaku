@@ -20,7 +20,7 @@ export default function SettingsPage () {
   const toast = useToast()
   const { user, signOut } = useAuth()
   const { settings, updateSettings, resetSettings } = useSettings()
-  const { categories, accounts, workbook, useSpreadsheet } = useData()
+  const { categories, activeAccounts, workbook, useSpreadsheet } = useData()
 
   const [sheetId, setSheetId] = useState('')
   const [switching, setSwitching] = useState(false)
@@ -95,7 +95,7 @@ export default function SettingsPage () {
             onChange={(defaultAccount) => updateSettings({ defaultAccount })}
             options={[
               { value: '', label: 'Tidak ada' },
-              ...accounts.map((account) => ({ value: account.name, label: account.name }))
+              ...activeAccounts.map((account) => ({ value: account.name, label: account.name }))
             ]}
           />
         </Row>

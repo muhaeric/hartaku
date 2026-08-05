@@ -25,6 +25,13 @@
     @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-canvas dark:ring-offset-canvas-dark;
   }
 
+  /* The search field draws its own clear button, so WebKit's would be a second
+     one sitting next to it. */
+  input[type='search']::-webkit-search-cancel-button,
+  input[type='search']::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+
   /* Amounts must never wrap or shift width as digits change. */
   .amount {
     @apply whitespace-nowrap tabular-nums;

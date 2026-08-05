@@ -17,7 +17,7 @@ import GoldForm, { emptyGoldLot } from './GoldForm.jsx'
 export default function GoldManager () {
   const toast = useToast()
   const { settings } = useSettings()
-  const { goldLots, accounts, addGoldLot, editGoldLot, removeGoldLot } = useData()
+  const { goldLots, accounts, activeAccounts, addGoldLot, editGoldLot, removeGoldLot } = useData()
   const { quote, loading, error, stale, refresh } = useGoldPrice()
 
   const [editing, setEditing] = useState(null)
@@ -25,6 +25,14 @@ export default function GoldManager () {
 
   const summary = useMemo(() => goldSummary(goldLots, quote?.buybackPerGram), [goldLots, quote])
   const money = (value) => formatCurrency(value, settings.currency)
+
+  /** As in the transaction form: an archived account already on the lot stays offered. */
+  const formAccounts = useMemo(() => {
+    const kept = accounts.filter(
+      (account) => account.archived && account.name === editing?.fromAccount
+    )
+    return kept.length ? [...activeAccounts, ...kept] : activeAccounts
+  }, [accounts, activeAccounts, editing?.fromAccount])
 
   const handleSubmit = async (values) => {
     try {
@@ -146,7 +154,7 @@ export default function GoldManager () {
           open
           key={editing.id || 'new'}
           initial={editing}
-          accounts={accounts}
+          accounts={formAccounts}
           onSubmit={handleSubmit}
           onClose={() => setEditing(null)}
         />
@@ -163,8 +171,22 @@ export default function GoldManager () {
   )
 }
 
-function GoldPortfolio ({ summary, quote, loading, error, stale, onRefresh, money }) {
+/**
+ * Value, then profit, then the four figures behind them.
+ *
+ * Profit gets a full-width row of its own rather than a cell in the grid.
+ * Amounts never wrap - a rupiah figure that reflows mid-number is unreadable -
+ * so "−Rp4.349.000 (−10,1%)" in a half-width cell had nowhere to go but over the
+ * top of the column next to it. It is also the one figure here that people come
+ * to the screen for, so the space is not spent on it grudgingly.
+ *
+ * Everything else is a two-column grid of plain figures, each free to truncate
+ * rather than overflow, with the price the whole card is derived from as the
+ * last line.
+ */
+export function GoldPortfolio ({ summary, quote, loading, error, stale, onRefresh, money }) {
   const hasValue = summary.value !== null
+  const up = summary.profit >= 0
 
   return (
     <Card aria-labelledby="gold-label">
@@ -173,7 +195,7 @@ function GoldPortfolio ({ summary, quote, loading, error, stale, onRefresh, mone
           <p id="gold-label" className="text-caption text-subtitle dark:text-subtitle-dark">
             Nilai emas sekarang
           </p>
-          <p className="mt-0.5 text-hero font-bold tracking-tight amount">
+          <p className="mt-0.5 truncate text-hero font-bold tracking-tight amount">
             {hasValue ? money(summary.value) : '—'}
           </p>
         </div>
@@ -183,46 +205,47 @@ function GoldPortfolio ({ summary, quote, loading, error, stale, onRefresh, mone
           onClick={onRefresh}
           disabled={loading}
           aria-label="Perbarui harga emas"
-          className="tap -mr-1 -mt-1 flex items-center justify-center rounded-control text-subtitle transition hover:bg-black/5 disabled:opacity-40 dark:hover:bg-white/5"
+          className="tap -mr-1 -mt-1 flex shrink-0 items-center justify-center rounded-control text-subtitle transition hover:bg-black/5 disabled:opacity-40 dark:hover:bg-white/5"
         >
           <RefreshIcon className={loading ? 'h-[19px] w-[19px] animate-spin' : 'h-[19px] w-[19px]'} />
         </button>
       </div>
 
+      {hasValue && (
+        <div
+          className={`mt-2 inline-flex max-w-full items-baseline gap-1.5 overflow-hidden rounded-full px-2.5 py-1 text-caption font-semibold ${
+            up
+              ? 'bg-income/10 text-income dark:bg-emerald-400/15 dark:text-emerald-400'
+              : 'bg-expense/10 text-expense dark:bg-red-400/15 dark:text-red-400'
+          }`}
+        >
+          <span className="truncate amount">
+            {up ? '+' : '−'}
+            {money(Math.abs(summary.profit))}
+          </span>
+          <span className="shrink-0 amount opacity-80">{formatPercent(summary.profitPct)}</span>
+        </div>
+      )}
+
       <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 border-t border-hairline pt-2.5 dark:border-hairline-dark">
         <Stat label="Total gram" value={formatGrams(summary.grams)} />
         <Stat label="Total investasi" value={money(summary.invested)} />
         <Stat
-          label="Untung / rugi"
-          value={
-            hasValue ? (
-              <span
-                className={
-                  summary.profit >= 0
-                    ? 'text-income dark:text-emerald-400'
-                    : 'text-expense dark:text-red-400'
-                }
-              >
-                {summary.profit >= 0 ? '+' : '−'}
-                {money(Math.abs(summary.profit))} ({formatPercent(summary.profitPct)})
-              </span>
-            ) : (
-              '—'
-            )
-          }
-        />
-        <Stat
           label="Rata-rata beli"
           value={summary.grams > 0 ? `${money(summary.averageCost)}/gr` : '—'}
+        />
+        <Stat
+          label="Harga buyback"
+          value={quote ? `${money(quote.buybackPerGram)}/gr` : '—'}
         />
       </dl>
 
       <p className="mt-2.5 border-t border-hairline pt-2 text-caption text-subtitle dark:border-hairline-dark dark:text-subtitle-dark">
         {quote ? (
           <>
-            Buyback <strong className="font-semibold">{money(quote.buybackPerGram)}/gr</strong> ·
-            beli {money(quote.sellPerGram)}/gr · {quote.source}
-            {quote.recordedDate && ` · ${quote.recordedDate}`}
+            {quote.source}
+            {quote.recordedDate && ` · ${quote.recordedDate}`} · harga beli{' '}
+            <span className="amount">{money(quote.sellPerGram)}/gr</span>
             {stale && ' · harga tersimpan, gagal memperbarui'}
           </>
         ) : (
@@ -236,8 +259,11 @@ function GoldPortfolio ({ summary, quote, loading, error, stale, onRefresh, mone
 function Stat ({ label, value }) {
   return (
     <div className="min-w-0">
-      <dt className="text-caption text-subtitle dark:text-subtitle-dark">{label}</dt>
-      <dd className="mt-0.5 text-body font-semibold amount">{value}</dd>
+      <dt className="truncate text-caption text-subtitle dark:text-subtitle-dark">{label}</dt>
+      {/* `truncate` rather than wrap: `.amount` forbids wrapping anyway, so
+          without it a long figure escapes its column instead of ending in an
+          ellipsis the eye can act on. */}
+      <dd className="mt-0.5 truncate text-body font-semibold amount">{value}</dd>
     </div>
   )
 }

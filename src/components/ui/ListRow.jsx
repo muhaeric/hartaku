@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { isImageIcon } from '../../lib/accountIcon.js'
 import { ChevronRightIcon } from './icons.jsx'
 
 /**
@@ -94,15 +95,26 @@ export default function ListRow ({
   )
 }
 
-/** Coloured emoji tile used as the leading element of most rows. */
-export function RowIcon ({ icon, color }) {
+/**
+ * Coloured tile used as the leading element of most rows. Accounts can carry an
+ * uploaded picture instead of an emoji, so the tile takes either - the picture
+ * fills the tile and keeps its rounded corners, and the tint stays behind it as
+ * the frame for logos that do not reach the edges.
+ */
+export function RowIcon ({ icon, color, size = 'md' }) {
+  const box = size === 'lg' ? 'h-12 w-12 rounded-[14px] text-[22px]' : 'h-8 w-8 rounded-[10px] text-[15px]'
+
   return (
     <span
-      className="flex h-8 w-8 items-center justify-center rounded-[10px] text-[15px] ring-1 ring-inset ring-black/[0.06] dark:ring-white/10"
+      className={`flex shrink-0 items-center justify-center overflow-hidden ring-1 ring-inset ring-black/[0.06] dark:ring-white/10 ${box}`}
       style={color ? { backgroundColor: `${color}1f` } : undefined}
       aria-hidden="true"
     >
-      {icon}
+      {isImageIcon(icon) ? (
+        <img src={icon} alt="" className="h-full w-full object-cover" />
+      ) : (
+        icon
+      )}
     </span>
   )
 }

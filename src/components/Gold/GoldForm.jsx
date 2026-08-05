@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { LIMITS } from '../../lib/constants.js'
+import { accountOptionLabel } from '../../lib/accountIcon.js'
 import { isFutureDate, todayIso } from '../../lib/dates.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
 import Button from '../ui/Button.jsx'
@@ -142,7 +143,8 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
             <option value="">Tidak dipotong dari akun</option>
             {accounts.map((account) => (
               <option key={account.id} value={account.name}>
-                {account.icon} {account.name}
+                {accountOptionLabel(account)}
+                {account.archived ? ' (arsip)' : ''}
               </option>
             ))}
           </select>

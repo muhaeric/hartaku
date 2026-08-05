@@ -1,7 +1,8 @@
+import { useMemo } from 'react'
 import MonthStepper from '../ui/MonthStepper.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
 import SelectPill from '../ui/SelectPill.jsx'
-import { SearchIcon } from '../ui/icons.jsx'
+import { CloseIcon, SearchIcon } from '../ui/icons.jsx'
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'Semua' },
@@ -13,6 +14,10 @@ const TYPE_OPTIONS = [
 /**
  * Search, two pills and one segmented row - about 150px total, so the list is
  * still visible above the fold on a phone.
+ *
+ * While a search is running the month control is replaced rather than disabled:
+ * search covers every period, and a greyed-out "Agu 2026" sitting next to the
+ * results would still read as the scope they came from.
  */
 export default function TransactionFilters ({
   filters,
@@ -20,6 +25,7 @@ export default function TransactionFilters ({
   monthOptions,
   categories,
   accounts,
+  searching = false,
   onChange,
   onMonthChange
 }) {
@@ -29,6 +35,24 @@ export default function TransactionFilters ({
     else selected.add(name)
     onChange({ categories: [...selected] })
   }
+
+  /**
+   * Archived accounts are not offered, but one that is already selected stays in
+   * the list: a native select whose value is missing from its options renders
+   * blank, which would read as "no filter" while the list stayed filtered.
+   */
+  const accountOptions = useMemo(() => {
+    const options = [
+      { value: '', label: 'Semua akun' },
+      ...accounts.map((account) => ({ value: account.name, label: account.name }))
+    ]
+
+    if (filters.account && !options.some((option) => option.value === filters.account)) {
+      options.push({ value: filters.account, label: `${filters.account} (arsip)` })
+    }
+
+    return options
+  }, [accounts, filters.account])
 
   return (
     <div className="space-y-gap">
@@ -40,23 +64,37 @@ export default function TransactionFilters ({
         <input
           id="search"
           type="search"
-          className="field h-9 py-0 pl-9"
+          className="field h-9 py-0 pl-9 pr-9"
           placeholder="Cari keterangan…"
           value={filters.search}
           onChange={(event) => onChange({ search: event.target.value })}
         />
+        {filters.search && (
+          <button
+            type="button"
+            onClick={() => onChange({ search: '' })}
+            aria-label="Hapus pencarian"
+            className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-subtitle transition hover:bg-black/5 dark:hover:bg-white/5"
+          >
+            <CloseIcon className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-gap">
-        <MonthStepper value={month} options={monthOptions} onChange={onMonthChange} />
+        {searching ? (
+          <div className="flex h-9 items-center justify-center gap-1.5 rounded-control border border-dashed border-hairline px-2 text-caption font-medium text-subtitle dark:border-hairline-dark dark:text-subtitle-dark">
+            <SearchIcon className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">Semua periode</span>
+          </div>
+        ) : (
+          <MonthStepper value={month} options={monthOptions} onChange={onMonthChange} />
+        )}
         <SelectPill
           label="Filter akun"
           value={filters.account}
           onChange={(account) => onChange({ account })}
-          options={[
-            { value: '', label: 'Semua akun' },
-            ...accounts.map((account) => ({ value: account.name, label: account.name }))
-          ]}
+          options={accountOptions}
         />
       </div>
 

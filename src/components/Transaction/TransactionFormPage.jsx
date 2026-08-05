@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { formatAmountInput } from '../../lib/format.js'
 import { readLastAccount } from '../../lib/lastAccount.js'
+import { collectTags } from '../../lib/tags.js'
 import { Card } from '../ui/Card.jsx'
 import { EmptyState, SkeletonRows } from '../ui/Feedback.jsx'
 import { ScanIcon } from '../ui/icons.jsx'
@@ -16,7 +17,15 @@ export default function TransactionFormPage () {
   const navigate = useNavigate()
   const toast = useToast()
   const { settings } = useSettings()
-  const { transactions, categories, accounts, loading, addTransaction, editTransaction } = useData()
+  const {
+    transactions,
+    categories,
+    accounts,
+    activeAccounts,
+    loading,
+    addTransaction,
+    editTransaction
+  } = useData()
 
   const editing = Boolean(id)
   const existing = editing ? transactions.find((transaction) => transaction.id === id) : null
@@ -24,19 +33,35 @@ export default function TransactionFormPage () {
   /**
    * Someone filtering the list to one account is almost always about to log
    * another transaction on that same account, so the filter wins over the
-   * configured default. A remembered account that has since been deleted is
-   * ignored rather than preselected into a field that cannot be saved.
+   * configured default. A remembered account that has since been deleted or
+   * archived is ignored rather than preselected into a field that cannot be
+   * saved.
    */
   const newDraft = useCallback(() => {
     const base = emptyDraft(settings)
     const remembered = readLastAccount()
-    const known = remembered && accounts.some((account) => account.name === remembered)
+    const known = remembered && activeAccounts.some((account) => account.name === remembered)
 
     return known ? { ...base, account: remembered } : base
-  }, [settings, accounts])
+  }, [settings, activeAccounts])
 
   const [draft, setDraft] = useState(newDraft)
   const [busy, setBusy] = useState(false)
+
+  /**
+   * Archived accounts are gone from the picker, with one exception: the ones
+   * this transaction is already filed under. Dropping those would blank the
+   * field and turn "fix the amount" into "also pick a new account", which is
+   * not what was asked for and not something a save should quietly require.
+   */
+  const formAccounts = useMemo(() => {
+    const inUse = new Set([draft.account, draft.toAccount].filter(Boolean))
+    const kept = accounts.filter((account) => account.archived && inUse.has(account.name))
+
+    return kept.length ? [...activeAccounts, ...kept] : activeAccounts
+  }, [accounts, activeAccounts, draft.account, draft.toAccount])
+
+  const tagSuggestions = useMemo(() => collectTags(transactions), [transactions])
 
   /**
    * Accounts arrive from cache before the first paint most of the time, but not
@@ -46,11 +71,11 @@ export default function TransactionFormPage () {
   const prefilled = useRef(false)
 
   useEffect(() => {
-    if (editing || prefilled.current || !accounts.length) return
+    if (editing || prefilled.current || !activeAccounts.length) return
 
     prefilled.current = true
     setDraft((current) => (current.account ? current : newDraft()))
-  }, [editing, accounts, newDraft])
+  }, [editing, activeAccounts, newDraft])
 
   useEffect(() => {
     if (!existing) return
@@ -62,7 +87,8 @@ export default function TransactionFormPage () {
       amount: formatAmountInput(existing.amount, settings.currency),
       type: existing.type,
       category: existing.category,
-      description: existing.description
+      description: existing.description,
+      tags: existing.tags || []
     })
   }, [existing, settings.currency])
 
@@ -127,7 +153,8 @@ export default function TransactionFormPage () {
           draft={draft}
           setDraft={setDraft}
           categories={categories}
-          accounts={accounts}
+          accounts={formAccounts}
+          tagSuggestions={tagSuggestions}
           busy={busy}
           submitLabel={editing ? 'Simpan perubahan' : 'Tambah transaksi'}
           onSubmit={handleSubmit}

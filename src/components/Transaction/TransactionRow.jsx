@@ -33,6 +33,11 @@ export default function TransactionRow ({
     ? `${transaction.account} → ${transaction.toAccount}`
     : transaction.account
 
+  // Tags share the second line with the account rather than claiming a third:
+  // the row has a height budget, and an unlabelled row is still readable while a
+  // taller list is not. Overflow truncates - the full set is on the edit screen.
+  const tags = transaction.tags || []
+
   return (
     <button
       type="button"
@@ -61,6 +66,11 @@ export default function TransactionRow ({
         <span className="block truncate text-body font-medium">{label}</span>
         <span className="block truncate text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">
           {source || '—'}
+          {tags.map((tag) => (
+            <span key={tag} className="ml-1.5 text-brand-700 dark:text-brand-200">
+              #{tag}
+            </span>
+          ))}
         </span>
       </span>
 

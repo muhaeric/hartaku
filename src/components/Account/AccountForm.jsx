@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ACCOUNT_KINDS, CATEGORY_COLORS, LIMITS } from '../../lib/constants.js'
+import { fileToAccountIcon, isImageIcon } from '../../lib/accountIcon.js'
 import { parseAmount } from '../../lib/format.js'
 import Button from '../ui/Button.jsx'
 import ColorPicker, { HEX_PATTERN } from '../ui/ColorPicker.jsx'
 import Sheet from '../ui/Sheet.jsx'
+import { ImageIcon } from '../ui/icons.jsx'
 
 export function emptyAccount () {
   return {
@@ -12,7 +14,8 @@ export function emptyAccount () {
     color: CATEGORY_COLORS[0],
     icon: '💵',
     openingBalance: '',
-    description: ''
+    description: '',
+    archived: false
   }
 }
 
@@ -43,15 +46,44 @@ export default function AccountForm ({ open, initial, takenNames, onSubmit, onCl
   const [draft, setDraft] = useState(initial)
   const [errors, setErrors] = useState({})
   const [busy, setBusy] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const fileInput = useRef(null)
 
   const patch = (changes) => setDraft((current) => ({ ...current, ...changes }))
+  const uploaded = isImageIcon(draft.icon)
+
+  /**
+   * The picked file never leaves the browser: it is cropped, shrunk and encoded
+   * into the icon cell itself. Nothing is uploaded anywhere, which is also why
+   * there is nothing to clean up when an account is deleted.
+   */
+  const handleFile = async (event) => {
+    const file = event.target.files?.[0]
+    // Cleared straight away so picking the same file twice still fires.
+    event.target.value = ''
+    if (!file) return
+
+    setUploading(true)
+    try {
+      patch({ icon: await fileToAccountIcon(file) })
+      setErrors((current) => ({ ...current, icon: undefined }))
+    } catch (err) {
+      setErrors((current) => ({ ...current, icon: err.message }))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  /** Back to the emoji the account's kind suggests - never to an empty tile. */
+  const clearImage = () =>
+    patch({ icon: ACCOUNT_KINDS.find((kind) => kind.value === draft.kind)?.icon || '👛' })
 
   const handleSubmit = async (event) => {
     event.preventDefault()
 
     const found = validate(draft, takenNames)
     setErrors(found)
-    if (Object.keys(found).length) return
+    if (Object.keys(found).some((key) => found[key])) return
 
     setBusy(true)
     try {
@@ -70,37 +102,93 @@ export default function AccountForm ({ open, initial, takenNames, onSubmit, onCl
   return (
     <Sheet open={open} title={initial.id ? 'Ubah akun' : 'Akun baru'} onClose={onClose}>
       <form className="space-y-gap-normal" onSubmit={handleSubmit} noValidate>
-        <div className="flex gap-gap">
-          <div className="w-20">
-            <label className="label" htmlFor="account-icon">
-              Ikon
-            </label>
-            <input
-              id="account-icon"
-              type="text"
-              maxLength={4}
-              className={`field text-center text-[19px] ${errors.icon ? 'field-error' : ''}`}
-              value={draft.icon}
-              onChange={(event) => patch({ icon: event.target.value })}
-            />
-          </div>
+        <div>
+          <span className="label">Ikon</span>
+          <div className="flex items-center gap-gap">
+            <span
+              className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[14px] text-[24px] ring-1 ring-inset ring-black/[0.06] dark:ring-white/10"
+              style={{ backgroundColor: `${HEX_PATTERN.test(draft.color) ? draft.color : '#6b7280'}1f` }}
+              aria-hidden="true"
+            >
+              {uploaded ? (
+                <img src={draft.icon} alt="" className="h-full w-full object-cover" />
+              ) : (
+                draft.icon
+              )}
+            </span>
 
-          <div className="flex-1">
-            <label className="label" htmlFor="account-name">
-              Nama
-            </label>
+            {uploaded ? (
+              <div className="flex min-w-0 flex-1 flex-wrap gap-gap">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  loading={uploading}
+                  onClick={() => fileInput.current?.click()}
+                >
+                  Ganti gambar
+                </Button>
+                <Button variant="ghost" size="sm" onClick={clearImage}>
+                  Pakai emoji
+                </Button>
+              </div>
+            ) : (
+              <div className="flex min-w-0 flex-1 items-center gap-gap">
+                <label className="sr-only" htmlFor="account-icon">
+                  Emoji ikon
+                </label>
+                <input
+                  id="account-icon"
+                  type="text"
+                  maxLength={4}
+                  className={`field w-16 shrink-0 text-center text-[19px] ${errors.icon ? 'field-error' : ''}`}
+                  value={draft.icon}
+                  onChange={(event) => patch({ icon: event.target.value })}
+                />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  loading={uploading}
+                  onClick={() => fileInput.current?.click()}
+                >
+                  <ImageIcon className="h-4 w-4" />
+                  Unggah
+                </Button>
+              </div>
+            )}
+
             <input
-              id="account-name"
-              type="text"
-              maxLength={LIMITS.accountName}
-              className={`field ${errors.name ? 'field-error' : ''}`}
-              value={draft.name}
-              placeholder="Contoh: Bank Mandiri"
-              onChange={(event) => patch({ name: event.target.value })}
+              ref={fileInput}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFile}
             />
           </div>
+          {errors.icon ? (
+            <p className="hint-error">{errors.icon}</p>
+          ) : (
+            <p className="hint">
+              Emoji, atau unggah logo bank / e-wallet. Gambarnya dipotong jadi kotak, dikecilkan,
+              lalu disimpan langsung di spreadsheet.
+            </p>
+          )}
         </div>
-        {(errors.icon || errors.name) && <p className="hint-error">{errors.icon || errors.name}</p>}
+
+        <div>
+          <label className="label" htmlFor="account-name">
+            Nama
+          </label>
+          <input
+            id="account-name"
+            type="text"
+            maxLength={LIMITS.accountName}
+            className={`field ${errors.name ? 'field-error' : ''}`}
+            value={draft.name}
+            placeholder="Contoh: Bank Mandiri"
+            onChange={(event) => patch({ name: event.target.value })}
+          />
+          {errors.name && <p className="hint-error">{errors.name}</p>}
+        </div>
 
         <div>
           <label className="label" htmlFor="account-kind">
@@ -112,7 +200,12 @@ export default function AccountForm ({ open, initial, takenNames, onSubmit, onCl
             value={draft.kind}
             onChange={(event) => {
               const kind = ACCOUNT_KINDS.find((item) => item.value === event.target.value)
-              patch({ kind: event.target.value, icon: kind?.icon || draft.icon })
+              // An uploaded picture was chosen deliberately; the kind's emoji
+              // only fills in for an emoji.
+              patch({
+                kind: event.target.value,
+                icon: uploaded ? draft.icon : kind?.icon || draft.icon
+              })
             }}
           >
             {ACCOUNT_KINDS.map((kind) => (

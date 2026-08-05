@@ -12,6 +12,7 @@ import DayGroupHeader from './Transaction/DayGroup.jsx'
 import PeriodSummary from './Transaction/PeriodSummary.jsx'
 import SelectionBar from './Transaction/SelectionBar.jsx'
 import TransactionRow from './Transaction/TransactionRow.jsx'
+import { GoldPortfolio } from './Gold/GoldManager.jsx'
 import AccountBalances from './Dashboard/AccountBalances.jsx'
 import NetWorthCard from './Dashboard/NetWorthCard.jsx'
 import NetWorthTrend from './Dashboard/NetWorthTrend.jsx'
@@ -40,7 +41,7 @@ const ACCOUNTS = [
 
 const TRANSACTIONS = [
   { id: 'a', date: '2026-08-04', type: 'expense', amount: 2500, category: 'Other', account: 'Bank Mandiri', description: 'admin', createdAt: '3' },
-  { id: 'b', date: '2026-08-04', type: 'expense', amount: 105886, category: 'Household', account: 'Bank Mandiri', description: "Al Fath - Al Qur'an Hafalan", createdAt: '2' },
+  { id: 'b', date: '2026-08-04', type: 'expense', amount: 105886, category: 'Household', account: 'Bank Mandiri', description: "Al Fath - Al Qur'an Hafalan", tags: ['hadiah', 'adik'], createdAt: '2' },
   { id: 'c', date: '2026-08-04', type: 'expense', amount: 17440, category: 'Food & Beverages', account: 'Bank Mandiri', description: 'FS Sei Sapi', createdAt: '1' },
   { id: 'd', date: '2026-08-04', type: 'expense', amount: 379964, category: 'Household', account: 'Bank Mandiri', description: 'Mahar Pernikahan Adik', createdAt: '0' },
   { id: 'e', date: '2026-08-03', type: 'income', amount: 8500000, category: 'Salary', account: 'Bank Jago', description: 'Gaji Agustus', createdAt: '5' },
@@ -58,6 +59,13 @@ const HISTORY = Array.from({ length: 18 }, (_, index) => {
     { id: `h${index}e`, date: `${date}-15`, type: 'expense', amount: 5200000 + index * 80000, category: 'Household', account: 'Bank Mandiri', description: '', createdAt: '' }
   ]
 }).flat()
+
+/** 15.5g bought above today's buyback - the loss case, which is the wide one. */
+const GOLD_LOTS = [
+  { id: 'g1', date: '2026-07-21', grams: 1, cost: 2409000 },
+  { id: 'g2', date: '2026-07-01', grams: 0.5, cost: 1300000 },
+  { id: 'g3', date: '2026-06-11', grams: 14, cost: 39545000 }
+]
 
 const CATEGORIES = [
   { id: 'c1', name: 'Food & Beverages', color: '#eb6834' },
@@ -114,7 +122,7 @@ export default function DevPreview () {
         </div>
       </div>
 
-      <PeriodSummary summary={summary} filtered />
+      <PeriodSummary summary={summary} />
 
       <div className="flex items-center justify-between">
         <p className="text-caption text-subtitle dark:text-subtitle-dark">2 dipilih</p>
@@ -124,7 +132,13 @@ export default function DevPreview () {
         </div>
       </div>
 
-      <SelectionBar count={2} onMove={() => {}} onCopy={() => {}} onDelete={() => {}} />
+      <SelectionBar
+        count={2}
+        onMove={() => {}}
+        onTag={() => {}}
+        onCopy={() => {}}
+        onDelete={() => {}}
+      />
 
       <Card flush as="div" className="overflow-hidden">
         {days.map((day) => (
@@ -197,6 +211,33 @@ export default function DevPreview () {
             </li>
           ))}
         </Card>
+      </div>
+
+      {/* The gold card is the widest thing in the app: a loss runs to a signed
+          eight-figure rupiah amount and a percentage, and amounts never wrap. It
+          belongs here so the next layout change has to survive it. */}
+      <div className="space-y-gap-normal">
+        <SectionHeader title="Emas" hint="12 catatan" />
+        <GoldPortfolio
+          summary={goldSummary(GOLD_LOTS, 2510000)}
+          quote={{
+            buybackPerGram: 2510000,
+            sellPerGram: 2590000,
+            source: 'Aneka Logam',
+            recordedDate: '2026-08-05'
+          }}
+          loading={false}
+          error={null}
+          stale={false}
+          onRefresh={() => {}}
+          money={(value) =>
+            new Intl.NumberFormat('id-ID', {
+              style: 'currency',
+              currency: 'IDR',
+              maximumFractionDigits: 0
+            }).format(value)
+          }
+        />
       </div>
     </div>
   )

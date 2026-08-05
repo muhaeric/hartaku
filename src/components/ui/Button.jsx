@@ -10,6 +10,9 @@ const VARIANTS = {
 
 const SIZES = {
   // Compact by default - full-width chunky buttons are what the brief moved away from.
+  // `xs` exists for rows of four actions on a 375px screen, where `sm`'s padding
+  // is the difference between four labelled buttons and four bare icons.
+  xs: 'h-9 px-2 text-caption gap-1',
   sm: 'h-9 px-3 text-caption gap-1.5',
   md: 'h-11 px-4 text-body gap-2',
   lg: 'h-12 px-5 text-body gap-2',

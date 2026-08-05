@@ -155,6 +155,22 @@ export const SwapIcon = (props) => (
   </Icon>
 )
 
+export const ArchiveIcon = (props) => (
+  <Icon {...props}>
+    <rect x="3" y="4" width="18" height="4.5" rx="1.2" />
+    <path d="M5 8.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8.5" />
+    <path d="M10 12h4" />
+  </Icon>
+)
+
+export const UnarchiveIcon = (props) => (
+  <Icon {...props}>
+    <rect x="3" y="4" width="18" height="4.5" rx="1.2" />
+    <path d="M5 8.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8.5" />
+    <path d="M12 17v-5m-2.2 2.2L12 12l2.2 2.2" />
+  </Icon>
+)
+
 export const CheckIcon = (props) => (
   <Icon {...props}>
     <path d="m5 12.5 4.5 4.5L19 7.5" />

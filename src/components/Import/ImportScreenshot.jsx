@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+import { accountOptionLabel } from '../../lib/accountIcon.js'
 import { todayIso } from '../../lib/dates.js'
 import { parseAmount } from '../../lib/format.js'
 import { parseTransactions } from '../../lib/receiptParser.js'
@@ -24,7 +25,7 @@ export default function ImportScreenshot () {
   const navigate = useNavigate()
   const toast = useToast()
   const { settings } = useSettings()
-  const { categories, accounts, addTransactions } = useData()
+  const { categories, activeAccounts: accounts, addTransactions } = useData()
 
   const [account, setAccount] = useState(settings.defaultAccount || '')
   const [stage, setStage] = useState('setup')
@@ -169,7 +170,7 @@ export default function ImportScreenshot () {
               <option value="">Pilih akun…</option>
               {accounts.map((item) => (
                 <option key={item.id} value={item.name}>
-                  {item.icon} {item.name}
+                  {accountOptionLabel(item)}
                 </option>
               ))}
             </select>

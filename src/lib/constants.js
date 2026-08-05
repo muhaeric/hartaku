@@ -8,9 +8,9 @@ export const SHEET = {
 }
 
 /**
- * `to_account` is appended rather than slotted next to `account` on purpose:
- * columns are positional, so inserting one in the middle would shift every
- * existing row's data one cell to the right.
+ * `to_account` and `tags` are appended rather than slotted next to the fields
+ * they belong with: columns are positional, so inserting one in the middle would
+ * shift every existing row's data one cell to the right.
  */
 export const TRANSACTION_HEADERS = [
   'id',
@@ -22,7 +22,8 @@ export const TRANSACTION_HEADERS = [
   'description',
   'created_at',
   'updated_at',
-  'to_account'
+  'to_account',
+  'tags'
 ]
 
 export const CATEGORY_HEADERS = [
@@ -56,7 +57,8 @@ export const ACCOUNT_HEADERS = [
   'icon',
   'opening_balance',
   'description',
-  'sort_order'
+  'sort_order',
+  'archived'
 ]
 
 export const TYPE = {
@@ -135,13 +137,16 @@ export const DATE_FORMATS = [
   { value: 'YYYY-MM-DD', label: '2026-12-31' }
 ]
 
-export const PAGE_SIZE = 20
-export const PAGINATION_THRESHOLD = 50
+/** How many rows the transaction list adds each time the scroll reaches the end. */
+export const PAGE_SIZE = 25
 
 export const LIMITS = {
   description: 200,
   categoryName: 30,
-  accountName: 30
+  accountName: 30,
+  tagName: 24,
+  // A row that carries more labels than this is describing itself, not filing.
+  tagsPerTransaction: 8
 }
 
 /** Gold is quoted per gram; three decimals covers the smallest bars sold. */

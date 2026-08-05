@@ -35,6 +35,17 @@ export default function Dashboard () {
     [accounts, transactions, goldLots]
   )
 
+  /**
+   * Archived accounts drop off the list once they are empty, which is what
+   * archiving one is normally for. One still holding money stays on - it is part
+   * of the net worth above it, and a list that quietly omitted it would stop
+   * adding up to the figure it sits under.
+   */
+  const listed = useMemo(
+    () => balances.filter((entry) => !entry.account.archived || entry.balance !== 0),
+    [balances]
+  )
+
   const gold = useMemo(
     () => goldSummary(goldLots, quote?.buybackPerGram),
     [goldLots, quote]
@@ -69,7 +80,7 @@ export default function Dashboard () {
         />
       </NetWorthCard>
 
-      <AccountBalances balances={balances} gold={gold} />
+      <AccountBalances balances={listed} gold={gold} />
 
       <div className="space-y-gap-normal">
         <SectionHeader

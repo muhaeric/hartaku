@@ -164,7 +164,8 @@ export default function ImportMoneyManager () {
             icon: ACCOUNT_KINDS.find((kind) => kind.value === account.kind)?.icon || '👛',
             openingBalance: 0,
             description: 'Diimpor dari Money Manager',
-            sortOrder: accounts.length + index
+            sortOrder: accounts.length + index,
+            archived: false
           }))
         )
       }

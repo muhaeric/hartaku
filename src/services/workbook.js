@@ -200,7 +200,7 @@ async function ensureHeaders (workbook) {
 }
 
 async function seedAccounts (workbook) {
-  const rows = await getValues(workbook.spreadsheetId, `${SHEET.accounts}!A2:H`)
+  const rows = await getValues(workbook.spreadsheetId, `${SHEET.accounts}!A2:I`)
   if (rows.some((row) => row[0])) return
 
   const seeded = DEFAULT_ACCOUNTS.map((account, index) => [
@@ -211,7 +211,8 @@ async function seedAccounts (workbook) {
     account.icon,
     account.openingBalance,
     '',
-    index
+    index,
+    ''
   ])
 
   await appendValues(workbook.spreadsheetId, `${SHEET.accounts}!A1`, seeded)

@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { ACCOUNT_KINDS, PAGE_SIZE, PAGINATION_THRESHOLD } from '../../lib/constants.js'
+import { ACCOUNT_KINDS, PAGE_SIZE } from '../../lib/constants.js'
 import { buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
 import { readLastAccount, writeLastAccount } from '../../lib/lastAccount.js'
+import { collectTags, normalizeTags } from '../../lib/tags.js'
 import { filterByMonth, groupByDay, monthsWithData, summarize } from '../../lib/summary.js'
 import Button from '../ui/Button.jsx'
 import { Card } from '../ui/Card.jsx'
@@ -12,6 +13,7 @@ import ConfirmDialog from '../ui/ConfirmDialog.jsx'
 import { EmptyState, ErrorState, SkeletonRows } from '../ui/Feedback.jsx'
 import ListRow, { RowIcon } from '../ui/ListRow.jsx'
 import Sheet from '../ui/Sheet.jsx'
+import TagInput from '../ui/TagInput.jsx'
 import DayGroupHeader from './DayGroup.jsx'
 import PeriodSummary from './PeriodSummary.jsx'
 import SelectionBar from './SelectionBar.jsx'
@@ -33,11 +35,13 @@ export default function TransactionList () {
     transactions,
     categories,
     accounts,
+    activeAccounts,
     loading,
     error,
     reload,
     addTransactions,
     moveTransactions,
+    tagTransactions,
     removeTransactions
   } = useData()
 
@@ -60,19 +64,37 @@ export default function TransactionList () {
   const [pendingDelete, setPendingDelete] = useState(null)
   const [moving, setMoving] = useState(false)
   const [copying, setCopying] = useState(false)
+  const [tagging, setTagging] = useState(false)
+  const [pendingTags, setPendingTags] = useState([])
   const [busy, setBusy] = useState(false)
-  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(PAGE_SIZE)
 
   const monthOptions = useMemo(
     () => buildMonthOptions(monthsWithData(transactions)),
     [transactions]
   )
 
+  const tagSuggestions = useMemo(() => collectTags(transactions), [transactions])
+
+  const search = filters.search.trim().toLowerCase()
+
+  /**
+   * A search runs across every month, not the one on screen.
+   *
+   * Searching is how people answer "when did I pay that?", and the honest answer
+   * is almost never in the month they happen to be looking at. Scoping it to the
+   * selected month turned every lookup into a month-by-month hunt, and an empty
+   * result read as "it isn't there" when it only meant "not in August".
+   */
+  const scoped = useMemo(
+    () => (search ? transactions : filterByMonth(transactions, month)),
+    [transactions, month, search]
+  )
+
   const visible = useMemo(() => {
-    const search = filters.search.trim().toLowerCase()
     const wantedCategories = new Set(filters.categories)
 
-    return filterByMonth(transactions, month)
+    return scoped
       .filter((transaction) => filters.type === 'all' || transaction.type === filters.type)
       .filter(
         (transaction) =>
@@ -92,40 +114,63 @@ export default function TransactionList () {
             transaction.description,
             transaction.category,
             transaction.account,
-            transaction.toAccount
+            transaction.toAccount,
+            ...(transaction.tags || [])
           ]
             .filter(Boolean)
             .some((field) => field.toLowerCase().includes(search))
       )
       .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
-  }, [transactions, month, filters])
+  }, [scoped, filters, search])
 
   // Scoped to the filtered account, so a transfer in or out of it counts as
   // money moving rather than vanishing from the totals.
   const summary = useMemo(() => summarize(visible, filters.account), [visible, filters.account])
 
-  const paginated = visible.length > PAGINATION_THRESHOLD
-  const pageCount = paginated ? Math.ceil(visible.length / PAGE_SIZE) : 1
-  const rows = paginated ? visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) : visible
+  const rows = visible.slice(0, limit)
+  const hasMore = visible.length > rows.length
 
-  // Grouping happens after paging so a day is never split across two pages
-  // without its header.
+  // Grouping happens after slicing so a day is never split from its header.
   const days = useMemo(() => groupByDay(rows, filters.account), [rows, filters.account])
 
-  const filtersActive =
-    filters.type !== 'all' ||
-    filters.categories.length > 0 ||
-    Boolean(filters.account) ||
-    Boolean(filters.search.trim())
+  const loadMore = useCallback(() => setLimit((current) => current + PAGE_SIZE), [])
 
-  useEffect(() => setPage(1), [month, filters])
+  /**
+   * The list grows as the end of it comes into view. The observer is rebuilt on
+   * every `limit` change on purpose: an element that was already intersecting
+   * fires no second callback when the rows below it appear, so a fast scroll
+   * would otherwise stall one page short. Re-observing re-reports the
+   * intersection and the next page follows.
+   */
+  const sentinel = useRef(null)
+
+  useEffect(() => {
+    const node = sentinel.current
+    if (!hasMore || !node || typeof IntersectionObserver === 'undefined') return undefined
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) loadMore()
+      },
+      // Starts fetching a screen early, so the rows are there before the scroll
+      // reaches the gap.
+      { rootMargin: '600px 0px' }
+    )
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [hasMore, limit, loadMore])
+
+  useEffect(() => setLimit(PAGE_SIZE), [month, filters])
   useEffect(() => setSelected([]), [month, filters])
 
   useEffect(() => writeLastAccount(filters.account), [filters.account])
 
   /**
    * A remembered filter pointing at a deleted account would show an empty list
-   * with no obvious cause, so drop it once the accounts are known.
+   * with no obvious cause, so drop it once the accounts are known. Archived
+   * accounts are checked against the full list, not the offered one - they still
+   * hold history, and reaching one from its account row should keep working.
    */
   useEffect(() => {
     if (!filters.account || !accounts.length) return
@@ -164,6 +209,13 @@ export default function TransactionList () {
   const leaveSelection = () => {
     setSelected([])
     setSelecting(false)
+  }
+
+  // Abandoned tags are cleared with the sheet: reopening it to tag a different
+  // batch should not arrive pre-loaded with the last batch's labels.
+  const closeTagging = () => {
+    setTagging(false)
+    setPendingTags([])
   }
 
   const confirmDelete = async () => {
@@ -208,6 +260,48 @@ export default function TransactionList () {
     }
   }
 
+  /**
+   * Tags are added to what each row already carries rather than swapped in.
+   * Rows are picked in bulk precisely because they have something in common, and
+   * that is rarely everything - wiping the labels the rest of them were filed
+   * under would destroy more than the action put back.
+   */
+  const handleTag = async () => {
+    // A tag still sitting in the input has just been committed by the blur this
+    // click caused, so the empty case here means nothing was typed at all - and
+    // it has to be said rather than swallowed, because a dead button gives the
+    // user nothing to correct.
+    const tags = normalizeTags(pendingTags)
+    if (!tags.length) {
+      toast.error('Ketik tagnya dulu, lalu tekan Enter.')
+      return
+    }
+
+    setBusy(true)
+    try {
+      const tagged = await tagTransactions(selected, tags)
+      const skipped = selected.length - tagged.length
+
+      closeTagging()
+      leaveSelection()
+
+      if (!tagged.length) {
+        toast.success('Semua transaksi terpilih sudah punya tag itu.')
+        return
+      }
+
+      toast.success(
+        skipped > 0
+          ? `Tag ditambahkan ke ${tagged.length} transaksi, ${skipped} sudah punya.`
+          : `Tag ditambahkan ke ${tagged.length} transaksi.`
+      )
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const handleCopy = async () => {
     const wanted = new Set(selected)
     const copies = transactions
@@ -219,7 +313,8 @@ export default function TransactionList () {
         amount: transaction.amount,
         type: transaction.type,
         category: transaction.category || '',
-        description: transaction.description || ''
+        description: transaction.description || '',
+        tags: transaction.tags || []
       }))
 
     try {
@@ -245,12 +340,13 @@ export default function TransactionList () {
         month={month}
         monthOptions={monthOptions}
         categories={categories}
-        accounts={accounts}
+        accounts={activeAccounts}
+        searching={Boolean(search)}
         onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))}
         onMonthChange={setMonth}
       />
 
-      <PeriodSummary summary={summary} filtered={filtersActive} account={filters.account} />
+      <PeriodSummary summary={summary} />
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-caption text-subtitle dark:text-subtitle-dark">
@@ -286,9 +382,13 @@ export default function TransactionList () {
 
       {!rows.length ? (
         <EmptyState
-          icon="📄"
-          title="Belum ada transaksi"
-          description="Tidak ada transaksi yang cocok dengan filter di bulan ini."
+          icon={search ? '🔍' : '📄'}
+          title={search ? 'Tidak ada yang cocok' : 'Belum ada transaksi'}
+          description={
+            search
+              ? `Tidak ada transaksi yang cocok dengan "${filters.search.trim()}" di seluruh periode.`
+              : 'Tidak ada transaksi yang cocok dengan filter di bulan ini.'
+          }
           actionLabel="Tambah transaksi"
           onAction={() => navigate('/add')}
         />
@@ -316,27 +416,17 @@ export default function TransactionList () {
             ))}
           </Card>
 
-          {paginated && (
-            <div className="flex items-center justify-between gap-3">
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={page === 1}
-                onClick={() => setPage((current) => current - 1)}
-              >
-                Sebelumnya
+          {/* The button is not a fallback for a broken observer so much as the
+              keyboard route to the same thing - and it is what shows up if the
+              browser has no IntersectionObserver at all. */}
+          {hasMore && (
+            <div ref={sentinel} className="flex flex-col items-center gap-1.5 py-1">
+              <Button variant="secondary" size="sm" onClick={loadMore}>
+                Muat lebih banyak
               </Button>
               <span className="text-caption text-subtitle dark:text-subtitle-dark">
-                Halaman {page} dari {pageCount}
+                {rows.length} dari {visible.length}
               </span>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={page === pageCount}
-                onClick={() => setPage((current) => current + 1)}
-              >
-                Berikutnya
-              </Button>
             </div>
           )}
 
@@ -344,6 +434,7 @@ export default function TransactionList () {
             <SelectionBar
               count={selected.length}
               onMove={() => setMoving(true)}
+              onTag={() => setTagging(true)}
               onCopy={() => setCopying(true)}
               onDelete={() => setPendingDelete({ ids: selected })}
             />
@@ -358,7 +449,7 @@ export default function TransactionList () {
         onClose={() => !busy && setMoving(false)}
       >
         <div className="divide-hairline">
-          {accounts.map((account) => (
+          {activeAccounts.map((account) => (
             <ListRow
               key={account.id}
               leading={<RowIcon icon={account.icon} color={account.color} />}
@@ -375,10 +466,37 @@ export default function TransactionList () {
         </p>
       </Sheet>
 
+      <Sheet
+        open={tagging}
+        title="Tambah tag"
+        description={`${selected.length} transaksi akan diberi tag ini.`}
+        onClose={() => !busy && closeTagging()}
+      >
+        <div className="space-y-gap-normal">
+          <TagInput
+            autoFocus
+            value={pendingTags}
+            suggestions={tagSuggestions}
+            onChange={setPendingTags}
+            label="Tag yang ditambahkan"
+            hint="Tag yang sudah ada di transaksi terpilih tetap dipertahankan."
+          />
+
+          <div className="flex gap-gap pt-1">
+            <Button variant="secondary" className="flex-1 justify-center" onClick={closeTagging}>
+              Batal
+            </Button>
+            <Button className="flex-1 justify-center" loading={busy} onClick={handleTag}>
+              Tambahkan
+            </Button>
+          </div>
+        </div>
+      </Sheet>
+
       <ConfirmDialog
         open={copying}
         title="Salin transaksi?"
-        message={`${selected.length} transaksi akan digandakan persis — tanggal, akun, kategori, dan nominalnya sama. Salinannya bisa diubah satu per satu setelah ini.`}
+        message={`${selected.length} transaksi akan digandakan persis — tanggal, akun, kategori, tag, dan nominalnya sama. Salinannya bisa diubah satu per satu setelah ini.`}
         confirmLabel="Salin"
         destructive={false}
         onConfirm={handleCopy}

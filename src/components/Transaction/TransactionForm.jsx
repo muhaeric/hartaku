@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { LIMITS, TRANSACTION_TYPES } from '../../lib/constants.js'
+import { accountOptionLabel } from '../../lib/accountIcon.js'
 import { isFutureDate, todayIso } from '../../lib/dates.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
+import { normalizeTags } from '../../lib/tags.js'
 import Button from '../ui/Button.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
+import TagInput from '../ui/TagInput.jsx'
 
 export function emptyDraft (settings) {
   return {
@@ -14,7 +17,8 @@ export function emptyDraft (settings) {
     amount: '',
     type: settings.defaultType || 'expense',
     category: settings.defaultCategory || '',
-    description: ''
+    description: '',
+    tags: []
   }
 }
 
@@ -53,6 +57,7 @@ export default function TransactionForm ({
   setDraft,
   categories,
   accounts,
+  tagSuggestions = [],
   onSubmit,
   onCancel,
   submitLabel = 'Simpan',
@@ -91,7 +96,8 @@ export default function TransactionForm ({
       amount: parseAmount(draft.amount),
       type: draft.type,
       category: transfer ? '' : draft.category,
-      description: draft.description.trim()
+      description: draft.description.trim(),
+      tags: normalizeTags(draft.tags)
     })
   }
 
@@ -226,6 +232,13 @@ export default function TransactionForm ({
         </div>
       </div>
 
+      <TagInput
+        value={draft.tags || []}
+        suggestions={tagSuggestions}
+        onChange={(tags) => patch({ tags })}
+        hint="Label bebas untuk mengelompokkan transaksi lintas kategori — misalnya proyek, orang, atau perjalanan."
+      />
+
       <div className="flex gap-gap pt-1">
         {onCancel && (
           <Button variant="secondary" className="flex-1 justify-center" onClick={onCancel}>
@@ -251,7 +264,8 @@ function AccountSelect ({ id, value, accounts, invalid, onChange }) {
       <option value="">Pilih…</option>
       {accounts.map((account) => (
         <option key={account.id} value={account.name}>
-          {account.icon} {account.name}
+          {accountOptionLabel(account)}
+          {account.archived ? ' (arsip)' : ''}
         </option>
       ))}
     </select>

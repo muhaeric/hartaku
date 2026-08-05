@@ -62,7 +62,10 @@ export default function AccountBalances ({ balances, gold }) {
                   leading={<RowIcon icon={account.icon} color={account.color} />}
                   title={account.name}
                   /* The group heading already names the kind - repeating it on
-                     every row was noise competing with the balance. */
+                     every row was noise competing with the balance. An archived
+                     account only reaches this list while it still holds money,
+                     and that needs saying or it reads as a stray. */
+                  subtitle={account.archived ? 'Arsip' : null}
                   trailing={
                     <span className={balance < 0 ? 'text-expense dark:text-red-400' : ''}>
                       {money(balance)}
