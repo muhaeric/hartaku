@@ -191,7 +191,10 @@ export async function createTransactions (workbook, inputs) {
   const transactions = inputs.map((input) => ({
     ...input,
     id: newId(),
-    createdAt: now,
+    // An importer knows when the row was really written; without that, rows
+    // brought in from another app would all share one timestamp and lose their
+    // order within a day.
+    createdAt: input.createdAt || now,
     updatedAt: now
   }))
 
@@ -277,6 +280,20 @@ export async function createCategory (workbook, input) {
   return category
 }
 
+/** One append for a whole set - an import creates dozens of these at once. */
+export async function createCategories (workbook, inputs) {
+  if (!inputs.length) return []
+
+  const categories = inputs.map((input) => ({ ...input, id: newId() }))
+
+  await appendValues(
+    workbook.spreadsheetId,
+    `${SHEET.categories}!A1`,
+    categories.map(categoryToRow)
+  )
+  return categories
+}
+
 export async function updateCategory (workbook, input) {
   const rowNumber = await resolveRowNumber(workbook, CAT_RANGE, input.id, input.rowNumber)
   if (!rowNumber) throw new Error('Kategori tidak ditemukan - mungkin sudah dihapus.')
@@ -312,6 +329,15 @@ export async function createAccount (workbook, input) {
 
   await appendValues(workbook.spreadsheetId, `${SHEET.accounts}!A1`, [accountToRow(account)])
   return account
+}
+
+export async function createAccounts (workbook, inputs) {
+  if (!inputs.length) return []
+
+  const accounts = inputs.map((input) => ({ ...input, id: newId() }))
+
+  await appendValues(workbook.spreadsheetId, `${SHEET.accounts}!A1`, accounts.map(accountToRow))
+  return accounts
 }
 
 export async function updateAccount (workbook, input) {

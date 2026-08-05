@@ -13,6 +13,7 @@ export const PAGE_TITLES = {
   '/transactions': 'Transaksi',
   '/add': 'Tambah',
   '/import': 'Import',
+  '/import/money-manager': 'Import Money Manager',
   '/manage': 'Akun & Kategori',
   '/settings': 'Pengaturan'
 }

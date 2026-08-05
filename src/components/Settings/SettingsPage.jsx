@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
@@ -7,7 +8,7 @@ import { CURRENCIES, DATE_FORMATS } from '../../lib/constants.js'
 import { extractSpreadsheetId } from '../../lib/spreadsheetId.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
-import { ExternalIcon } from '../ui/icons.jsx'
+import { ExternalIcon, ScanIcon } from '../ui/icons.jsx'
 
 const THEMES = [
   { value: 'light', label: 'Terang' },
@@ -156,6 +157,26 @@ export default function SettingsPage () {
             yang dibuat aplikasi ini yang bisa dibuka — batas izin <code>drive.file</code>.
           </p>
         </div>
+      </Section>
+
+      <Section title="Import data">
+        <Link
+          to="/import/money-manager"
+          className="-m-1 flex items-center gap-3 rounded-control p-1 transition hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-brand-50 text-brand-500 dark:bg-brand-500/15">
+            <ScanIcon className="h-[19px] w-[19px]" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-body font-medium">Dari Money Manager</span>
+            <span className="block text-caption text-subtitle dark:text-subtitle-dark">
+              Baca file Excel hasil ekspornya — akun, kategori, dan transaksinya ikut terbawa
+            </span>
+          </span>
+          <span aria-hidden="true" className="shrink-0 text-subtitle">
+            ›
+          </span>
+        </Link>
       </Section>
 
       <Section title="Tentang">

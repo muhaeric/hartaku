@@ -3,6 +3,7 @@ import AuthCallback from './components/Auth/AuthCallback.jsx'
 import LoginScreen from './components/Auth/LoginScreen.jsx'
 import Dashboard from './components/Dashboard/Dashboard.jsx'
 import DevPreview from './components/DevPreview.jsx'
+import ImportMoneyManager from './components/Import/ImportMoneyManager.jsx'
 import ImportScreenshot from './components/Import/ImportScreenshot.jsx'
 import AppLayout from './components/Layout/AppLayout.jsx'
 import ManagePage from './components/Manage/ManagePage.jsx'
@@ -53,6 +54,7 @@ function AuthenticatedApp () {
           <Route path="transactions" element={<TransactionList />} />
           <Route path="add" element={<TransactionFormPage />} />
           <Route path="import" element={<ImportScreenshot />} />
+          <Route path="import/money-manager" element={<ImportMoneyManager />} />
           <Route path="transactions/:id/edit" element={<TransactionFormPage />} />
           <Route path="manage" element={<ManagePage />} />
           <Route path="categories" element={<Navigate to="/manage?tab=categories" replace />} />

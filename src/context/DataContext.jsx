@@ -9,6 +9,8 @@ import {
 } from 'react'
 import {
   createAccount,
+  createAccounts,
+  createCategories,
   createCategory,
   createGoldLot,
   createTransaction,
@@ -214,6 +216,15 @@ export function DataProvider ({ children }) {
     [withWorkbook]
   )
 
+  const addCategoriesBatch = useCallback(
+    withWorkbook(async (workbook, inputs) => {
+      const created = await createCategories(workbook, inputs)
+      setState((current) => ({ ...current, categories: [...current.categories, ...created] }))
+      return created
+    }),
+    [withWorkbook]
+  )
+
   const removeCategory = useCallback(
     withWorkbook(async (workbook, id) => {
       await deleteCategory(workbook, id)
@@ -229,6 +240,15 @@ export function DataProvider ({ children }) {
     withWorkbook(async (workbook, input) => {
       const created = await createAccount(workbook, input)
       setState((current) => ({ ...current, accounts: [...current.accounts, created] }))
+      return created
+    }),
+    [withWorkbook]
+  )
+
+  const addAccountsBatch = useCallback(
+    withWorkbook(async (workbook, inputs) => {
+      const created = await createAccounts(workbook, inputs)
+      setState((current) => ({ ...current, accounts: [...current.accounts, ...created] }))
       return created
     }),
     [withWorkbook]
@@ -341,9 +361,11 @@ export function DataProvider ({ children }) {
       editTransaction,
       removeTransactions,
       addCategory,
+      addCategories: addCategoriesBatch,
       editCategory,
       removeCategory,
       addAccount,
+      addAccounts: addAccountsBatch,
       editAccount,
       removeAccount,
       addGoldLot,
@@ -360,9 +382,11 @@ export function DataProvider ({ children }) {
       editTransaction,
       removeTransactions,
       addCategory,
+      addCategoriesBatch,
       editCategory,
       removeCategory,
       addAccount,
+      addAccountsBatch,
       editAccount,
       removeAccount,
       addGoldLot,
