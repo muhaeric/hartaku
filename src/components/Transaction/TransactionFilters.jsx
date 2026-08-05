@@ -1,4 +1,4 @@
-import { monthLabel } from '../../lib/dates.js'
+import MonthStepper from '../ui/MonthStepper.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
 import SelectPill from '../ui/SelectPill.jsx'
 import { SearchIcon } from '../ui/icons.jsx'
@@ -48,12 +48,7 @@ export default function TransactionFilters ({
       </div>
 
       <div className="grid grid-cols-2 gap-gap">
-        <SelectPill
-          label="Pilih bulan"
-          value={month}
-          onChange={onMonthChange}
-          options={monthOptions.map((key) => ({ value: key, label: monthLabel(key) }))}
-        />
+        <MonthStepper value={month} options={monthOptions} onChange={onMonthChange} />
         <SelectPill
           label="Filter akun"
           value={filters.account}
