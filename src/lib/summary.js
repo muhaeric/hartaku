@@ -151,23 +151,34 @@ export function netWorthHistory (accounts, transactions, goldLots = [], period =
   for (const transaction of transactions) {
     if (!transaction.date) continue
     let delta = 0
+    let income = 0
+    let expense = 0
 
     if (transaction.type === 'income') {
-      if (known.has(transaction.account)) delta = transaction.amount
+      if (known.has(transaction.account)) {
+        delta = transaction.amount
+        income = transaction.amount
+      }
     } else if (transaction.type === 'transfer') {
+      // Money changing pockets is not earning or spending, so a transfer moves
+      // the total only when one end is missing - and even then it is neither.
       if (known.has(transaction.account)) delta -= transaction.amount
       if (known.has(transaction.toAccount)) delta += transaction.amount
     } else if (known.has(transaction.account)) {
       delta = -transaction.amount
+      expense = transaction.amount
     }
 
-    if (delta) events.push({ date: transaction.date, delta })
+    if (delta) events.push({ date: transaction.date, delta, income, expense })
   }
 
   for (const lot of goldLots) {
     // Cash out, metal in, at the same number: a purchase moves nothing overall
-    // unless the account it was paid from is gone.
-    if (lot.date && !known.has(lot.fromAccount)) events.push({ date: lot.date, delta: lot.cost })
+    // unless the account it was paid from is gone. Not earning either, so it
+    // lands in neither column.
+    if (lot.date && !known.has(lot.fromAccount)) {
+      events.push({ date: lot.date, delta: lot.cost, income: 0, expense: 0 })
+    }
   }
 
   if (!events.length) return []
@@ -184,16 +195,59 @@ export function netWorthHistory (accounts, transactions, goldLots = [], period =
   // The cap is a runaway guard, not a limit anyone should reach: 600 weeks is
   // eleven years of history.
   for (let key = bucket.keyOf(events[0].date); key <= finalKey && series.length < 600; ) {
+    let income = 0
+    let expense = 0
+
     while (index < events.length && bucket.keyOf(events[index].date) <= key) {
       running += events[index].delta
+      income += events[index].income
+      expense += events[index].expense
       index += 1
     }
 
-    series.push({ key, total: running })
+    series.push({ key, total: running, income, expense, net: income - expense })
     key = bucket.next(key)
   }
 
-  return series.slice(-limit)
+  /*
+   * The step against the previous period is measured before the window is
+   * trimmed, so the oldest row on screen still has a real predecessor to compare
+   * against rather than reporting no change because its neighbour got sliced off.
+   *
+   * `change` is the movement of the total and `net` is income minus spending;
+   * they are related but not the same number, and a transfer with one end
+   * pointing at a deleted account is exactly where they part company. Keeping
+   * them separately labelled is why neither has to lie.
+   */
+  const stepped = series.map((point, position) => {
+    const previous = position > 0 ? series[position - 1].total : null
+    const change = previous === null ? null : point.total - previous
+
+    return {
+      ...point,
+      change,
+      // Divided by the magnitude, so a climb out of debt does not read as a fall.
+      changePct: previous ? (change / Math.abs(previous)) * 100 : null
+    }
+  })
+
+  return stepped.slice(-limit)
+}
+
+/** Totals per account for one flow, largest first. Transfers are not spending. */
+export function accountBreakdown (transactions, type = 'expense') {
+  const totals = new Map()
+
+  for (const transaction of transactions) {
+    if (transaction.type !== type) continue
+
+    const name = transaction.account || 'Tanpa akun'
+    totals.set(name, (totals.get(name) || 0) + transaction.amount)
+  }
+
+  return [...totals.entries()]
+    .map(([name, total]) => ({ name, total }))
+    .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name))
 }
 
 /** Totals per category for one flow, largest first. */

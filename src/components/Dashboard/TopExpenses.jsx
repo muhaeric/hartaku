@@ -24,13 +24,16 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
  * here is reachable only by hovering - the ring is the glance, the list is the
  * answer.
  */
-export default function TopExpenses ({ breakdown, categories, limit = 5 }) {
+export default function TopExpenses ({ breakdown, categories, limit = 5, unit = 'kategori' }) {
   const { settings } = useSettings()
   const [active, setActive] = useState(null)
 
   const money = (value, compact = false) => formatCurrency(value, settings.currency, { compact })
 
   const { slices, total } = useMemo(() => {
+    // Anything with a name, a colour and an icon works here - the ring does not
+    // care whether it is slicing categories or accounts, only that each slice
+    // owns exactly one whole of the total.
     const byName = new Map(categories.map((category) => [category.name, category]))
     const sum = breakdown.reduce((carry, row) => carry + row.total, 0)
 
@@ -89,7 +92,7 @@ export default function TopExpenses ({ breakdown, categories, limit = 5 }) {
           viewBox={`0 0 ${SIZE} ${SIZE}`}
           className="w-full"
           role="img"
-          aria-label={`Pengeluaran per kategori: ${slices
+          aria-label={`Pengeluaran per ${unit}: ${slices
             .map((slice) => `${slice.name} ${percentLabel(slice.total)}`)
             .join(', ')}`}
         >
@@ -154,7 +157,7 @@ export default function TopExpenses ({ breakdown, categories, limit = 5 }) {
                 {slice.count ? (
                   <span className="text-subtitle">
                     {' '}
-                    · {slice.count} kategori
+                    · {slice.count} {unit}
                   </span>
                 ) : null}
               </span>
