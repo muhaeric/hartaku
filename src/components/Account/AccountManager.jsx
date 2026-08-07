@@ -121,7 +121,7 @@ export default function AccountManager () {
           subtitle={ACCOUNT_KINDS.find((kind) => kind.value === account.kind)?.label}
           meta={inUse > 0 ? `${inUse} transaksi` : null}
           trailing={
-            <span className={balance < 0 ? 'text-expense dark:text-red-400' : ''}>
+            <span className={balance < 0 ? 'text-expense' : ''}>
               {formatCurrency(balance, settings.currency)}
             </span>
           }
@@ -198,7 +198,7 @@ export default function AccountManager () {
             type="button"
             onClick={() => setShowArchived((current) => !current)}
             aria-expanded={showArchived}
-            className="flex w-full items-center justify-between gap-3 text-caption font-semibold text-subtitle transition hover:text-ink dark:text-subtitle-dark dark:hover:text-ink-dark"
+            className="flex w-full items-center justify-between gap-3 text-caption font-semibold text-subtitle transition hover:text-ink"
           >
             <span>Arsip ({archived.length})</span>
             <span>{showArchived ? 'Sembunyikan' : 'Lihat'}</span>

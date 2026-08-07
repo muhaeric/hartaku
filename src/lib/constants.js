@@ -81,6 +81,23 @@ export const CATEGORY_TYPES = [
 ]
 
 /**
+ * Themes, in the order they appear in settings. No colours here on purpose: the
+ * palettes live in src/styles/index.css keyed by these same ids, and the picker
+ * renders each preview by carrying its own `data-theme`, so the list and the
+ * palettes cannot drift apart. `decorated` only tells the copy which ones have
+ * an ornament behind the page - ThemeBackdrop owns the art itself.
+ */
+export const THEMES = [
+  { value: 'auto', label: 'Ikut sistem' },
+  { value: 'light', label: 'Terang' },
+  { value: 'dark', label: 'Gelap' },
+  { value: 'ocean', label: 'Laut', decorated: true },
+  { value: 'space', label: 'Luar Angkasa', decorated: true },
+  { value: 'flower', label: 'Bunga', decorated: true },
+  { value: 'animal', label: 'Hewan', decorated: true }
+]
+
+/**
  * Category hues come from a fixed categorical theme, assigned in order and never
  * cycled. This ordering clears the colour-blind separation and normal-vision
  * floors on the adjacent pairlist (validated, light surface); a few sit under 3:1

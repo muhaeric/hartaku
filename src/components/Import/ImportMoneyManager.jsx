@@ -218,17 +218,17 @@ export default function ImportMoneyManager () {
       {stage === 'setup' && (
         <Card>
           <div className="text-center">
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-card bg-brand-50 text-brand-500 dark:bg-brand-500/15">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-card bg-brand-soft text-brand">
               <ScanIcon className="h-6 w-6" />
             </span>
             <h2 className="mt-3 text-card-title font-semibold">Pindah dari Money Manager</h2>
-            <p className="mx-auto mt-1 max-w-sm text-caption text-subtitle dark:text-subtitle-dark">
+            <p className="mx-auto mt-1 max-w-sm text-caption text-subtitle">
               Ambil file Excel hasil ekspor dari aplikasi Money Manager, lalu pilih di sini.
               Akun, kategori, dan seluruh transaksinya ikut terbawa.
             </p>
           </div>
 
-          <ol className="mt-4 space-y-1.5 text-caption text-subtitle dark:text-subtitle-dark">
+          <ol className="mt-4 space-y-1.5 text-caption text-subtitle">
             <Step index={1}>Buka Money Manager → menu ⋮ → Backup/Restore atau Export.</Step>
             <Step index={2}>Pilih Export Excel File, rentang waktu All (semua data).</Step>
             <Step index={3}>Simpan filenya, lalu pilih di sini.</Step>
@@ -251,7 +251,7 @@ export default function ImportMoneyManager () {
       {stage === 'reading' && (
         <Card className="text-center">
           <p className="text-body font-medium">Membaca {fileName}…</p>
-          <p className="mt-1 text-caption text-subtitle dark:text-subtitle-dark">
+          <p className="mt-1 text-caption text-subtitle">
             File dengan ribuan baris butuh beberapa detik.
           </p>
         </Card>
@@ -260,24 +260,24 @@ export default function ImportMoneyManager () {
       {stage === 'review' && plan && (
         <>
           <Card>
-            <p className="truncate text-caption text-subtitle dark:text-subtitle-dark">
+            <p className="truncate text-caption text-subtitle">
               {fileName}
             </p>
             <p className="mt-0.5 text-hero font-bold tracking-tight amount">
               {plan.fresh.length}
             </p>
-            <p className="text-caption text-subtitle dark:text-subtitle-dark">
+            <p className="text-caption text-subtitle">
               transaksi siap diimpor · {formatDate(parsed.range.from, settings.dateFormat)} –{' '}
               {formatDate(parsed.range.to, settings.dateFormat)}
             </p>
 
-            <dl className="mt-3 grid grid-cols-3 gap-3 border-t border-hairline pt-2.5 dark:border-hairline-dark">
+            <dl className="mt-3 grid grid-cols-3 gap-3 border-t border-hairline pt-2.5">
               <Figure label="Pengeluaran" value={parsed.counts.expense} />
               <Figure label="Pemasukan" value={parsed.counts.income} />
               <Figure label="Transfer" value={parsed.counts.transfer} />
             </dl>
 
-            <ul className="mt-3 space-y-1 text-caption text-subtitle dark:text-subtitle-dark">
+            <ul className="mt-3 space-y-1 text-caption text-subtitle">
               {parsed.counts.paired > 0 && (
                 <li>
                   {parsed.counts.paired} baris transfer digabung — Money Manager mencatat satu
@@ -342,7 +342,7 @@ export default function ImportMoneyManager () {
                   {plan.newCategories.map((category) => (
                     <span
                       key={category.name}
-                      className="rounded-full border border-hairline px-2.5 py-1 text-caption dark:border-hairline-dark"
+                      className="rounded-full border border-hairline px-2.5 py-1 text-caption"
                     >
                       {category.name}
                     </span>
@@ -354,11 +354,11 @@ export default function ImportMoneyManager () {
 
           {plan.fresh.length === 0 ? (
             <Card className="text-center">
-              <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-brand-50 text-brand-500 dark:bg-brand-500/15">
+              <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-brand-soft text-brand">
                 <CheckIcon className="h-5 w-5" />
               </span>
               <p className="mt-2 text-body font-medium">Semuanya sudah ada</p>
-              <p className="mt-1 text-caption text-subtitle dark:text-subtitle-dark">
+              <p className="mt-1 text-caption text-subtitle">
                 Tidak ada transaksi baru di file ini.
               </p>
             </Card>
@@ -389,19 +389,19 @@ export default function ImportMoneyManager () {
       {stage === 'saving' && (
         <Card className="text-center">
           <p className="text-body font-medium">Menyimpan ke spreadsheet…</p>
-          <p className="mt-1 text-caption text-subtitle dark:text-subtitle-dark">
+          <p className="mt-1 text-caption text-subtitle">
             {job.done} dari {job.total} transaksi. Jangan tutup halaman ini.
           </p>
 
           <div
-            className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-hairline dark:bg-hairline-dark"
+            className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-hairline"
             role="progressbar"
             aria-valuenow={job.done}
             aria-valuemin={0}
             aria-valuemax={job.total}
           >
             <div
-              className="h-full rounded-full bg-brand-500 transition-all"
+              className="h-full rounded-full bg-brand transition-all"
               style={{ width: `${Math.max(4, (job.done / (job.total || 1)) * 100)}%` }}
             />
           </div>
@@ -416,7 +416,7 @@ function Step ({ index, children }) {
     <li className="flex items-start gap-2.5">
       <span
         aria-hidden="true"
-        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[11px] font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200"
+        className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-soft text-[11px] font-semibold text-brand-onsoft"
       >
         {index}
       </span>
@@ -428,7 +428,7 @@ function Step ({ index, children }) {
 function Figure ({ label, value }) {
   return (
     <div>
-      <dt className="text-caption text-subtitle dark:text-subtitle-dark">{label}</dt>
+      <dt className="text-caption text-subtitle">{label}</dt>
       <dd className="text-amount font-semibold amount">{value}</dd>
     </div>
   )

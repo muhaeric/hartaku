@@ -26,12 +26,12 @@ export default function AccountBalances ({ balances, gold }) {
     return (
       <Card className="text-center">
         <p className="text-body font-medium">Belum ada akun</p>
-        <p className="mt-1 text-caption text-subtitle dark:text-subtitle-dark">
+        <p className="mt-1 text-caption text-subtitle">
           Tambahkan akun seperti Cash atau Bank untuk mulai mencatat.
         </p>
         <Link
           to="/manage"
-          className="mt-3 inline-flex h-9 items-center rounded-control bg-brand-500 px-3 text-caption font-semibold text-white"
+          className="mt-3 inline-flex h-9 items-center rounded-control bg-brand px-3 text-caption font-semibold text-brand-fg"
         >
           Tambah akun
         </Link>
@@ -44,7 +44,7 @@ export default function AccountBalances ({ balances, gold }) {
       <SectionHeader
         title="Akun"
         action={
-          <Link to="/manage" className="text-caption font-semibold text-brand-500">
+          <Link to="/manage" className="text-caption font-semibold text-brand">
             Kelola
           </Link>
         }
@@ -67,7 +67,7 @@ export default function AccountBalances ({ balances, gold }) {
                      and that needs saying or it reads as a stray. */
                   subtitle={account.archived ? 'Arsip' : null}
                   trailing={
-                    <span className={balance < 0 ? 'text-expense dark:text-red-400' : ''}>
+                    <span className={balance < 0 ? 'text-expense' : ''}>
                       {money(balance)}
                     </span>
                   }
@@ -95,8 +95,8 @@ export default function AccountBalances ({ balances, gold }) {
                     <span
                       className={
                         gold.profit >= 0
-                          ? 'text-income dark:text-emerald-400'
-                          : 'text-expense dark:text-red-400'
+                          ? 'text-income'
+                          : 'text-expense'
                       }
                     >
                       {gold.profit >= 0 ? '+' : '−'}

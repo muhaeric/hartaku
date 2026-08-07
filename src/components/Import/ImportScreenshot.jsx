@@ -147,11 +147,11 @@ export default function ImportScreenshot () {
       {stage === 'setup' && (
         <Card>
           <div className="text-center">
-            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-card bg-brand-50 text-brand-500 dark:bg-brand-500/15">
+            <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-card bg-brand-soft text-brand">
               <ScanIcon className="h-6 w-6" />
             </span>
             <h2 className="mt-3 text-card-title font-semibold">Import dari screenshot</h2>
-            <p className="mx-auto mt-1 max-w-sm text-caption text-subtitle dark:text-subtitle-dark">
+            <p className="mx-auto mt-1 max-w-sm text-caption text-subtitle">
               Bukti transfer atau daftar mutasi. Kalau ada beberapa transaksi dalam satu gambar,
               semuanya dibaca dan bisa kamu pilih.
             </p>
@@ -200,7 +200,7 @@ export default function ImportScreenshot () {
           </div>
 
           {!account && (
-            <p className="mt-2 text-center text-caption text-subtitle dark:text-subtitle-dark">
+            <p className="mt-2 text-center text-caption text-subtitle">
               Pilih akun dulu untuk melanjutkan.
             </p>
           )}
@@ -217,19 +217,19 @@ export default function ImportScreenshot () {
             />
           )}
           <p className="text-body font-medium">Membaca gambar…</p>
-          <p className="mt-1 text-caption text-subtitle dark:text-subtitle-dark">
+          <p className="mt-1 text-caption text-subtitle">
             Pertama kali bisa agak lama karena model OCR-nya diunduh dulu.
           </p>
 
           <div
-            className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-hairline dark:bg-hairline-dark"
+            className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-hairline"
             role="progressbar"
             aria-valuenow={Math.round(progress * 100)}
             aria-valuemin={0}
             aria-valuemax={100}
           >
             <div
-              className="h-full rounded-full bg-brand-500 transition-all"
+              className="h-full rounded-full bg-brand transition-all"
               style={{ width: `${Math.max(4, progress * 100)}%` }}
             />
           </div>
@@ -325,7 +325,7 @@ function ScanSummary ({ items, account, preview, rawText, onRescan }) {
 
   const tone =
     percent >= 75
-      ? 'text-income dark:text-emerald-400'
+      ? 'text-income'
       : percent >= 45
         ? 'text-warning'
         : 'text-expense'
@@ -336,11 +336,11 @@ function ScanSummary ({ items, account, preview, rawText, onRescan }) {
         {preview && <img src={preview} alt="" className="h-16 w-16 rounded-control object-cover" />}
 
         <div className="min-w-0 flex-1">
-          <p className="text-caption text-subtitle dark:text-subtitle-dark">
+          <p className="text-caption text-subtitle">
             Keyakinan hasil baca · masuk ke {account}
           </p>
           <p className={`text-amount font-semibold ${tone}`}>{percent}%</p>
-          <p className="mt-0.5 text-caption text-subtitle dark:text-subtitle-dark">
+          <p className="mt-0.5 text-caption text-subtitle">
             {percent >= 75
               ? 'Terbaca jelas, tapi tetap periksa nominalnya.'
               : 'Kurang yakin — periksa setiap kolom sebelum menyimpan.'}
@@ -355,13 +355,13 @@ function ScanSummary ({ items, account, preview, rawText, onRescan }) {
       <button
         type="button"
         onClick={() => setShowText((value) => !value)}
-        className="mt-2 text-caption font-semibold text-brand-500"
+        className="mt-2 text-caption font-semibold text-brand"
       >
         {showText ? 'Sembunyikan teks hasil OCR' : 'Lihat teks hasil OCR'}
       </button>
 
       {showText && (
-        <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-black/[0.04] p-2.5 text-caption text-subtitle dark:bg-white/[0.06] dark:text-subtitle-dark">
+        <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-control bg-tint/[0.05] p-2.5 text-caption text-subtitle">
           {rawText || '(kosong)'}
         </pre>
       )}

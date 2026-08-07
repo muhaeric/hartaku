@@ -1,11 +1,9 @@
 const VARIANTS = {
-  primary: 'bg-brand-500 text-white hover:bg-brand-600 active:bg-brand-700 disabled:bg-brand-500/50',
-  secondary:
-    'border border-hairline bg-surface text-ink hover:bg-canvas disabled:opacity-50 dark:border-hairline-dark dark:bg-surface-dark dark:text-ink-dark dark:hover:bg-white/5',
-  soft: 'bg-brand-50 text-brand-700 hover:bg-brand-100 disabled:opacity-50 dark:bg-brand-500/15 dark:text-brand-200 dark:hover:bg-brand-500/25',
-  danger: 'bg-expense text-white hover:brightness-95 disabled:opacity-50',
-  ghost:
-    'text-subtitle hover:bg-black/5 disabled:opacity-50 dark:text-subtitle-dark dark:hover:bg-white/5'
+  primary: 'bg-brand text-brand-fg hover:bg-brand-hover active:bg-brand-active disabled:bg-brand/50',
+  secondary: 'border border-hairline bg-surface text-ink hover:bg-canvas disabled:opacity-50',
+  soft: 'bg-brand-soft text-brand-onsoft hover:bg-brand-soft-hover disabled:opacity-50',
+  danger: 'bg-expense text-surface hover:brightness-95 disabled:opacity-50',
+  ghost: 'text-subtitle hover:bg-tint/5 disabled:opacity-50'
 }
 
 const SIZES = {

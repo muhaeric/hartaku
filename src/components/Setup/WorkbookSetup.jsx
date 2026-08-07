@@ -31,14 +31,14 @@ export default function WorkbookSetup ({
           <h1 className="text-section-title font-semibold">
             {lookupFailed ? 'Spreadsheet belum bisa dibuka' : 'Belum ada spreadsheet di akun ini'}
           </h1>
-          <p className="mt-1.5 text-body text-subtitle dark:text-subtitle-dark">{message}</p>
+          <p className="mt-1.5 text-body text-subtitle">{message}</p>
         </div>
 
         <section className="space-y-2">
           <h2 className="text-caption font-semibold">
             Sudah punya catatan di perangkat lain? Tempel ID spreadsheet-nya
           </h2>
-          <p className="text-body text-subtitle dark:text-subtitle-dark">
+          <p className="text-body text-subtitle">
             Ambil dari halaman <strong>Pengaturan → Sumber data</strong> di perangkat yang sudah
             berisi data, atau salin URL Google Sheets-nya. Boleh tempel URL lengkapnya.
           </p>
@@ -56,9 +56,9 @@ export default function WorkbookSetup ({
         </section>
 
         {lookupFailed && (
-          <section className="space-y-2 border-t border-hairline pt-4 dark:border-hairline-dark">
+          <section className="space-y-2 border-t border-hairline pt-4">
             <h2 className="text-caption font-semibold">Atau aktifkan Google Drive API</h2>
-            <p className="text-body text-subtitle dark:text-subtitle-dark">
+            <p className="text-body text-subtitle">
               Google Cloud Console → APIs &amp; Services → Library → cari{' '}
               <strong>Google Drive API</strong> → Enable. Setelah itu aplikasi bisa menemukan
               sendiri spreadsheet lamamu di perangkat mana pun.
@@ -69,7 +69,7 @@ export default function WorkbookSetup ({
           </section>
         )}
 
-        <section className="space-y-2 border-t border-hairline pt-4 dark:border-hairline-dark">
+        <section className="space-y-2 border-t border-hairline pt-4">
           <h2 className="text-caption font-semibold">Atau mulai dari nol</h2>
           {confirmingCreate ? (
             <>
@@ -88,7 +88,7 @@ export default function WorkbookSetup ({
             </>
           ) : (
             <>
-              <p className="text-body text-subtitle dark:text-subtitle-dark">
+              <p className="text-body text-subtitle">
                 Pilih ini kalau kamu memang belum pernah pakai Hartaku sebelumnya.
               </p>
               <Button variant="secondary" onClick={() => setConfirmingCreate(true)}>
@@ -99,7 +99,7 @@ export default function WorkbookSetup ({
         </section>
 
         {!lookupFailed && (
-          <p className="border-t border-hairline pt-4 text-caption text-subtitle dark:border-hairline-dark dark:text-subtitle-dark">
+          <p className="border-t border-hairline pt-4 text-caption text-subtitle">
             Pencariannya sudah mencakup seluruh spreadsheet yang pernah dibuat Hartaku di akun ini,
             apa pun namanya sekarang — dan hasilnya kosong. Periksa email yang tampil di layar
             login: paling sering penyebabnya akun Google yang berbeda.

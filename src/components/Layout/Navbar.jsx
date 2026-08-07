@@ -24,7 +24,7 @@ export default function Navbar () {
   }, [menuOpen])
 
   return (
-    <header className="sticky top-0 z-20 bg-canvas/90 backdrop-blur dark:bg-canvas-dark/90">
+    <header className="sticky top-0 z-20 bg-canvas/90 backdrop-blur">
       <div className="mx-auto flex max-w-2xl items-center gap-1 px-page pb-2 pt-2">
         {/* Page title carries the hierarchy, so the bar itself stays chrome-free. */}
         <h1 className="flex-1 truncate text-page-title font-bold tracking-tight">
@@ -36,13 +36,13 @@ export default function Navbar () {
           onClick={() => reload()}
           disabled={loading}
           aria-label={staleSince ? 'Data tersimpan, coba muat ulang' : 'Muat ulang data'}
-          className="tap relative flex items-center justify-center rounded-control text-subtitle transition hover:bg-black/5 disabled:opacity-40 dark:text-subtitle-dark dark:hover:bg-white/5"
+          className="tap relative flex items-center justify-center rounded-control text-subtitle transition hover:bg-tint/5 disabled:opacity-40"
         >
           <RefreshIcon className={loading ? 'h-[19px] w-[19px] animate-spin' : 'h-[19px] w-[19px]'} />
           {/* Cached numbers are on screen and the refresh failed - say so quietly. */}
           {staleSince && !loading && (
             <span
-              className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-warning ring-2 ring-canvas dark:ring-canvas-dark"
+              className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-warning ring-2 ring-canvas"
               aria-hidden="true"
             />
           )}
@@ -64,17 +64,17 @@ export default function Navbar () {
                 className="h-8 w-8 rounded-full object-cover"
               />
             ) : (
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-caption font-semibold text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-caption font-semibold text-brand-fg">
                 {(user?.name || '?').charAt(0).toUpperCase()}
               </span>
             )}
           </button>
 
           {menuOpen && (
-            <div className="absolute right-0 z-20 mt-1 w-60 animate-fade-in overflow-hidden rounded-control border border-hairline bg-surface shadow-lg dark:border-hairline-dark dark:bg-surface-dark">
-              <div className="border-b border-hairline px-3 py-2.5 dark:border-hairline-dark">
+            <div className="absolute right-0 z-20 mt-1 w-60 animate-fade-in overflow-hidden rounded-control border border-hairline bg-surface shadow-lg">
+              <div className="border-b border-hairline px-3 py-2.5">
                 <p className="truncate text-body font-semibold">{user?.name}</p>
-                <p className="truncate text-caption text-subtitle dark:text-subtitle-dark">
+                <p className="truncate text-caption text-subtitle">
                   {user?.email}
                 </p>
               </div>
@@ -84,7 +84,7 @@ export default function Navbar () {
                   href={workbook.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-2 px-3 py-2.5 text-body text-subtitle transition hover:bg-black/5 dark:text-subtitle-dark dark:hover:bg-white/5"
+                  className="flex items-center gap-2 px-3 py-2.5 text-body text-subtitle transition hover:bg-tint/5"
                 >
                   <ExternalIcon className="h-4 w-4" />
                   Buka spreadsheet
@@ -94,7 +94,7 @@ export default function Navbar () {
               <button
                 type="button"
                 onClick={signOut}
-                className="w-full px-3 py-2.5 text-left text-body font-medium text-expense transition hover:bg-black/5 dark:hover:bg-white/5"
+                className="w-full px-3 py-2.5 text-left text-body font-medium text-expense transition hover:bg-tint/5"
               >
                 Keluar
               </button>

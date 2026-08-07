@@ -4,22 +4,16 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { CURRENCIES, DATE_FORMATS } from '../../lib/constants.js'
+import { CURRENCIES, DATE_FORMATS, THEMES } from '../../lib/constants.js'
 import { extractSpreadsheetId } from '../../lib/spreadsheetId.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
 import { ExternalIcon, ScanIcon } from '../ui/icons.jsx'
 
-const THEMES = [
-  { value: 'light', label: 'Terang' },
-  { value: 'dark', label: 'Gelap' },
-  { value: 'auto', label: 'Ikut sistem' }
-]
-
 export default function SettingsPage () {
   const toast = useToast()
   const { user, signOut } = useAuth()
-  const { settings, updateSettings, resetSettings } = useSettings()
+  const { settings, updateSettings, resetSettings, resolvedTheme } = useSettings()
   const { categories, activeAccounts, workbook, useSpreadsheet } = useData()
 
   const [sheetId, setSheetId] = useState('')
@@ -47,14 +41,11 @@ export default function SettingsPage () {
   return (
     <>
       <Section title="Tampilan">
-        <Row label="Tema" htmlFor="theme">
-          <Select
-            id="theme"
-            value={settings.theme}
-            onChange={(theme) => updateSettings({ theme })}
-            options={THEMES}
-          />
-        </Row>
+        <ThemePicker
+          value={settings.theme}
+          resolved={resolvedTheme}
+          onChange={(theme) => updateSettings({ theme })}
+        />
         <Row label="Mata uang" htmlFor="currency">
           <Select
             id="currency"
@@ -116,21 +107,21 @@ export default function SettingsPage () {
         {workbook ? (
           <div className="space-y-1">
             <p className="text-body">{workbook.title}</p>
-            <p className="break-all font-mono text-caption text-subtitle dark:text-subtitle-dark">
+            <p className="break-all font-mono text-caption text-subtitle">
               {workbook.spreadsheetId}
             </p>
             <a
               href={workbook.url}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 text-caption font-semibold text-brand-500"
+              className="inline-flex items-center gap-1.5 text-caption font-semibold text-brand"
             >
               <ExternalIcon className="h-4 w-4" />
               Buka di Google Sheets
             </a>
           </div>
         ) : (
-          <p className="text-caption text-subtitle dark:text-subtitle-dark">
+          <p className="text-caption text-subtitle">
             Spreadsheet belum siap.
           </p>
         )}
@@ -162,14 +153,14 @@ export default function SettingsPage () {
       <Section title="Import data">
         <Link
           to="/import/money-manager"
-          className="-m-1 flex items-center gap-3 rounded-control p-1 transition hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
+          className="-m-1 flex items-center gap-3 rounded-control p-1 transition hover:bg-tint/[0.04]"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-brand-50 text-brand-500 dark:bg-brand-500/15">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-brand-soft text-brand">
             <ScanIcon className="h-[19px] w-[19px]" />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-body font-medium">Dari Money Manager</span>
-            <span className="block text-caption text-subtitle dark:text-subtitle-dark">
+            <span className="block text-caption text-subtitle">
               Baca file Excel hasil ekspornya — akun, kategori, dan transaksinya ikut terbawa
             </span>
           </span>
@@ -181,17 +172,17 @@ export default function SettingsPage () {
 
       <Section title="Tentang">
         <div className="flex flex-wrap gap-x-4 gap-y-1">
-          <a className="text-body font-medium text-brand-500" href="/privacy">
+          <a className="text-body font-medium text-brand" href="/privacy">
             Kebijakan Privasi
           </a>
-          <a className="text-body font-medium text-brand-500" href="/terms">
+          <a className="text-body font-medium text-brand" href="/terms">
             Syarat &amp; Ketentuan
           </a>
         </div>
         <p className="hint">
           Cabut akses aplikasi kapan saja lewat{' '}
           <a
-            className="font-medium text-brand-500"
+            className="font-medium text-brand"
             href="https://myaccount.google.com/permissions"
             target="_blank"
             rel="noreferrer"
@@ -203,7 +194,7 @@ export default function SettingsPage () {
       </Section>
 
       <Section title="Akun">
-        <p className="text-body text-subtitle dark:text-subtitle-dark">{user?.email}</p>
+        <p className="text-body text-subtitle">{user?.email}</p>
         <div className="flex flex-col gap-gap sm:flex-row">
           <Button
             variant="secondary"
@@ -242,6 +233,53 @@ function Row ({ label, htmlFor, children }) {
       </label>
       <div className="w-1/2 max-w-[220px] shrink-0">{children}</div>
     </div>
+  )
+}
+
+/**
+ * Each tile carries its own `data-theme`, so the palette variables resolve
+ * inside it and the preview is painted by the real theme rather than by a copy
+ * of its colours kept here. 'Ikut sistem' previews whatever it currently
+ * resolves to.
+ */
+function ThemePicker ({ value, resolved, onChange }) {
+  return (
+    <fieldset>
+      <legend className="label">Tema</legend>
+
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {THEMES.map((theme) => {
+          const selected = theme.value === value
+
+          return (
+            <button
+              key={theme.value}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => onChange(theme.value)}
+              className={`rounded-control border p-1.5 text-left transition ${
+                selected ? 'border-brand ring-2 ring-brand/30' : 'border-hairline hover:bg-tint/5'
+              }`}
+            >
+              <span
+                data-theme={theme.value === 'auto' ? resolved : theme.value}
+                className="mb-1.5 block rounded-[10px] border border-hairline bg-canvas p-1.5"
+              >
+                <span className="flex items-center gap-1">
+                  <span className="h-3 w-3 shrink-0 rounded-full bg-brand" />
+                  <span className="h-1.5 min-w-0 flex-1 rounded-full bg-hairline" />
+                </span>
+                <span className="mt-1.5 flex items-center gap-1 rounded-[6px] border border-hairline bg-surface p-1.5">
+                  <span className="h-1.5 w-1/3 rounded-full bg-subtitle/60" />
+                  <span className="ml-auto h-1.5 w-1/4 rounded-full bg-income" />
+                </span>
+              </span>
+              <span className="block truncate text-caption font-medium">{theme.label}</span>
+            </button>
+          )
+        })}
+      </div>
+    </fieldset>
   )
 }
 

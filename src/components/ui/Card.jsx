@@ -12,7 +12,7 @@ export function SectionHeader ({ title, hint, action, className = '' }) {
       <div className="min-w-0">
         <h2 className="text-section-title font-semibold">{title}</h2>
         {hint && (
-          <p className="text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">{hint}</p>
+          <p className="text-[11px] leading-4 text-subtitle">{hint}</p>
         )}
       </div>
       {action}
@@ -32,7 +32,7 @@ export function SectionHeader ({ title, hint, action, className = '' }) {
  */
 export function GroupLabel ({ children, trailing }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-hairline bg-black/[0.02] px-page py-1 dark:border-hairline-dark dark:bg-white/[0.03]">
+    <div className="flex items-center justify-between gap-3 border-b border-hairline bg-tint/[0.03] px-page py-1">
       <span className="min-w-0 truncate text-caption font-semibold">{children}</span>
       {trailing && <span className="amount shrink-0 text-caption font-semibold">{trailing}</span>}
     </div>

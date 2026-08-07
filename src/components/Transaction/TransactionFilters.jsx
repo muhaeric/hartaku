@@ -74,7 +74,7 @@ export default function TransactionFilters ({
             type="button"
             onClick={() => onChange({ search: '' })}
             aria-label="Hapus pencarian"
-            className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-subtitle transition hover:bg-black/5 dark:hover:bg-white/5"
+            className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-subtitle transition hover:bg-tint/5"
           >
             <CloseIcon className="h-3.5 w-3.5" />
           </button>
@@ -83,7 +83,7 @@ export default function TransactionFilters ({
 
       <div className="grid grid-cols-2 gap-gap">
         {searching ? (
-          <div className="flex h-9 items-center justify-center gap-1.5 rounded-control border border-dashed border-hairline px-2 text-caption font-medium text-subtitle dark:border-hairline-dark dark:text-subtitle-dark">
+          <div className="flex h-9 items-center justify-center gap-1.5 rounded-control border border-dashed border-hairline px-2 text-caption font-medium text-subtitle">
             <SearchIcon className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">Semua periode</span>
           </div>
@@ -119,8 +119,8 @@ export default function TransactionFilters ({
                   onClick={() => toggleCategory(category.name)}
                   className={`flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-caption transition ${
                     active
-                      ? 'border-brand-500 bg-brand-50 font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200'
-                      : 'border-hairline text-subtitle dark:border-hairline-dark dark:text-subtitle-dark'
+                      ? 'border-brand bg-brand-soft font-semibold text-brand-onsoft'
+                      : 'border-hairline text-subtitle'
                   }`}
                 >
                   <span

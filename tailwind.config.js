@@ -1,29 +1,47 @@
+/**
+ * Every colour resolves through a CSS variable so a theme is data, not a set of
+ * hand-written `dark:` twins - see the palettes in src/styles/index.css.
+ * `<alpha-value>` is what keeps the opacity modifiers (`bg-brand/15`) working;
+ * a plain `var(--brand)` would swallow them silently.
+ */
+const token = (name) => `rgb(var(--${name}) / <alpha-value>)`
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
-  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        // Light values come from the design brief; dark steps are picked to hold
-        // the same contrast relationships against a dark surface.
-        canvas: { DEFAULT: '#f6f7fb', dark: '#0d1117' },
-        surface: { DEFAULT: '#ffffff', dark: '#161b22' },
-        hairline: { DEFAULT: '#e7eaf0', dark: '#262c36' },
-        ink: { DEFAULT: '#111827', dark: '#e6edf3' },
-        subtitle: { DEFAULT: '#6b7280', dark: '#8b949e' },
+        canvas: token('canvas'),
+        surface: token('surface'),
+        hairline: token('hairline'),
+        ink: token('ink'),
+        subtitle: token('subtitle'),
+        /*
+         * Overlay ink - black on light themes, white on dark ones. One
+         * `hover:bg-tint/5` now covers what used to need a
+         * `hover:bg-black/5 dark:hover:bg-white/5` pair at every call site.
+         */
+        tint: token('tint'),
+        /*
+         * Named by role rather than by lightness step. A numeric 50..700 scale
+         * assumes light-to-dark, which inverts on a dark theme; `soft` and
+         * `onsoft` mean the same thing whichever way the theme runs.
+         */
         brand: {
-          50: '#eef1fe',
-          100: '#dfe4fd',
-          200: '#c2ccfb',
-          500: '#4361ee',
-          600: '#3a55d9',
-          700: '#2f45b4'
+          DEFAULT: token('brand'),
+          hover: token('brand-hover'),
+          active: token('brand-active'),
+          soft: token('brand-soft'),
+          'soft-hover': token('brand-soft-hover'),
+          onsoft: token('brand-onsoft'),
+          fg: token('brand-fg')
         },
-        // Money polarity: one cool / one warm pole, both clearing 3:1 on white.
-        income: '#047857',
-        expense: '#dc2626',
-        warning: '#b45309'
+        income: token('income'),
+        expense: token('expense'),
+        warning: token('warning'),
+        /** Backdrop ornament tint - only the decorative layer reads this. */
+        decor: token('decor')
       },
       borderRadius: {
         card: '16px',

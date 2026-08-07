@@ -12,23 +12,23 @@ export default function NetWorthCard ({ worth, children }) {
 
   return (
     <section className="card" aria-labelledby="networth-label">
-      <p id="networth-label" className="text-caption text-subtitle dark:text-subtitle-dark">
+      <p id="networth-label" className="text-caption text-subtitle">
         Total aset
       </p>
       <p
         className={`mt-0.5 overflow-hidden text-hero font-bold tracking-tight amount ${
-          worth.total < 0 ? 'text-expense dark:text-red-400' : ''
+          worth.total < 0 ? 'text-expense' : ''
         }`}
       >
         {money(worth.total)}
       </p>
 
-      <div className="mt-2.5 flex items-end gap-6 border-t border-hairline pt-2 dark:border-hairline-dark">
+      <div className="mt-2.5 flex items-end gap-6 border-t border-hairline pt-2">
         <Figure label="Aset" value={money(worth.assets, true)} />
         <Figure
           label="Kewajiban"
           value={money(worth.liabilities, true)}
-          tone={worth.liabilities > 0 ? 'text-expense dark:text-red-400' : ''}
+          tone={worth.liabilities > 0 ? 'text-expense' : ''}
         />
       </div>
 
@@ -41,7 +41,7 @@ export default function NetWorthCard ({ worth, children }) {
 function Figure ({ label, value, tone = '' }) {
   return (
     <div>
-      <p className="text-caption text-subtitle dark:text-subtitle-dark">{label}</p>
+      <p className="text-caption text-subtitle">{label}</p>
       <p className={`text-amount font-semibold amount ${tone}`}>{value}</p>
     </div>
   )

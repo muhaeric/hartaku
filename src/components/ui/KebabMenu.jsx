@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { MoreIcon } from './icons.jsx'
 
 /** One menu row: 20px of line box plus `py-2.5`. Rounded up, so the estimate
- *  errs towards flipping the menu rather than towards letting it overflow. */
+ * errs towards flipping the menu rather than towards letting it overflow. */
 const ROW_HEIGHT = 42
 
 /** Breathing room kept between the menu and whatever bounds it. */
@@ -111,7 +111,7 @@ export default function KebabMenu ({ label = 'Aksi lainnya', items }) {
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         onClick={() => (open ? setPlacement(null) : place())}
-        className="tap flex items-center justify-center rounded-control text-subtitle transition hover:bg-black/5 dark:text-subtitle-dark dark:hover:bg-white/10"
+        className="tap flex items-center justify-center rounded-control text-subtitle transition hover:bg-tint/5"
       >
         <MoreIcon />
       </button>
@@ -123,7 +123,7 @@ export default function KebabMenu ({ label = 'Aksi lainnya', items }) {
             id={menuId}
             role="menu"
             style={placement}
-            className="fixed z-40 w-44 animate-fade-in overflow-hidden rounded-control border border-hairline bg-surface shadow-lg dark:border-hairline-dark dark:bg-surface-dark"
+            className="fixed z-40 w-44 animate-fade-in overflow-hidden rounded-control border border-hairline bg-surface shadow-lg"
           >
             {items.map((item) => (
               <button
@@ -134,7 +134,7 @@ export default function KebabMenu ({ label = 'Aksi lainnya', items }) {
                   setPlacement(null)
                   item.onSelect()
                 }}
-                className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-body transition hover:bg-black/5 dark:hover:bg-white/5 ${
+                className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-body transition hover:bg-tint/5 ${
                   item.destructive ? 'text-expense' : ''
                 }`}
               >

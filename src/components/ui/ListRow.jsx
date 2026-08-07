@@ -42,7 +42,7 @@ export default function ListRow ({
       <span className="min-w-0 flex-1">
         <span className="block truncate text-caption font-medium">{title}</span>
         {(subtitle || meta) && (
-          <span className="block truncate text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">
+          <span className="block truncate text-[11px] leading-4 text-subtitle">
             {subtitle}
             {subtitle && meta && ' · '}
             {meta}
@@ -56,7 +56,7 @@ export default function ListRow ({
             <span className="block text-caption font-medium amount">{trailing}</span>
           )}
           {trailingSub && (
-            <span className="block text-[11px] leading-4 amount text-subtitle dark:text-subtitle-dark">
+            <span className="block text-[11px] leading-4 amount text-subtitle">
               {trailingSub}
             </span>
           )}
@@ -73,7 +73,7 @@ export default function ListRow ({
   )
 
   const shared = `flex w-full items-center gap-2.5 px-page py-2 text-left ${
-    interactive ? 'transition hover:bg-black/[0.03] dark:hover:bg-white/[0.04]' : ''
+    interactive ? 'transition hover:bg-tint/[0.04]' : ''
   } ${className}`
 
   return (
@@ -106,7 +106,7 @@ export function RowIcon ({ icon, color, size = 'md' }) {
 
   return (
     <span
-      className={`flex shrink-0 items-center justify-center overflow-hidden ring-1 ring-inset ring-black/[0.06] dark:ring-white/10 ${box}`}
+      className={`flex shrink-0 items-center justify-center overflow-hidden ring-1 ring-inset ring-tint/10 ${box}`}
       style={color ? { backgroundColor: `${color}1f` } : undefined}
       aria-hidden="true"
     >

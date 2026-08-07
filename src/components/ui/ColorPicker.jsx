@@ -16,8 +16,8 @@ export default function ColorPicker ({ value, error, onChange }) {
             aria-label={`Pilih warna ${color}`}
             aria-pressed={value.toLowerCase() === color}
             onClick={() => onChange(color)}
-            className={`h-9 w-9 rounded-full ring-offset-2 ring-offset-surface transition dark:ring-offset-surface-dark ${
-              value.toLowerCase() === color ? 'ring-2 ring-ink dark:ring-white' : ''
+            className={`h-9 w-9 rounded-full ring-offset-2 ring-offset-surface transition ${
+              value.toLowerCase() === color ? 'ring-2 ring-ink' : ''
             }`}
             style={{ backgroundColor: color }}
           />
@@ -28,7 +28,7 @@ export default function ColorPicker ({ value, error, onChange }) {
         <input
           type="color"
           aria-label="Warna khusus"
-          className="h-10 w-12 cursor-pointer rounded-control border border-hairline bg-surface p-1 dark:border-hairline-dark dark:bg-surface-dark"
+          className="h-10 w-12 cursor-pointer rounded-control border border-hairline bg-surface p-1"
           value={HEX_PATTERN.test(value) ? value : '#2a78d6'}
           onChange={(event) => onChange(event.target.value)}
         />

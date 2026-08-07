@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage.js'
 
 const STORAGE_KEY = 'hartaku.settings'
@@ -16,12 +16,28 @@ const SettingsContext = createContext(null)
 
 export function SettingsProvider ({ children }) {
   const [settings, updateSettings, resetSettings] = useLocalStorage(STORAGE_KEY, DEFAULT_SETTINGS)
+  const [resolvedTheme, setResolvedTheme] = useState(() => resolveTheme(settings.theme))
 
-  useEffect(() => applyTheme(settings.theme), [settings.theme])
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+
+    const paint = () => {
+      const next = resolveTheme(settings.theme, media)
+      applyTheme(next)
+      setResolvedTheme(next)
+    }
+
+    paint()
+    // Only 'auto' has anything to follow; a named theme ignores the OS.
+    if (settings.theme !== 'auto') return undefined
+
+    media.addEventListener('change', paint)
+    return () => media.removeEventListener('change', paint)
+  }, [settings.theme])
 
   const value = useMemo(
-    () => ({ settings, updateSettings, resetSettings, defaults: DEFAULT_SETTINGS }),
-    [settings, updateSettings, resetSettings]
+    () => ({ settings, updateSettings, resetSettings, resolvedTheme, defaults: DEFAULT_SETTINGS }),
+    [settings, updateSettings, resetSettings, resolvedTheme]
   )
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>
@@ -33,17 +49,37 @@ export function useSettings () {
   return context
 }
 
+/** 'auto' is the only setting that asks the OS; everything else is literal. */
+function resolveTheme (theme, media) {
+  if (theme !== 'auto') return theme
+  const dark = (media ?? window.matchMedia('(prefers-color-scheme: dark)')).matches
+  return dark ? 'dark' : 'light'
+}
+
 function applyTheme (theme) {
-  const media = window.matchMedia('(prefers-color-scheme: dark)')
+  const root = document.documentElement
 
-  const paint = () => {
-    const dark = theme === 'dark' || (theme === 'auto' && media.matches)
-    document.documentElement.classList.toggle('dark', dark)
-  }
+  /*
+   * Chromium keeps a transitioned property pinned to its old value when the
+   * var() behind it changes, which left every element carrying a `transition`
+   * painted in the previous theme. Reading `offsetHeight` between the two
+   * attribute writes forces a style flush while transitions are suppressed -
+   * see [data-theme-switching] in index.css. It is load-bearing, not
+   * superstition.
+   */
+  root.dataset.themeSwitching = ''
+  root.dataset.theme = theme
+  void root.offsetHeight
+  delete root.dataset.themeSwitching
 
-  paint()
-  if (theme !== 'auto') return undefined
+  /*
+   * Read the canvas back out of the stylesheet rather than keeping a second
+   * copy of every palette here. A `media` attribute on the meta tag could only
+   * ever follow the OS, so it got the status bar wrong for anyone who picked a
+   * theme by hand - and it has no way at all to express Laut or Bunga.
+   */
+  const canvas = getComputedStyle(root).getPropertyValue('--canvas').trim()
+  if (!canvas) return
 
-  media.addEventListener('change', paint)
-  return () => media.removeEventListener('change', paint)
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', `rgb(${canvas})`)
 }

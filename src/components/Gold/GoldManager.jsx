@@ -115,8 +115,8 @@ export default function GoldManager () {
                         <span
                           className={
                             profit >= 0
-                              ? 'text-income dark:text-emerald-400'
-                              : 'text-expense dark:text-red-400'
+                              ? 'text-income'
+                              : 'text-expense'
                           }
                         >
                           {profit >= 0 ? '+' : '−'}
@@ -192,7 +192,7 @@ export function GoldPortfolio ({ summary, quote, loading, error, stale, onRefres
     <Card aria-labelledby="gold-label">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p id="gold-label" className="text-caption text-subtitle dark:text-subtitle-dark">
+          <p id="gold-label" className="text-caption text-subtitle">
             Nilai emas sekarang
           </p>
           <p className="mt-0.5 truncate text-hero font-bold tracking-tight amount">
@@ -205,7 +205,7 @@ export function GoldPortfolio ({ summary, quote, loading, error, stale, onRefres
           onClick={onRefresh}
           disabled={loading}
           aria-label="Perbarui harga emas"
-          className="tap -mr-1 -mt-1 flex shrink-0 items-center justify-center rounded-control text-subtitle transition hover:bg-black/5 disabled:opacity-40 dark:hover:bg-white/5"
+          className="tap -mr-1 -mt-1 flex shrink-0 items-center justify-center rounded-control text-subtitle transition hover:bg-tint/5 disabled:opacity-40"
         >
           <RefreshIcon className={loading ? 'h-[19px] w-[19px] animate-spin' : 'h-[19px] w-[19px]'} />
         </button>
@@ -215,8 +215,8 @@ export function GoldPortfolio ({ summary, quote, loading, error, stale, onRefres
         <div
           className={`mt-2 inline-flex max-w-full items-baseline gap-1.5 overflow-hidden rounded-full px-2.5 py-1 text-caption font-semibold ${
             up
-              ? 'bg-income/10 text-income dark:bg-emerald-400/15 dark:text-emerald-400'
-              : 'bg-expense/10 text-expense dark:bg-red-400/15 dark:text-red-400'
+              ? 'bg-income/10 text-income'
+              : 'bg-expense/10 text-expense'
           }`}
         >
           <span className="truncate amount">
@@ -227,7 +227,7 @@ export function GoldPortfolio ({ summary, quote, loading, error, stale, onRefres
         </div>
       )}
 
-      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 border-t border-hairline pt-2.5 dark:border-hairline-dark">
+      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 border-t border-hairline pt-2.5">
         <Stat label="Total gram" value={formatGrams(summary.grams)} />
         <Stat label="Total investasi" value={money(summary.invested)} />
         <Stat
@@ -240,7 +240,7 @@ export function GoldPortfolio ({ summary, quote, loading, error, stale, onRefres
         />
       </dl>
 
-      <p className="mt-2.5 border-t border-hairline pt-2 text-caption text-subtitle dark:border-hairline-dark dark:text-subtitle-dark">
+      <p className="mt-2.5 border-t border-hairline pt-2 text-caption text-subtitle">
         {quote ? (
           <>
             {quote.source}
@@ -259,7 +259,7 @@ export function GoldPortfolio ({ summary, quote, loading, error, stale, onRefres
 function Stat ({ label, value }) {
   return (
     <div className="min-w-0">
-      <dt className="truncate text-caption text-subtitle dark:text-subtitle-dark">{label}</dt>
+      <dt className="truncate text-caption text-subtitle">{label}</dt>
       {/* `truncate` rather than wrap: `.amount` forbids wrapping anyway, so
           without it a long figure escapes its column instead of ending in an
           ellipsis the eye can act on. */}

@@ -73,13 +73,13 @@ export default function TagInput ({
         <ul className="mb-1.5 flex flex-wrap gap-1.5">
           {value.map((tag) => (
             <li key={tag}>
-              <span className="inline-flex h-7 items-center gap-1 rounded-full bg-brand-50 pl-2.5 pr-1 text-caption font-medium text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">
+              <span className="inline-flex h-7 items-center gap-1 rounded-full bg-brand-soft pl-2.5 pr-1 text-caption font-medium text-brand-onsoft">
                 {tag}
                 <button
                   type="button"
                   onClick={() => remove(tag)}
                   aria-label={`Hapus tag ${tag}`}
-                  className="flex h-5 w-5 items-center justify-center rounded-full transition hover:bg-black/10 dark:hover:bg-white/10"
+                  className="flex h-5 w-5 items-center justify-center rounded-full transition hover:bg-tint/10"
                 >
                   <CloseIcon className="h-3 w-3" />
                 </button>
@@ -113,7 +113,7 @@ export default function TagInput ({
               key={tag}
               type="button"
               onClick={() => add(tag)}
-              className="h-7 rounded-full border border-hairline px-2.5 text-caption text-subtitle transition hover:border-brand-500 hover:text-brand-700 dark:border-hairline-dark dark:text-subtitle-dark dark:hover:text-brand-200"
+              className="h-7 rounded-full border border-hairline px-2.5 text-caption text-subtitle transition hover:border-brand hover:text-brand-onsoft"
             >
               {tag}
             </button>

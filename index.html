@@ -18,9 +18,13 @@
     />
     <meta property="og:type" content="website" />
 
-    <!-- Matches the canvas in each mode so the status bar blends with the page. -->
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f7fb" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d1117" />
+    <!--
+      Matches the canvas so the status bar blends with the page. Deliberately one
+      tag with no `media`: the theme is a saved setting rather than an OS
+      preference, and a media query has no way to express Laut or Bunga at all.
+      The script below and SettingsContext keep the value in step.
+    -->
+    <meta name="theme-color" content="#f6f7fb" />
 
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -34,10 +38,25 @@
       try {
         const saved = JSON.parse(localStorage.getItem('hartaku.settings') || '{}')
         const theme = saved.theme || 'auto'
-        const dark =
-          theme === 'dark' ||
-          (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches)
-        if (dark) document.documentElement.classList.add('dark')
+        const root = document.documentElement
+
+        root.dataset.theme =
+          theme !== 'auto'
+            ? theme
+            : window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light'
+
+        // Only works once the stylesheet has parsed, which is why it is guarded
+        // rather than assumed - SettingsContext sets it properly on mount, so
+        // the worst case here is the status bar catching up a frame later. No
+        // palette is copied into this file.
+        const canvas = getComputedStyle(root).getPropertyValue('--canvas').trim()
+        if (canvas) {
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute('content', 'rgb(' + canvas + ')')
+        }
       } catch (_) {}
     </script>
   </head>

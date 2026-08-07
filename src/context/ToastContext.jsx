@@ -3,9 +3,9 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 const ToastContext = createContext(null)
 
 const TONES = {
-  success: 'bg-income text-white',
-  error: 'bg-expense text-white',
-  info: 'bg-ink text-white dark:bg-surface-dark dark:text-ink-dark'
+  success: 'bg-income text-surface',
+  error: 'bg-expense text-surface',
+  info: 'bg-ink text-canvas'
 }
 
 export function ToastProvider ({ children }) {

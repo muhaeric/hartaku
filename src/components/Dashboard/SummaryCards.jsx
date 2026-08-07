@@ -18,12 +18,12 @@ export default function SummaryCards ({ summary }) {
         <Figure
           label="Selisih"
           value={money(summary.net)}
-          dotClass="bg-brand-500"
-          tone={summary.net < 0 ? 'text-expense dark:text-red-400' : ''}
+          dotClass="bg-brand"
+          tone={summary.net < 0 ? 'text-expense' : ''}
         />
       </div>
 
-      <p className="mt-2.5 border-t border-hairline pt-2 text-caption text-subtitle dark:border-hairline-dark dark:text-subtitle-dark">
+      <p className="mt-2.5 border-t border-hairline pt-2 text-caption text-subtitle">
         {summary.count} transaksi
         {summary.transfers > 0 && ` · ${summary.transfers} transfer`}
       </p>
@@ -34,7 +34,7 @@ export default function SummaryCards ({ summary }) {
 function Figure ({ label, value, dotClass, tone = '' }) {
   return (
     <div className="min-w-0">
-      <p className="flex items-center gap-1.5 text-caption text-subtitle dark:text-subtitle-dark">
+      <p className="flex items-center gap-1.5 text-caption text-subtitle">
         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotClass}`} aria-hidden="true" />
         {label}
       </p>

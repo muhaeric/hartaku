@@ -28,7 +28,7 @@ export default function MonthStepper ({ value, options, onChange, className = ''
 
   return (
     <div
-      className={`flex h-9 items-center rounded-control border border-hairline bg-surface dark:border-hairline-dark dark:bg-surface-dark ${className}`}
+      className={`flex h-9 items-center rounded-control border border-hairline bg-surface ${className}`}
     >
       <Step
         label="Bulan sebelumnya"
@@ -75,7 +75,7 @@ function Step ({ label, disabled, onClick, children }) {
       aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className="flex h-full w-9 shrink-0 items-center justify-center rounded-control text-subtitle transition disabled:opacity-30 enabled:hover:text-ink dark:text-subtitle-dark dark:enabled:hover:text-ink-dark"
+      className="flex h-full w-9 shrink-0 items-center justify-center rounded-control text-subtitle transition disabled:opacity-30 enabled:hover:text-ink"
     >
       {children}
     </button>

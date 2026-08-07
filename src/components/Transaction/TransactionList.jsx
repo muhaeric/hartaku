@@ -349,7 +349,7 @@ export default function TransactionList () {
       <PeriodSummary summary={summary} />
 
       <div className="flex items-center justify-between gap-3">
-        <p className="text-caption text-subtitle dark:text-subtitle-dark">
+        <p className="text-caption text-subtitle">
           {selecting ? `${selected.length} dipilih` : `${visible.length} transaksi`}
         </p>
 
@@ -424,7 +424,7 @@ export default function TransactionList () {
               <Button variant="secondary" size="sm" onClick={loadMore}>
                 Muat lebih banyak
               </Button>
-              <span className="text-caption text-subtitle dark:text-subtitle-dark">
+              <span className="text-caption text-subtitle">
                 {rows.length} dari {visible.length}
               </span>
             </div>

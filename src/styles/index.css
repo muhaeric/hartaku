@@ -3,12 +3,180 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * Themes, as space-separated RGB channels so Tailwind's alpha modifiers can
+   * slot into them. A theme is data here, not a set of hand-written `dark:`
+   * twins - which is what lets Laut and Luar Angkasa exist at all. Light and
+   * dark are just two entries in this list.
+   *
+   * Every value below was checked against the twenty pairs the app actually
+   * paints - body text, subtitles, links, button labels, chip text, both money
+   * colours, and the divider - at the same floors the shipping light theme
+   * already met. `income` vs `expense` is checked as a perceptual distance
+   * rather than a contrast ratio, because green and red sit at a 1.14 luminance
+   * ratio and nobody has ever confused them.
+   *
+   * `color-scheme` is what makes native selects, scrollbars and the date picker
+   * follow the theme; without it they stay light on a dark page.
+   */
+  :root,
+  [data-theme='light'] {
+    color-scheme: light;
+    --canvas: 246 247 251;
+    --surface: 255 255 255;
+    --hairline: 231 234 240;
+    --ink: 17 24 39;
+    --subtitle: 107 114 128;
+    --brand: 67 97 238;
+    --brand-hover: 58 85 217;
+    --brand-active: 47 69 180;
+    --brand-soft: 238 241 254;
+    --brand-soft-hover: 223 228 253;
+    --brand-onsoft: 47 69 180;
+    --brand-fg: 255 255 255;
+    --income: 4 120 87;
+    --expense: 220 38 38;
+    --warning: 180 83 9;
+    --decor: 67 97 238;
+    --tint: 0 0 0;
+  }
+
+  /*
+   * The accent is lighter than the light theme's on every dark theme. `text-brand`
+   * lands on a dark surface here, and the old #4361ee only reached 3.45:1 against
+   * it - readable-ish, never actually passing. Splitting `--brand-fg` out means
+   * the button label can go dark to compensate.
+   */
+  [data-theme='dark'] {
+    color-scheme: dark;
+    --canvas: 13 17 23;
+    --surface: 22 27 34;
+    --hairline: 38 44 54;
+    --ink: 230 237 243;
+    --subtitle: 139 148 158;
+    --brand: 142 166 255;
+    --brand-hover: 165 184 255;
+    --brand-active: 188 203 255;
+    --brand-soft: 27 36 64;
+    --brand-soft-hover: 35 48 86;
+    --brand-onsoft: 188 203 255;
+    --brand-fg: 13 17 23;
+    --income: 52 211 153;
+    --expense: 248 113 113;
+    --warning: 251 191 36;
+    --decor: 142 166 255;
+    --tint: 255 255 255;
+  }
+
+  [data-theme='ocean'] {
+    color-scheme: dark;
+    --canvas: 4 20 28;
+    --surface: 10 36 48;
+    --hairline: 23 65 79;
+    --ink: 226 244 250;
+    --subtitle: 148 184 196;
+    --brand: 94 207 232;
+    --brand-hover: 127 218 239;
+    --brand-active: 161 229 244;
+    --brand-soft: 15 52 65;
+    --brand-soft-hover: 23 65 79;
+    --brand-onsoft: 168 230 244;
+    --brand-fg: 4 20 28;
+    --income: 79 214 168;
+    --expense: 255 143 143;
+    --warning: 245 194 107;
+    --decor: 94 207 232;
+    --tint: 255 255 255;
+  }
+
+  [data-theme='space'] {
+    color-scheme: dark;
+    --canvas: 7 8 24;
+    --surface: 18 20 44;
+    --hairline: 39 43 79;
+    --ink: 233 231 255;
+    --subtitle: 157 154 203;
+    --brand: 168 152 255;
+    --brand-hover: 188 176 255;
+    --brand-active: 208 200 255;
+    --brand-soft: 27 29 63;
+    --brand-soft-hover: 39 43 79;
+    --brand-onsoft: 201 192 255;
+    --brand-fg: 7 8 24;
+    --income: 95 214 180;
+    --expense: 255 143 168;
+    --warning: 255 209 102;
+    --decor: 168 152 255;
+    --tint: 255 255 255;
+  }
+
+  [data-theme='flower'] {
+    color-scheme: light;
+    --canvas: 253 245 246;
+    --surface: 255 255 255;
+    --hairline: 243 226 229;
+    --ink: 59 42 46;
+    --subtitle: 135 104 110;
+    --brand: 192 42 99;
+    --brand-hover: 165 34 82;
+    --brand-active: 135 26 66;
+    --brand-soft: 253 234 241;
+    --brand-soft-hover: 251 217 230;
+    --brand-onsoft: 135 26 66;
+    --brand-fg: 255 255 255;
+    --income: 18 121 92;
+    --expense: 207 48 48;
+    --warning: 163 95 16;
+    --decor: 192 42 99;
+    --tint: 0 0 0;
+  }
+
+  /*
+   * Khaki rather than the brown this started as. A warm theme has the accent,
+   * the warning and the expense colour all wanting the same corner of the
+   * wheel, and brown could not get far enough from a rust warning to stay
+   * tellable apart - the status dot would have read as decoration.
+   */
+  [data-theme='animal'] {
+    color-scheme: light;
+    --canvas: 250 244 233;
+    --surface: 255 253 247;
+    --hairline: 236 224 201;
+    --ink: 51 41 27;
+    --subtitle: 126 108 82;
+    --brand: 107 98 46;
+    --brand-hover: 87 80 38;
+    --brand-active: 69 63 30;
+    --brand-soft: 242 236 217;
+    --brand-soft-hover: 232 223 194;
+    --brand-onsoft: 69 63 30;
+    --brand-fg: 255 253 247;
+    --income: 23 113 79;
+    --expense: 194 53 43;
+    --warning: 184 91 10;
+    --decor: 107 98 46;
+    --tint: 0 0 0;
+  }
+
+  /*
+   * Chromium keeps a transitioned property pinned to its old value when the
+   * var() behind it changes, so swapping theme left every element carrying a
+   * `transition` - buttons above all - painted in the previous colour until
+   * something else forced it to re-render. SettingsContext flushes styles with
+   * this attribute set, which sidesteps that and stops the whole UI
+   * cross-fading at once as a bonus.
+   */
+  [data-theme-switching],
+  [data-theme-switching] * {
+    transition: none !important;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }
 
   body {
-    @apply bg-canvas text-body text-ink antialiased dark:bg-canvas-dark dark:text-ink-dark;
+    @apply bg-canvas text-body text-ink antialiased;
     font-family:
       ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
       sans-serif;
@@ -22,7 +190,7 @@
   }
 
   :focus-visible {
-    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-canvas dark:ring-offset-canvas-dark;
+    @apply outline-none ring-2 ring-brand ring-offset-2 ring-offset-canvas;
   }
 
   /* The search field draws its own clear button, so WebKit's would be a second
@@ -40,23 +208,22 @@
 
 @layer components {
   .card {
-    @apply rounded-card border border-hairline bg-surface p-page dark:border-hairline-dark dark:bg-surface-dark;
+    @apply rounded-card border border-hairline bg-surface p-page;
   }
 
   /* Thin borders instead of heavy shadows, per the brief. */
   .card-flush {
-    @apply rounded-card border border-hairline bg-surface dark:border-hairline-dark dark:bg-surface-dark;
+    @apply rounded-card border border-hairline bg-surface;
   }
 
   .label {
-    @apply mb-1.5 block text-caption font-medium text-subtitle dark:text-subtitle-dark;
+    @apply mb-1.5 block text-caption font-medium text-subtitle;
   }
 
   .field {
     @apply w-full rounded-control border border-hairline bg-surface px-3 py-2 text-ink
-      placeholder:text-subtitle/70 focus:border-brand-500 focus:outline-none focus:ring-2
-      focus:ring-brand-500/25 disabled:cursor-not-allowed disabled:opacity-60
-      dark:border-hairline-dark dark:bg-surface-dark dark:text-ink-dark;
+      placeholder:text-subtitle/70 focus:border-brand focus:outline-none focus:ring-2
+      focus:ring-brand/25 disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .field-error {
@@ -68,7 +235,7 @@
   }
 
   .hint {
-    @apply mt-1 text-caption text-subtitle dark:text-subtitle-dark;
+    @apply mt-1 text-caption text-subtitle;
   }
 
   /* Rows are compact but the tap target still reaches the platform minimum. */
@@ -77,6 +244,6 @@
   }
 
   .divide-hairline > * + * {
-    @apply border-t border-hairline dark:border-hairline-dark;
+    @apply border-t border-hairline;
   }
 }

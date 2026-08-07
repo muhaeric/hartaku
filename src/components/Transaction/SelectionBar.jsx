@@ -19,7 +19,7 @@ export default function SelectionBar ({ count, onMove, onTag, onCopy, onDelete }
 
   return (
     <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-10 lg:bottom-4">
-      <div className="flex gap-1 rounded-control border border-hairline bg-surface p-1.5 shadow-lg dark:border-hairline-dark dark:bg-surface-dark">
+      <div className="flex gap-1 rounded-control border border-hairline bg-surface p-1.5 shadow-lg">
         <Action label="Pindah" onClick={onMove}>
           <SwapIcon className="h-4 w-4" />
         </Action>

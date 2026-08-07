@@ -2,9 +2,9 @@ import { useSettings } from '../../context/SettingsContext.jsx'
 import { formatCurrency } from '../../lib/format.js'
 
 const TONES = {
-  income: 'text-income dark:text-emerald-400',
-  expense: 'text-expense dark:text-red-400',
-  transfer: 'text-subtitle dark:text-subtitle-dark',
+  income: 'text-income',
+  expense: 'text-expense',
+  transfer: 'text-subtitle',
   neutral: ''
 }
 

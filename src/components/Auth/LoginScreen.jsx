@@ -27,11 +27,11 @@ export default function LoginScreen () {
   return (
     <main className="mx-auto w-full max-w-lg px-page py-8">
       <header className="text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-card bg-brand-500 text-[26px]">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-card bg-brand text-[26px]">
           💸
         </div>
         <h1 className="text-page-title font-bold tracking-tight">{LANDING.name}</h1>
-        <p className="mx-auto mt-2 max-w-sm text-body text-subtitle dark:text-subtitle-dark">
+        <p className="mx-auto mt-2 max-w-sm text-body text-subtitle">
           {LANDING.tagline}
         </p>
       </header>
@@ -40,7 +40,7 @@ export default function LoginScreen () {
         <h2 id="about-heading" className="text-section-title font-semibold">
           Apa itu {LANDING.name}
         </h2>
-        <p className="mt-1.5 text-body text-subtitle dark:text-subtitle-dark">{LANDING.intro}</p>
+        <p className="mt-1.5 text-body text-subtitle">{LANDING.intro}</p>
       </section>
 
       <div className="mt-6">
@@ -72,7 +72,7 @@ export default function LoginScreen () {
               </span>
               <span className="min-w-0">
                 <span className="block text-body font-medium">{feature.title}</span>
-                <span className="block text-caption text-subtitle dark:text-subtitle-dark">
+                <span className="block text-caption text-subtitle">
                   {feature.body}
                 </span>
               </span>
@@ -90,11 +90,11 @@ export default function LoginScreen () {
             <li key={step} className="flex items-start gap-2.5">
               <span
                 aria-hidden="true"
-                className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[11px] font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-200"
+                className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-soft text-[11px] font-semibold text-brand-onsoft"
               >
                 {index + 1}
               </span>
-              <span className="text-caption text-subtitle dark:text-subtitle-dark">{step}</span>
+              <span className="text-caption text-subtitle">{step}</span>
             </li>
           ))}
         </ol>
@@ -108,18 +108,18 @@ export default function LoginScreen () {
           {LANDING.access.map((item) => (
             <div key={item.what}>
               <dt className="text-body font-medium">{item.what}</dt>
-              <dd className="text-caption text-subtitle dark:text-subtitle-dark">{item.why}</dd>
+              <dd className="text-caption text-subtitle">{item.why}</dd>
             </div>
           ))}
         </dl>
-        <p className="mt-3 rounded-card border border-hairline bg-surface p-3.5 text-caption text-subtitle dark:border-hairline-dark dark:bg-surface-dark dark:text-subtitle-dark">
+        <p className="mt-3 rounded-card border border-hairline bg-surface p-3.5 text-caption text-subtitle">
           {LANDING.privacyNote}
         </p>
       </section>
 
-      <footer className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-hairline pt-4 text-caption dark:border-hairline-dark">
+      <footer className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-hairline pt-4 text-caption">
         {LANDING.links.map((link) => (
-          <a key={link.href} className="font-medium text-brand-500" href={link.href}>
+          <a key={link.href} className="font-medium text-brand" href={link.href}>
             {link.label}
           </a>
         ))}

@@ -45,7 +45,7 @@ export default function ConfirmDialog ({
         </div>
       }
     >
-      <p className="text-body text-subtitle dark:text-subtitle-dark">{message}</p>
+      <p className="text-body text-subtitle">{message}</p>
     </Sheet>
   )
 }

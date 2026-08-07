@@ -57,7 +57,7 @@ export default function TopExpenses ({ breakdown, categories, limit = 5 }) {
 
   if (!slices.length) {
     return (
-      <p className="px-page py-4 text-caption text-subtitle dark:text-subtitle-dark">
+      <p className="px-page py-4 text-caption text-subtitle">
         Belum ada pengeluaran di bulan ini.
       </p>
     )
@@ -117,14 +117,14 @@ export default function TopExpenses ({ breakdown, categories, limit = 5 }) {
         </svg>
 
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-          <span className="w-full truncate text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">
+          <span className="w-full truncate text-[11px] leading-4 text-subtitle">
             {focused ? focused.name : 'Total'}
           </span>
           <span className="text-card-title font-semibold">
             {money(focused ? focused.total : total, true)}
           </span>
           {focused && (
-            <span className="text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">
+            <span className="text-[11px] leading-4 text-subtitle">
               {percentLabel(focused.total)}
             </span>
           )}
@@ -136,7 +136,7 @@ export default function TopExpenses ({ breakdown, categories, limit = 5 }) {
           <li key={slice.name}>
             <button
               type="button"
-              className="flex w-full items-center gap-2 rounded-[10px] px-1 py-1 text-left transition hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+              className="flex w-full items-center gap-2 rounded-[10px] px-1 py-1 text-left transition hover:bg-tint/[0.04]"
               onMouseEnter={() => setActive(index)}
               onMouseLeave={() => setActive(null)}
               onFocus={() => setActive(index)}
@@ -144,7 +144,7 @@ export default function TopExpenses ({ breakdown, categories, limit = 5 }) {
               onClick={() => setActive((current) => (current === index ? null : index))}
             >
               <span
-                className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-black/10 dark:ring-white/20"
+                className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-tint/15"
                 style={{ backgroundColor: slice.color }}
                 aria-hidden="true"
               />
@@ -152,13 +152,13 @@ export default function TopExpenses ({ breakdown, categories, limit = 5 }) {
                 {slice.icon ? `${slice.icon} ` : ''}
                 {slice.name}
                 {slice.count ? (
-                  <span className="text-subtitle dark:text-subtitle-dark">
+                  <span className="text-subtitle">
                     {' '}
                     · {slice.count} kategori
                   </span>
                 ) : null}
               </span>
-              <span className="amount w-10 shrink-0 text-right text-caption text-subtitle dark:text-subtitle-dark">
+              <span className="amount w-10 shrink-0 text-right text-caption text-subtitle">
                 {percentLabel(slice.total)}
               </span>
               <span className="amount shrink-0 text-caption font-medium">

@@ -23,7 +23,7 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
     <Card
       as="li"
       flush
-      className={`p-3 transition ${selected ? 'ring-1 ring-brand-500' : 'opacity-60'}`}
+      className={`p-3 transition ${selected ? 'ring-1 ring-brand' : 'opacity-60'}`}
     >
       <div className="flex items-start gap-2.5">
         <input
@@ -31,7 +31,7 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
           checked={selected}
           onChange={onToggle}
           aria-label={`Sertakan ${item.description || 'transaksi ini'}`}
-          className="mt-1 h-5 w-5 shrink-0 rounded border-hairline text-brand-500"
+          className="mt-1 h-5 w-5 shrink-0 rounded border-hairline text-brand"
         />
 
         <div className="min-w-0 flex-1 space-y-2">
@@ -57,7 +57,7 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
                 onChange={(event) => onChange({ amount: event.target.value })}
               />
               {validAmount && (
-                <p className="mt-0.5 truncate text-caption text-subtitle dark:text-subtitle-dark">
+                <p className="mt-0.5 truncate text-caption text-subtitle">
                   {formatCurrency(amount, settings.currency)}
                 </p>
               )}

@@ -16,22 +16,22 @@ export default function PeriodSummary ({ summary }) {
   const money = (value) => formatCurrency(value, settings.currency)
 
   return (
-    <div className="rounded-card border border-hairline bg-surface px-3 py-2 dark:border-hairline-dark dark:bg-surface-dark">
+    <div className="rounded-card border border-hairline bg-surface px-3 py-2">
       <div className="grid grid-cols-3 gap-2 text-center">
         <Figure
           label="Masuk"
           value={money(summary.income)}
-          tone="text-income dark:text-emerald-400"
+          tone="text-income"
         />
         <Figure
           label="Keluar"
           value={money(summary.expense)}
-          tone="text-expense dark:text-red-400"
+          tone="text-expense"
         />
         <Figure
           label="Selisih"
           value={money(summary.net)}
-          tone={summary.net < 0 ? 'text-expense dark:text-red-400' : ''}
+          tone={summary.net < 0 ? 'text-expense' : ''}
         />
       </div>
     </div>
@@ -41,7 +41,7 @@ export default function PeriodSummary ({ summary }) {
 function Figure ({ label, value, tone = '' }) {
   return (
     <div className="min-w-0">
-      <p className="text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">{label}</p>
+      <p className="text-[11px] leading-4 text-subtitle">{label}</p>
       <p className={`mt-0.5 truncate text-caption font-semibold amount ${tone}`}>{value}</p>
     </div>
   )

@@ -3,7 +3,7 @@ import Button from './Button.jsx'
 export function Spinner ({ className = 'h-5 w-5' }) {
   return (
     <span
-      className={`inline-block animate-spin rounded-full border-2 border-brand-500 border-t-transparent ${className}`}
+      className={`inline-block animate-spin rounded-full border-2 border-brand border-t-transparent ${className}`}
       role="status"
       aria-label="Memuat"
     />
@@ -12,7 +12,7 @@ export function Spinner ({ className = 'h-5 w-5' }) {
 
 export function LoadingBlock ({ label = 'Memuat…' }) {
   return (
-    <div className="flex flex-col items-center gap-2 py-12 text-subtitle dark:text-subtitle-dark">
+    <div className="flex flex-col items-center gap-2 py-12 text-subtitle">
       <Spinner />
       <p className="text-caption">{label}</p>
     </div>
@@ -20,7 +20,7 @@ export function LoadingBlock ({ label = 'Memuat…' }) {
 }
 
 function Bar ({ className = '' }) {
-  return <span className={`block rounded bg-hairline dark:bg-hairline-dark ${className}`} />
+  return <span className={`block rounded bg-hairline ${className}`} />
 }
 
 /** Skeletons mirror the real layout so nothing jumps when data lands. */
@@ -63,7 +63,7 @@ export function EmptyState ({ icon = '📄', title, description, actionLabel, on
       </span>
       <p className="text-body font-medium">{title}</p>
       {description && (
-        <p className="max-w-xs text-caption text-subtitle dark:text-subtitle-dark">{description}</p>
+        <p className="max-w-xs text-caption text-subtitle">{description}</p>
       )}
       {actionLabel && (
         <Button size="sm" className="mt-2" onClick={onAction}>
@@ -78,7 +78,7 @@ export function ErrorState ({ message, onRetry }) {
   return (
     <div className="rounded-card border border-expense/25 bg-expense/[0.06] p-page">
       <p className="text-body font-semibold text-expense">Gagal memuat data</p>
-      <p className="mt-1 text-caption text-subtitle dark:text-subtitle-dark">{message}</p>
+      <p className="mt-1 text-caption text-subtitle">{message}</p>
       {onRetry && (
         <Button size="sm" variant="danger" className="mt-3" onClick={onRetry}>
           Coba lagi

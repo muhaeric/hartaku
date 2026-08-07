@@ -113,7 +113,7 @@ export default function DevPreview () {
             <button
               key={category.id}
               type="button"
-              className="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-hairline px-2.5 text-caption text-subtitle dark:border-hairline-dark dark:text-subtitle-dark"
+              className="flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-hairline px-2.5 text-caption text-subtitle"
             >
               <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: category.color }} />
               {category.name}
@@ -125,7 +125,7 @@ export default function DevPreview () {
       <PeriodSummary summary={summary} />
 
       <div className="flex items-center justify-between">
-        <p className="text-caption text-subtitle dark:text-subtitle-dark">2 dipilih</p>
+        <p className="text-caption text-subtitle">2 dipilih</p>
         <div className="flex items-center gap-1.5">
           <Button variant="ghost" size="sm">Pilih semua</Button>
           <Button variant="ghost" size="sm">Selesai</Button>

@@ -72,8 +72,8 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
     setActive(Math.max(0, Math.min(series.length - 1, index + delta)))
 
   return (
-    <div className="mt-3 border-t border-hairline pt-3 dark:border-hairline-dark">
-      <p className="text-caption font-medium text-subtitle dark:text-subtitle-dark">
+    <div className="mt-3 border-t border-hairline pt-3">
+      <p className="text-caption font-medium text-subtitle">
         Pertumbuhan aset
       </p>
 
@@ -118,7 +118,7 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
               y1={PAD_Y}
               y2={PAD_Y}
               strokeWidth="1"
-              className="stroke-hairline dark:stroke-hairline-dark"
+              className="stroke-hairline"
             />
             <line
               x1="0"
@@ -126,7 +126,7 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
               y1={HEIGHT - PAD_Y}
               y2={HEIGHT - PAD_Y}
               strokeWidth="1"
-              className="stroke-hairline dark:stroke-hairline-dark"
+              className="stroke-hairline"
             />
 
             {/* Only while something is being read: a crosshair sitting on the
@@ -138,7 +138,7 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
                 y1={PAD_Y - 4}
                 y2={HEIGHT - PAD_Y + 4}
                 strokeWidth="1"
-                className="stroke-hairline dark:stroke-hairline-dark"
+                className="stroke-hairline"
               />
             )}
 
@@ -148,7 +148,7 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="stroke-brand-500"
+              className="stroke-brand"
             />
 
             <circle
@@ -156,24 +156,24 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
               cy={geometry[index].y}
               r="4"
               strokeWidth="2"
-              className="fill-brand-500 stroke-surface dark:stroke-surface-dark"
+              className="fill-brand stroke-surface"
             />
           </svg>
 
-          <div className="flex justify-between gap-3 text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">
+          <div className="flex justify-between gap-3 text-[11px] leading-4 text-subtitle">
             <span>{bucket.tick(first.key)}</span>
             <span>{bucket.tick(series[series.length - 1].key)}</span>
           </div>
         </>
       ) : (
-        <p className="mt-2 text-caption text-subtitle dark:text-subtitle-dark">
+        <p className="mt-2 text-caption text-subtitle">
           Riwayatnya baru satu periode — datanya belum cukup untuk digambar.
         </p>
       )}
 
       <div className="mt-2 flex items-end justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">
+          <p className="truncate text-[11px] leading-4 text-subtitle">
             {bucket.title(point.key)}
           </p>
           <p className="amount text-amount font-semibold">{money(point.total)}</p>
@@ -181,12 +181,12 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
 
         {series.length > 1 && index > 0 && (
           <div className="shrink-0 text-right">
-            <p className="text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">
+            <p className="text-[11px] leading-4 text-subtitle">
               sejak {bucket.tick(first.key)}
             </p>
             <p
               className={`amount text-caption font-semibold ${
-                change >= 0 ? 'text-income dark:text-emerald-400' : 'text-expense dark:text-red-400'
+                change >= 0 ? 'text-income' : 'text-expense'
               }`}
             >
               {change >= 0 ? '+' : '−'}
@@ -200,16 +200,16 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
       <button
         type="button"
         onClick={() => setShowTable((value) => !value)}
-        className="mt-2 text-caption font-semibold text-brand-500"
+        className="mt-2 text-caption font-semibold text-brand"
       >
         {showTable ? 'Sembunyikan angkanya' : 'Lihat angkanya'}
       </button>
 
       {showTable && (
-        <ul className="mt-1.5 divide-hairline rounded-control border border-hairline dark:border-hairline-dark">
+        <ul className="mt-1.5 divide-hairline rounded-control border border-hairline">
           {[...series].reverse().map((row) => (
             <li key={row.key} className="flex justify-between gap-3 px-2.5 py-1.5 text-caption">
-              <span className="truncate text-subtitle dark:text-subtitle-dark">
+              <span className="truncate text-subtitle">
                 {bucket.title(row.key)}
               </span>
               <span className="amount shrink-0 font-medium">{money(row.total)}</span>

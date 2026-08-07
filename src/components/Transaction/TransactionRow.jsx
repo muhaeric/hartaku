@@ -42,8 +42,8 @@ export default function TransactionRow ({
     <button
       type="button"
       onClick={selecting ? onSelect : onOpen}
-      className={`flex w-full items-center gap-2 px-page py-1.5 text-left transition hover:bg-black/[0.03] dark:hover:bg-white/[0.04] ${
-        selected ? 'bg-brand-50 dark:bg-brand-500/10' : ''
+      className={`flex w-full items-center gap-2 px-page py-1.5 text-left transition hover:bg-tint/[0.04] ${
+        selected ? 'bg-brand-soft' : ''
       }`}
     >
       {selecting ? (
@@ -52,22 +52,22 @@ export default function TransactionRow ({
           readOnly
           checked={selected}
           aria-label={`Pilih ${label}`}
-          className="h-5 w-5 shrink-0 rounded border-hairline text-brand-500"
+          className="h-5 w-5 shrink-0 rounded border-hairline text-brand"
         />
       ) : (
         // Wraps to two lines rather than truncating - the row is two lines tall
         // anyway, so "Food & Beverages" can be read in full.
-        <span className="line-clamp-2 w-[64px] shrink-0 text-[11px] leading-[14px] text-subtitle dark:text-subtitle-dark sm:w-20">
+        <span className="line-clamp-2 w-[64px] shrink-0 text-[11px] leading-[14px] text-subtitle sm:w-20">
           {transfer ? 'Transfer' : transaction.category || 'Tanpa kategori'}
         </span>
       )}
 
       <span className="min-w-0 flex-1">
         <span className="block truncate text-body font-medium">{label}</span>
-        <span className="block truncate text-[11px] leading-4 text-subtitle dark:text-subtitle-dark">
+        <span className="block truncate text-[11px] leading-4 text-subtitle">
           {source || '—'}
           {tags.map((tag) => (
-            <span key={tag} className="ml-1.5 text-brand-700 dark:text-brand-200">
+            <span key={tag} className="ml-1.5 text-brand-onsoft">
               #{tag}
             </span>
           ))}

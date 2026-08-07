@@ -37,20 +37,20 @@ export default function Sheet ({ open, title, description, onClose, children, fo
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`relative flex max-h-[92dvh] w-full animate-slide-up flex-col rounded-t-sheet bg-surface shadow-xl dark:bg-surface-dark sm:rounded-sheet ${
+        className={`relative flex max-h-[92dvh] w-full animate-slide-up flex-col rounded-t-sheet bg-surface shadow-xl sm:rounded-sheet ${
           size === 'lg' ? 'sm:max-w-2xl' : 'sm:max-w-md'
         }`}
       >
         {/* Grab handle: the affordance people look for on a sheet. */}
         <div className="flex justify-center pt-2 sm:hidden" aria-hidden="true">
-          <span className="h-1 w-9 rounded-full bg-hairline dark:bg-hairline-dark" />
+          <span className="h-1 w-9 rounded-full bg-hairline" />
         </div>
 
         <header className="flex items-start justify-between gap-3 px-page pb-3 pt-3">
           <div className="min-w-0">
             <h2 className="text-card-title font-semibold">{title}</h2>
             {description && (
-              <p className="mt-0.5 text-caption text-subtitle dark:text-subtitle-dark">
+              <p className="mt-0.5 text-caption text-subtitle">
                 {description}
               </p>
             )}
@@ -59,7 +59,7 @@ export default function Sheet ({ open, title, description, onClose, children, fo
             type="button"
             onClick={onClose}
             aria-label="Tutup"
-            className="tap -mr-2 -mt-1 flex items-center justify-center rounded-control text-subtitle transition hover:bg-black/5 dark:hover:bg-white/5"
+            className="tap -mr-2 -mt-1 flex items-center justify-center rounded-control text-subtitle transition hover:bg-tint/5"
           >
             <CloseIcon />
           </button>
@@ -68,7 +68,7 @@ export default function Sheet ({ open, title, description, onClose, children, fo
         <div className="flex-1 overflow-y-auto px-page pb-page">{children}</div>
 
         {footer && (
-          <footer className="border-t border-hairline px-page py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:border-hairline-dark sm:pb-3">
+          <footer className="border-t border-hairline px-page py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:pb-3">
             {footer}
           </footer>
         )}

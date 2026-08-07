@@ -106,7 +106,7 @@ export default function AccountForm ({ open, initial, takenNames, onSubmit, onCl
           <span className="label">Ikon</span>
           <div className="flex items-center gap-gap">
             <span
-              className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[14px] text-[24px] ring-1 ring-inset ring-black/[0.06] dark:ring-white/10"
+              className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[14px] text-[24px] ring-1 ring-inset ring-tint/10"
               style={{ backgroundColor: `${HEX_PATTERN.test(draft.color) ? draft.color : '#6b7280'}1f` }}
               aria-hidden="true"
             >
