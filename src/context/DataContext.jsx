@@ -25,6 +25,7 @@ import {
   listGoldLots,
   listTransactions,
   moveTransactions,
+  recategorizeTransactions,
   renameGoldAccountReferences,
   renameReferences,
   renameTag,
@@ -188,6 +189,22 @@ export function DataProvider ({ children }) {
         )
       }))
       return moved
+    }),
+    [withWorkbook]
+  )
+
+  const moveTransactionsToCategory = useCallback(
+    withWorkbook(async (workbook, ids, category) => {
+      const { moved, transfers, updatedAt } = await recategorizeTransactions(workbook, ids, category)
+      const changed = new Set(moved)
+
+      setState((current) => ({
+        ...current,
+        transactions: current.transactions.map((item) =>
+          changed.has(item.id) ? { ...item, category, updatedAt } : item
+        )
+      }))
+      return { moved, transfers }
     }),
     [withWorkbook]
   )
@@ -468,6 +485,7 @@ export function DataProvider ({ children }) {
       addTransactions: addTransactionsBatch,
       editTransaction,
       moveTransactions: moveTransactionsToAccount,
+      recategorizeTransactions: moveTransactionsToCategory,
       tagTransactions: tagTransactionsBatch,
       renameTag: renameTagEverywhere,
       removeTag: deleteTagEverywhere,
@@ -495,6 +513,7 @@ export function DataProvider ({ children }) {
       addTransactionsBatch,
       editTransaction,
       moveTransactionsToAccount,
+      moveTransactionsToCategory,
       tagTransactionsBatch,
       renameTagEverywhere,
       deleteTagEverywhere,

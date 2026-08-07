@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useData } from '../../context/DataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { CATEGORY_TYPES } from '../../lib/constants.js'
+import { categoryTransactionsPath } from '../../lib/links.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
@@ -90,6 +91,9 @@ export default function CategoryManager () {
             return (
               <li key={category.id}>
                 <ListRow
+                  /* The row leads to its transactions; editing stays on the
+                     kebab, matching how account rows already behave. */
+                  to={categoryTransactionsPath(category.name)}
                   leading={<RowIcon icon={category.icon} color={category.color} />}
                   title={category.name}
                   subtitle={CATEGORY_TYPES.find((type) => type.value === category.type)?.label}

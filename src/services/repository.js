@@ -280,6 +280,43 @@ export async function moveTransactions (workbook, ids, account) {
 }
 
 /**
+ * Re-files a batch of transactions under another category, same shape and same
+ * reasoning as `moveTransactions`.
+ *
+ * Transfers are skipped rather than written: a transfer carries no category, and
+ * giving one a category would make it the only transfer in the book that could
+ * appear under a category filter. They are reported back so the caller can say
+ * how many were left alone instead of quietly reporting a smaller number than
+ * the selection.
+ */
+export async function recategorizeTransactions (workbook, ids, category) {
+  const wanted = new Set(ids)
+  const rows = await getValues(workbook.spreadsheetId, TX_RANGE)
+  const updatedAt = new Date().toISOString()
+
+  const data = []
+  const moved = []
+  let transfers = 0
+
+  rows.forEach((row, index) => {
+    if (!wanted.has(row[0])) return
+    if (row[4] === 'transfer') {
+      transfers += 1
+      return
+    }
+    if (row[5] === category) return
+
+    const rowNumber = index + 2
+    data.push({ range: `${SHEET.transactions}!F${rowNumber}`, values: [[category]] })
+    data.push({ range: `${SHEET.transactions}!I${rowNumber}`, values: [[updatedAt]] })
+    moved.push(row[0])
+  })
+
+  await batchUpdateValues(workbook.spreadsheetId, data)
+  return { moved, transfers, updatedAt }
+}
+
+/**
  * Puts tags on a batch of transactions, touching only the tag and updated_at
  * cells for the same reason `moveTransactions` does: after a bulk selection the
  * rest of the row may already have moved on, and a full-row write would send a

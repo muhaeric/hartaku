@@ -4,6 +4,7 @@ import { useGoldPrice } from '../../hooks/useGoldPrice.js'
 import { buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
 import {
   accountBalances,
+  accountBreakdown,
   categoryBreakdown,
   filterByMonth,
   goldSummary,
@@ -13,6 +14,7 @@ import {
   tagBreakdown
 } from '../../lib/summary.js'
 import { Card, SectionHeader } from '../ui/Card.jsx'
+import Carousel from '../ui/Carousel.jsx'
 import { ErrorState, SkeletonRows, SkeletonSummary } from '../ui/Feedback.jsx'
 import AccountBalances from './AccountBalances.jsx'
 import MonthSelector from './MonthSelector.jsx'
@@ -55,11 +57,12 @@ export default function Dashboard () {
 
   const worth = useMemo(() => netWorth(balances, gold.value || 0), [balances, gold.value])
 
-  const { summary, breakdown, tags } = useMemo(() => {
+  const { summary, breakdown, byAccount, tags } = useMemo(() => {
     const items = filterByMonth(transactions, month)
     return {
       summary: summarize(items),
       breakdown: categoryBreakdown(items, 'expense'),
+      byAccount: accountBreakdown(items, 'expense'),
       tags: tagBreakdown(items, 'expense')
     }
   }, [transactions, month])
@@ -96,23 +99,40 @@ export default function Dashboard () {
         <SummaryCards summary={summary} />
       </div>
 
+      {/*
+        One question - where the month went - asked three ways, so they belong
+        in one slot rather than three stacked sections. Account and tag lead
+        because they were the two asked for; category keeps its place at the end
+        rather than being dropped, since it is the only one of the three that
+        partitions the month and so the only one whose ring adds up.
+      */}
       <div className="space-y-gap-normal">
         <SectionHeader title="Pengeluaran terbesar" />
         <Card flush as="div">
-          <TopExpenses breakdown={breakdown} categories={categories} />
+          <Carousel
+            label="Pengeluaran terbesar, per akun, tag dan kategori"
+            slides={[
+              {
+                key: 'account',
+                title: 'Per akun',
+                content: (
+                  <TopExpenses breakdown={byAccount} categories={accounts} unit="akun" />
+                )
+              },
+              {
+                key: 'tag',
+                title: 'Per tag',
+                content: <TagSpending breakdown={tags} />
+              },
+              {
+                key: 'category',
+                title: 'Per kategori',
+                content: <TopExpenses breakdown={breakdown} categories={categories} />
+              }
+            ]}
+          />
         </Card>
       </div>
-
-      {/* Only worth a slot once tags are actually in use - an empty card here
-          would just be a permanent advert for a feature. */}
-      {tags.rows.length > 0 && (
-        <div className="space-y-gap-normal">
-          <SectionHeader title="Pengeluaran per tag" />
-          <Card flush as="div">
-            <TagSpending breakdown={tags} />
-          </Card>
-        </div>
-      )}
     </>
   )
 }

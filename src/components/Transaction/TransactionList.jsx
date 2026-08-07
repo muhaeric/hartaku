@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { ACCOUNT_KINDS, PAGE_SIZE } from '../../lib/constants.js'
+import { ACCOUNT_KINDS, CATEGORY_TYPES, PAGE_SIZE } from '../../lib/constants.js'
 import { buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
 import { readLastAccount, writeLastAccount } from '../../lib/lastAccount.js'
 import { collectTags, hasAnyTag, normalizeTags } from '../../lib/tags.js'
@@ -12,6 +12,7 @@ import { Card } from '../ui/Card.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
 import { EmptyState, ErrorState, SkeletonRows } from '../ui/Feedback.jsx'
 import ListRow, { RowIcon } from '../ui/ListRow.jsx'
+import SegmentedControl from '../ui/SegmentedControl.jsx'
 import Sheet from '../ui/Sheet.jsx'
 import TagInput from '../ui/TagInput.jsx'
 import DayGroupHeader from './DayGroup.jsx'
@@ -21,6 +22,11 @@ import TransactionFilters from './TransactionFilters.jsx'
 import TransactionRow from './TransactionRow.jsx'
 
 const INITIAL_FILTERS = { type: 'all', categories: [], tags: [], account: '', search: '' }
+
+const MOVE_TARGETS = [
+  { value: 'account', label: 'Akun' },
+  { value: 'category', label: 'Kategori' }
+]
 
 function labelOf (transaction) {
   if (transaction.description) return transaction.description
@@ -41,6 +47,7 @@ export default function TransactionList () {
     reload,
     addTransactions,
     moveTransactions,
+    recategorizeTransactions,
     tagTransactions,
     removeTransactions
   } = useData()
@@ -49,6 +56,7 @@ export default function TransactionList () {
   const [params] = useSearchParams()
   const accountParam = params.get('account') || ''
   const tagParam = params.get('tag') || ''
+  const categoryParam = params.get('category') || ''
 
   const [month, setMonth] = useState(currentMonthKey)
   // The account filter survives leaving the page: it is what the entry form
@@ -56,9 +64,15 @@ export default function TransactionList () {
   // look random.
   const [filters, setFilters] = useState(() => ({
     ...INITIAL_FILTERS,
-    account: accountParam || readLastAccount(),
-    // Arrived from a tag row on the dashboard.
-    tags: tagParam ? [tagParam] : []
+    /*
+     * The account filter is sticky across visits, but arriving on a category or
+     * a tag is an explicit "show me this" - letting a remembered account narrow
+     * it further would hide rows the link promised, with the reason sitting in a
+     * control the visitor never touched.
+     */
+    account: accountParam || (categoryParam || tagParam ? '' : readLastAccount()),
+    tags: tagParam ? [tagParam] : [],
+    categories: categoryParam ? [categoryParam] : []
   }))
   // Null so the month jump still runs once the transactions have loaded.
   const appliedAccount = useRef(null)
@@ -66,6 +80,7 @@ export default function TransactionList () {
   const [selected, setSelected] = useState([])
   const [pendingDelete, setPendingDelete] = useState(null)
   const [moving, setMoving] = useState(false)
+  const [moveTarget, setMoveTarget] = useState('account')
   const [copying, setCopying] = useState(false)
   const [tagging, setTagging] = useState(false)
   const [pendingTags, setPendingTags] = useState([])
@@ -284,6 +299,40 @@ export default function TransactionList () {
   }
 
   /**
+   * Re-filing under another category. Transfers in the selection are skipped
+   * rather than refused, because a mixed selection is the normal case - the
+   * count that actually changed is what gets reported, and the transfers are
+   * named separately so a smaller number never looks like a failure.
+   */
+  const handleRecategorize = async (category) => {
+    setBusy(true)
+    try {
+      const { moved, transfers } = await recategorizeTransactions(selected, category)
+
+      if (!moved.length) {
+        toast.error(
+          transfers === selected.length
+            ? 'Transfer tidak punya kategori, jadi tidak ada yang bisa dipindah.'
+            : `Semuanya sudah ada di kategori ${category}.`
+        )
+        return
+      }
+
+      setMoving(false)
+      leaveSelection()
+      toast.success(
+        transfers > 0
+          ? `${moved.length} transaksi pindah ke ${category}, ${transfers} transfer dilewati.`
+          : `${moved.length} transaksi pindah ke ${category}.`
+      )
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  /**
    * Tags are added to what each row already carries rather than swapped in.
    * Rows are picked in bulk precisely because they have something in common, and
    * that is rarely everything - wiping the labels the rest of them were filed
@@ -466,28 +515,69 @@ export default function TransactionList () {
         </>
       )}
 
+      {/*
+        Category lives inside the existing "Pindah" sheet rather than behind a
+        fifth button in the selection bar: four actions already only fit a 375px
+        row at the tighter size, and the fifth would have cost every one of them
+        its word. Both destinations answer the same question anyway - what this
+        batch should be filed under.
+      */}
       <Sheet
         open={moving}
-        title="Pindah ke akun"
-        description={`${selected.length} transaksi akan dicatat di akun lain.`}
+        title={moveTarget === 'account' ? 'Pindah ke akun' : 'Pindah ke kategori'}
+        description={
+          moveTarget === 'account'
+            ? `${selected.length} transaksi akan dicatat di akun lain.`
+            : `${selected.length} transaksi akan dipindah ke kategori lain.`
+        }
         onClose={() => !busy && setMoving(false)}
       >
-        <div className="divide-hairline">
-          {activeAccounts.map((account) => (
-            <ListRow
-              key={account.id}
-              leading={<RowIcon icon={account.icon} color={account.color} />}
-              title={account.name}
-              subtitle={ACCOUNT_KINDS.find((kind) => kind.value === account.kind)?.label}
-              onClick={() => !busy && handleMove(account.name)}
-              className="!px-0"
-            />
-          ))}
-        </div>
-        <p className="hint">
-          Yang berubah adalah akun tempat transaksinya tercatat — untuk transfer, itu akun
-          asalnya. Transfer yang tujuannya sudah akun ini akan dilewati.
-        </p>
+        <SegmentedControl
+          label="Pindahkan apanya"
+          className="mb-gap-normal"
+          value={moveTarget}
+          options={MOVE_TARGETS}
+          onChange={setMoveTarget}
+        />
+
+        {moveTarget === 'account' ? (
+          <>
+            <div className="divide-hairline">
+              {activeAccounts.map((account) => (
+                <ListRow
+                  key={account.id}
+                  leading={<RowIcon icon={account.icon} color={account.color} />}
+                  title={account.name}
+                  subtitle={ACCOUNT_KINDS.find((kind) => kind.value === account.kind)?.label}
+                  onClick={() => !busy && handleMove(account.name)}
+                  className="!px-0"
+                />
+              ))}
+            </div>
+            <p className="hint">
+              Yang berubah adalah akun tempat transaksinya tercatat — untuk transfer, itu akun
+              asalnya. Transfer yang tujuannya sudah akun ini akan dilewati.
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="divide-hairline">
+              {categories.map((category) => (
+                <ListRow
+                  key={category.id}
+                  leading={<RowIcon icon={category.icon} color={category.color} />}
+                  title={category.name}
+                  subtitle={CATEGORY_TYPES.find((type) => type.value === category.type)?.label}
+                  onClick={() => !busy && handleRecategorize(category.name)}
+                  className="!px-0"
+                />
+              ))}
+            </div>
+            <p className="hint">
+              Transfer tidak punya kategori, jadi transfer yang ikut terpilih akan dilewati.
+            </p>
+          </>
+        )}
       </Sheet>
 
       <Sheet
