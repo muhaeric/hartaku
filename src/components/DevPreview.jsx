@@ -1,4 +1,5 @@
 import { ACCOUNT_KINDS } from '../lib/constants.js'
+import { ALL_MONTHS } from '../lib/dates.js'
 import { accountTransactionsPath } from '../lib/links.js'
 import {
   accountBalances,
@@ -96,6 +97,11 @@ export default function DevPreview () {
         <div className="grid grid-cols-2 gap-gap">
           <MonthStepper value="2026-08" options={['2026-09', '2026-08', '2026-07']} onChange={() => {}} />
           <SelectPill label="Akun" value="a" onChange={() => {}} options={[{ value: 'a', label: 'Semua akun' }]} />
+        </div>
+        {/* Both states of the stepper: stepping through months, and the
+            all-time scope where there is no month either side to step to. */}
+        <div className="grid grid-cols-2 gap-gap">
+          <MonthStepper value={ALL_MONTHS} options={['2026-09', '2026-08', '2026-07']} onChange={() => {}} />
         </div>
         <SegmentedControl
           label="Jenis"

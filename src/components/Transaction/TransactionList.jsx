@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { ACCOUNT_KINDS, CATEGORY_TYPES, PAGE_SIZE } from '../../lib/constants.js'
-import { buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
+import { ALL_MONTHS, buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
 import { readLastAccount, writeLastAccount } from '../../lib/lastAccount.js'
 import { collectTags, hasAnyTag, normalizeTags } from '../../lib/tags.js'
 import { filterByMonth, groupByDay, monthsWithData, summarize } from '../../lib/summary.js'
@@ -104,9 +104,13 @@ export default function TransactionList () {
    * selected month turned every lookup into a month-by-month hunt, and an empty
    * result read as "it isn't there" when it only meant "not in August".
    */
+  // Search forces every period whether or not one is picked, so the two reasons
+  // to drop the month scope collapse into one flag rather than two branches.
+  const allTime = Boolean(search) || month === ALL_MONTHS
+
   const scoped = useMemo(
-    () => (search ? transactions : filterByMonth(transactions, month)),
-    [transactions, month, search]
+    () => (allTime ? transactions : filterByMonth(transactions, month)),
+    [transactions, month, allTime]
   )
 
   const visible = useMemo(() => {
@@ -236,7 +240,12 @@ export default function TransactionList () {
     )
     const months = monthsWithData(owned).sort().reverse()
 
-    setMonth((current) => (months.length && !months.includes(current) ? months[0] : current))
+    setMonth((current) => {
+      // "Semua periode" already shows every month this account has, so jumping
+      // to the newest one would narrow a scope the visitor deliberately widened.
+      if (current === ALL_MONTHS) return current
+      return months.length && !months.includes(current) ? months[0] : current
+    })
   }, [accountParam, transactions])
 
   const toggleSelected = (id) =>
@@ -460,7 +469,9 @@ export default function TransactionList () {
           description={
             search
               ? `Tidak ada transaksi yang cocok dengan "${filters.search.trim()}" di seluruh periode.`
-              : 'Tidak ada transaksi yang cocok dengan filter di bulan ini.'
+              : month === ALL_MONTHS
+                ? 'Tidak ada transaksi yang cocok dengan filter ini di periode mana pun.'
+                : 'Tidak ada transaksi yang cocok dengan filter di bulan ini.'
           }
           actionLabel="Tambah transaksi"
           onAction={() => navigate('/add')}

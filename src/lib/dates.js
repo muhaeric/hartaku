@@ -45,6 +45,16 @@ export function monthLabelShort (monthKey, locale = 'id-ID') {
  * Months to offer in the selector: everything that has data, plus the last 12
  * months and the next 3 so future-dated planning still works.
  */
+/**
+ * Stands in for a month key when the period filter is off entirely.
+ *
+ * A sentinel rather than an empty string: month keys are compared with `<` and
+ * `>` all over this file, and '' sorts below every real key, so an empty value
+ * would quietly look like the oldest month ever recorded rather than like no
+ * month at all. 'all' sorts above them, and reads as itself in a debugger.
+ */
+export const ALL_MONTHS = 'all'
+
 export function buildMonthOptions (monthKeysWithData = []) {
   const keys = new Set(monthKeysWithData.filter(Boolean))
   const anchor = currentMonthKey()
