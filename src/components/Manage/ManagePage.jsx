@@ -3,19 +3,22 @@ import { useData } from '../../context/DataContext.jsx'
 import AccountManager from '../Account/AccountManager.jsx'
 import CategoryManager from '../Category/CategoryManager.jsx'
 import GoldManager from '../Gold/GoldManager.jsx'
+import TagManager from '../Tag/TagManager.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
 import { ErrorState, SkeletonRows } from '../ui/Feedback.jsx'
 
 const TABS = [
   { value: 'accounts', label: 'Akun' },
   { value: 'gold', label: 'Emas' },
-  { value: 'categories', label: 'Kategori' }
+  { value: 'categories', label: 'Kategori' },
+  { value: 'tags', label: 'Tag' }
 ]
 
 const PANELS = {
   accounts: AccountManager,
   gold: GoldManager,
-  categories: CategoryManager
+  categories: CategoryManager,
+  tags: TagManager
 }
 
 /**

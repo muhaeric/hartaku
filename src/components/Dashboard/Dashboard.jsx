@@ -9,7 +9,8 @@ import {
   goldSummary,
   monthsWithData,
   netWorth,
-  summarize
+  summarize,
+  tagBreakdown
 } from '../../lib/summary.js'
 import { Card, SectionHeader } from '../ui/Card.jsx'
 import { ErrorState, SkeletonRows, SkeletonSummary } from '../ui/Feedback.jsx'
@@ -18,6 +19,7 @@ import MonthSelector from './MonthSelector.jsx'
 import NetWorthCard from './NetWorthCard.jsx'
 import NetWorthTrend from './NetWorthTrend.jsx'
 import SummaryCards from './SummaryCards.jsx'
+import TagSpending from './TagSpending.jsx'
 import TopExpenses from './TopExpenses.jsx'
 
 export default function Dashboard () {
@@ -53,9 +55,13 @@ export default function Dashboard () {
 
   const worth = useMemo(() => netWorth(balances, gold.value || 0), [balances, gold.value])
 
-  const { summary, breakdown } = useMemo(() => {
+  const { summary, breakdown, tags } = useMemo(() => {
     const items = filterByMonth(transactions, month)
-    return { summary: summarize(items), breakdown: categoryBreakdown(items, 'expense') }
+    return {
+      summary: summarize(items),
+      breakdown: categoryBreakdown(items, 'expense'),
+      tags: tagBreakdown(items, 'expense')
+    }
   }, [transactions, month])
 
   if (error) return <ErrorState message={error} onRetry={() => reload()} />
@@ -96,6 +102,17 @@ export default function Dashboard () {
           <TopExpenses breakdown={breakdown} categories={categories} />
         </Card>
       </div>
+
+      {/* Only worth a slot once tags are actually in use - an empty card here
+          would just be a permanent advert for a feature. */}
+      {tags.rows.length > 0 && (
+        <div className="space-y-gap-normal">
+          <SectionHeader title="Pengeluaran per tag" />
+          <Card flush as="div">
+            <TagSpending breakdown={tags} />
+          </Card>
+        </div>
+      )}
     </>
   )
 }

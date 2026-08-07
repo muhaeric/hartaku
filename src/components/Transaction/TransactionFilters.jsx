@@ -25,6 +25,7 @@ export default function TransactionFilters ({
   monthOptions,
   categories,
   accounts,
+  tags = [],
   searching = false,
   onChange,
   onMonthChange
@@ -34,6 +35,13 @@ export default function TransactionFilters ({
     if (selected.has(name)) selected.delete(name)
     else selected.add(name)
     onChange({ categories: [...selected] })
+  }
+
+  const toggleTag = (name) => {
+    const selected = new Set(filters.tags)
+    if (selected.has(name)) selected.delete(name)
+    else selected.add(name)
+    onChange({ tags: [...selected] })
   }
 
   /**
@@ -129,6 +137,38 @@ export default function TransactionFilters ({
                     aria-hidden="true"
                   />
                   {category.name}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/*
+        Not hidden alongside the category chips: a transfer carries no category
+        but can carry tags, so filtering a transfer by tag is the one way to
+        find it. Two selected tags mean either, not both - the same widening the
+        category chips above already do, because two rules for two chip rows
+        sitting inches apart is a worse answer than one.
+      */}
+      {tags.length > 0 && (
+        <div className="-mx-page overflow-x-auto px-page">
+          <div className="flex gap-1.5 pb-0.5" role="group" aria-label="Filter tag">
+            {tags.map((tag) => {
+              const active = filters.tags.includes(tag)
+              return (
+                <button
+                  key={tag}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => toggleTag(tag)}
+                  className={`h-7 shrink-0 rounded-full border px-2.5 text-caption transition ${
+                    active
+                      ? 'border-brand bg-brand-soft font-semibold text-brand-onsoft'
+                      : 'border-hairline text-subtitle'
+                  }`}
+                >
+                  #{tag}
                 </button>
               )
             })}

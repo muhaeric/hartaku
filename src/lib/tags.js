@@ -63,10 +63,12 @@ export function sameTags (a, b) {
 }
 
 /**
- * Every tag in use, most-used first, so the suggestion strip surfaces the
- * handful someone actually reaches for rather than an alphabetical wall.
+ * Every tag in use with how many rows carry it, most-used first, so the
+ * suggestion strip surfaces the handful someone actually reaches for rather
+ * than an alphabetical wall. The count is what the manager lists, and it is
+ * also the warning before a delete.
  */
-export function collectTags (transactions) {
+export function tagUsage (transactions) {
   const counts = new Map()
 
   for (const transaction of transactions) {
@@ -78,7 +80,23 @@ export function collectTags (transactions) {
     }
   }
 
-  return [...counts.values()]
-    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
-    .map((entry) => entry.tag)
+  return [...counts.values()].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+}
+
+export function collectTags (transactions) {
+  return tagUsage(transactions).map((entry) => entry.tag)
+}
+
+/** Case-insensitive membership, matching how the rest of this module compares. */
+export function hasTag (tags, tag) {
+  const key = normalizeTag(tag).toLowerCase()
+  if (!key) return false
+  return parseTags(tags).some((item) => item.toLowerCase() === key)
+}
+
+/** True when the row carries at least one of `wanted`. */
+export function hasAnyTag (tags, wanted) {
+  if (!wanted.length) return true
+  const carried = new Set(parseTags(tags).map((tag) => tag.toLowerCase()))
+  return wanted.some((tag) => carried.has(normalizeTag(tag).toLowerCase()))
 }

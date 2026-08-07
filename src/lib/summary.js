@@ -1,4 +1,5 @@
 import { PERIODS, monthKeyOf, todayIso } from './dates.js'
+import { parseTags } from './tags.js'
 
 export function filterByMonth (transactions, monthKey) {
   return transactions.filter((transaction) => monthKeyOf(transaction.date) === monthKey)
@@ -209,6 +210,45 @@ export function categoryBreakdown (transactions, type = 'expense') {
   return [...totals.entries()]
     .map(([name, total]) => ({ name, total }))
     .sort((a, b) => b.total - a.total)
+}
+
+/**
+ * Totals per tag for one flow, largest first.
+ *
+ * Deliberately not shaped like `categoryBreakdown`, because tags are not a
+ * partition. A transaction carries up to eight of them and counts in full under
+ * every one, so the rows can add up to more than the period spent - drawing
+ * these as a pie would be a lie about what the numbers mean. `tagged` and
+ * `untagged` are the honest denominators: each transaction counted once.
+ */
+export function tagBreakdown (transactions, type = 'expense') {
+  const totals = new Map()
+  let tagged = 0
+  let untagged = 0
+
+  for (const transaction of transactions) {
+    if (transaction.type !== type) continue
+
+    const tags = parseTags(transaction.tags)
+    if (!tags.length) {
+      untagged += transaction.amount
+      continue
+    }
+
+    tagged += transaction.amount
+    for (const tag of tags) {
+      const key = tag.toLowerCase()
+      const entry = totals.get(key)
+      if (entry) entry.total += transaction.amount
+      else totals.set(key, { name: tag, total: transaction.amount })
+    }
+  }
+
+  return {
+    rows: [...totals.values()].sort((a, b) => b.total - a.total || a.name.localeCompare(b.name)),
+    tagged,
+    untagged
+  }
 }
 
 /**

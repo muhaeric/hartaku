@@ -5,7 +5,7 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { ACCOUNT_KINDS, PAGE_SIZE } from '../../lib/constants.js'
 import { buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
 import { readLastAccount, writeLastAccount } from '../../lib/lastAccount.js'
-import { collectTags, normalizeTags } from '../../lib/tags.js'
+import { collectTags, hasAnyTag, normalizeTags } from '../../lib/tags.js'
 import { filterByMonth, groupByDay, monthsWithData, summarize } from '../../lib/summary.js'
 import Button from '../ui/Button.jsx'
 import { Card } from '../ui/Card.jsx'
@@ -20,7 +20,7 @@ import SelectionBar from './SelectionBar.jsx'
 import TransactionFilters from './TransactionFilters.jsx'
 import TransactionRow from './TransactionRow.jsx'
 
-const INITIAL_FILTERS = { type: 'all', categories: [], account: '', search: '' }
+const INITIAL_FILTERS = { type: 'all', categories: [], tags: [], account: '', search: '' }
 
 function labelOf (transaction) {
   if (transaction.description) return transaction.description
@@ -48,6 +48,7 @@ export default function TransactionList () {
   // Arriving from an account row: ?account=<name> preselects that filter.
   const [params] = useSearchParams()
   const accountParam = params.get('account') || ''
+  const tagParam = params.get('tag') || ''
 
   const [month, setMonth] = useState(currentMonthKey)
   // The account filter survives leaving the page: it is what the entry form
@@ -55,7 +56,9 @@ export default function TransactionList () {
   // look random.
   const [filters, setFilters] = useState(() => ({
     ...INITIAL_FILTERS,
-    account: accountParam || readLastAccount()
+    account: accountParam || readLastAccount(),
+    // Arrived from a tag row on the dashboard.
+    tags: tagParam ? [tagParam] : []
   }))
   // Null so the month jump still runs once the transactions have loaded.
   const appliedAccount = useRef(null)
@@ -107,6 +110,7 @@ export default function TransactionList () {
           transaction.account === filters.account ||
           transaction.toAccount === filters.account
       )
+      .filter((transaction) => hasAnyTag(transaction.tags, filters.tags))
       .filter(
         (transaction) =>
           !search ||
@@ -178,6 +182,25 @@ export default function TransactionList () {
 
     setFilters((current) => ({ ...current, account: '' }))
   }, [accounts, filters.account])
+
+  /*
+   * A tag filtered on and then renamed or deleted in the manager would have no
+   * chip left to switch off, while the list stayed silently filtered to a tag
+   * nothing carries any more - an empty list with nothing on screen explaining
+   * it. Drop the ones that stopped existing.
+   */
+  useEffect(() => {
+    // Guarded on the transactions rather than on the tag list: before the first
+    // load both are empty, and clearing then would throw away a `?tag=` arrival
+    // before its own data had a chance to arrive.
+    if (!filters.tags.length || !transactions.length) return
+
+    const alive = new Set(tagSuggestions.map((tag) => tag.toLowerCase()))
+    const kept = filters.tags.filter((tag) => alive.has(tag.toLowerCase()))
+    if (kept.length === filters.tags.length) return
+
+    setFilters((current) => ({ ...current, tags: kept }))
+  }, [tagSuggestions, filters.tags, transactions.length])
 
   /**
    * Landing on an account whose current month happens to be empty would look
@@ -341,6 +364,7 @@ export default function TransactionList () {
         monthOptions={monthOptions}
         categories={categories}
         accounts={activeAccounts}
+        tags={tagSuggestions}
         searching={Boolean(search)}
         onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))}
         onMonthChange={setMonth}

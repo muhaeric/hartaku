@@ -18,6 +18,7 @@ import {
   deleteAccount,
   deleteCategory,
   deleteGoldLot,
+  deleteTag,
   deleteTransactions,
   listAccounts,
   listCategories,
@@ -26,6 +27,7 @@ import {
   moveTransactions,
   renameGoldAccountReferences,
   renameReferences,
+  renameTag,
   tagTransactions,
   updateAccount,
   updateCategory,
@@ -204,6 +206,45 @@ export function DataProvider ({ children }) {
       return tagged
     }),
     [withWorkbook]
+  )
+
+  /*
+   * Rename and delete share one shape: both come back with the rows they
+   * rewrote, and both patch those rows in place rather than refetching. The
+   * sheet is a network round trip away, and the manager is a list the user is
+   * looking at while it changes.
+   */
+  const applyTagRewrite = useCallback(
+    (changed, updatedAt) => {
+      const byId = new Map(changed.map((entry) => [entry.id, entry.tags]))
+      if (!byId.size) return
+
+      setState((current) => ({
+        ...current,
+        transactions: current.transactions.map((item) =>
+          byId.has(item.id) ? { ...item, tags: byId.get(item.id), updatedAt } : item
+        )
+      }))
+    },
+    []
+  )
+
+  const renameTagEverywhere = useCallback(
+    withWorkbook(async (workbook, from, to) => {
+      const { changed, updatedAt } = await renameTag(workbook, from, to)
+      applyTagRewrite(changed, updatedAt)
+      return changed
+    }),
+    [withWorkbook, applyTagRewrite]
+  )
+
+  const deleteTagEverywhere = useCallback(
+    withWorkbook(async (workbook, tag) => {
+      const { changed, updatedAt } = await deleteTag(workbook, tag)
+      applyTagRewrite(changed, updatedAt)
+      return changed
+    }),
+    [withWorkbook, applyTagRewrite]
   )
 
   const removeTransactions = useCallback(
@@ -428,6 +469,8 @@ export function DataProvider ({ children }) {
       editTransaction,
       moveTransactions: moveTransactionsToAccount,
       tagTransactions: tagTransactionsBatch,
+      renameTag: renameTagEverywhere,
+      removeTag: deleteTagEverywhere,
       removeTransactions,
       addCategory,
       addCategories: addCategoriesBatch,
@@ -453,6 +496,8 @@ export function DataProvider ({ children }) {
       editTransaction,
       moveTransactionsToAccount,
       tagTransactionsBatch,
+      renameTagEverywhere,
+      deleteTagEverywhere,
       removeTransactions,
       addCategory,
       addCategoriesBatch,

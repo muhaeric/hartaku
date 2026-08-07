@@ -6,7 +6,14 @@ import {
   TRANSACTION_HEADERS
 } from '../lib/constants.js'
 import { newId } from '../lib/id.js'
-import { formatTags, mergeTags, normalizeTags, parseTags, sameTags } from '../lib/tags.js'
+import {
+  formatTags,
+  mergeTags,
+  normalizeTag,
+  normalizeTags,
+  parseTags,
+  sameTags
+} from '../lib/tags.js'
 import {
   appendValues,
   batchUpdateValues,
@@ -306,6 +313,65 @@ export async function tagTransactions (workbook, ids, tags, { replace = false } 
 
   await batchUpdateValues(workbook.spreadsheetId, data)
   return { tagged, updatedAt }
+}
+
+/**
+ * Scans every row and rewrites the tag cell wherever `next` returns a different
+ * list. Only the tag and updated_at cells are touched, for the same reason
+ * `tagTransactions` does it: a full-row write would send back a stale copy of
+ * fields the row may have moved on from.
+ */
+async function rewriteTagCells (workbook, next) {
+  const rows = await getValues(workbook.spreadsheetId, TX_RANGE)
+  const updatedAt = new Date().toISOString()
+
+  const data = []
+  const changed = []
+
+  rows.forEach((row, index) => {
+    const current = parseTags(row[10])
+    const updated = next(current)
+    if (sameTags(current, updated)) return
+
+    const rowNumber = index + 2
+    data.push({ range: `${SHEET.transactions}!K${rowNumber}`, values: [[formatTags(updated)]] })
+    data.push({ range: `${SHEET.transactions}!I${rowNumber}`, values: [[updatedAt]] })
+    changed.push({ id: row[0], tags: updated })
+  })
+
+  await batchUpdateValues(workbook.spreadsheetId, data)
+  return { changed, updatedAt }
+}
+
+/**
+ * Renames one tag across every transaction carrying it.
+ *
+ * A tag has no identity of its own - it is a word in a cell - so this is a bulk
+ * rewrite rather than an update to one record. Matching is case-insensitive
+ * because that is how tags compare everywhere else, which also means renaming
+ * onto a name already in use is how you merge two tags: `normalizeTags` drops
+ * the duplicate and the row keeps one of them.
+ */
+export async function renameTag (workbook, from, to) {
+  const before = normalizeTag(from).toLowerCase()
+  const after = normalizeTag(to)
+  if (!before || !after) return { changed: [], updatedAt: null }
+
+  return rewriteTagCells(workbook, (current) =>
+    current.some((tag) => tag.toLowerCase() === before)
+      ? normalizeTags(current.map((tag) => (tag.toLowerCase() === before ? after : tag)))
+      : current
+  )
+}
+
+/** Strips one tag everywhere. The transactions themselves are left alone. */
+export async function deleteTag (workbook, tag) {
+  const wanted = normalizeTag(tag).toLowerCase()
+  if (!wanted) return { changed: [], updatedAt: null }
+
+  return rewriteTagCells(workbook, (current) =>
+    current.filter((item) => item.toLowerCase() !== wanted)
+  )
 }
 
 export async function deleteTransactions (workbook, ids) {
