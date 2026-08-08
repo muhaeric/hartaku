@@ -159,17 +159,22 @@
   }
 
   /*
-   * Frosted panels over a picture. Dark-leaning on purpose: a scrim can be made
-   * arbitrarily dark to protect light text, but no scrim can protect dark text
-   * from a dark photo, so light-on-glass is the only version of this that can
-   * be made safe against a picture nobody has seen.
+   * Frosted panels over a picture. Dark-leaning on purpose: a panel can be made
+   * arbitrarily dark to protect light text, but nothing protects dark text from
+   * a dark photo, so light-on-glass is the only version of this that can be made
+   * safe against a picture nobody has seen.
    *
-   * `--photo-scrim` is not a taste setting. It is the thinnest veil that still
-   * clears every contrast floor when the photo behind it is pure white - the
-   * worst case for light text - searched for rather than chosen. Every step
-   * below it hides less of the photo and puts the body text nearer the floor;
-   * at 0.88 the tightest reading is 4.52:1 on chip text, and the photo is still
-   * legible as shape and colour through the blur.
+   * The safety lives in the PANEL, not in the scrim. This started the other way
+   * round - a nearly transparent white panel, whose readability was inherited
+   * entirely from whatever was behind it, leaving no lever but to darken the
+   * whole photo to 12% and lose the reason for having one. A panel built from
+   * the canvas colour at 0.78 carries its own darkness: it clears every floor
+   * with the scrim at *zero* over a pure white photo, the worst case there is.
+   *
+   * So `--photo-scrim` is free to be a taste dial after all, which is what the
+   * setting drives. What it does still govern is text sitting directly on the
+   * canvas - headings, the top bar - and that is what the shadow below is for,
+   * rather than paying for those few labels by dimming the entire picture.
    */
   [data-theme='glass'] {
     color-scheme: dark;
@@ -190,7 +195,25 @@
     --warning: 255 209 102;
     --decor: 158 197 255;
     --tint: 255 255 255;
-    --photo-scrim: 0.88;
+    /* Overridden inline from the setting; this is the fallback. */
+    --photo-scrim: 0.35;
+  }
+
+  /*
+   * Headings and the top bar sit on the canvas, so at a thin scrim they are
+   * reading against the photo itself. A shadow buys that back locally instead
+   * of charging the whole picture for it. Panels reset it: their text is
+   * already on a guaranteed background, and a shadow there just looks smudged.
+   */
+  [data-theme='glass'] body {
+    text-shadow: 0 1px 3px rgb(0 0 0 / 0.85);
+  }
+
+  [data-theme='glass'] .card,
+  [data-theme='glass'] .card-flush,
+  [data-theme='glass'] .bg-surface,
+  [data-theme='glass'] .field {
+    text-shadow: none;
   }
 
   /*
@@ -203,9 +226,28 @@
   [data-theme='glass'] .bg-surface,
   [data-theme='glass'] .card,
   [data-theme='glass'] .card-flush {
-    background-color: rgb(var(--surface) / 0.12);
+    background-color: rgb(var(--canvas) / 0.78);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  /*
+   * Fields take the tint but not the blur. A form can hold a dozen of them, and
+   * every backdrop-filter is its own compositing layer over the same photo - the
+   * cost is real and the effect is invisible inside a card that is already
+   * frosted.
+   *
+   * Tagged with the element name to win on specificity, not source order:
+   * `.field` applies `bg-surface`, so Tailwind emits its own
+   * `[data-theme=glass] .field` rule carrying the blur, and it lands after this
+   * one. Same weight, later position, and the blur came back.
+   */
+  [data-theme='glass'] input.field,
+  [data-theme='glass'] select.field,
+  [data-theme='glass'] textarea.field {
+    background-color: rgb(var(--surface) / 0.1);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
   }
 
   /* The two bars that ride over content are denser, so what scrolls beneath

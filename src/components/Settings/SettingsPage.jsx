@@ -243,7 +243,7 @@ function Row ({ label, htmlFor, children }) {
 
 function ThemePhotoField () {
   const toast = useToast()
-  const { themePhoto, saveThemePhoto } = useSettings()
+  const { settings, updateSettings, themePhoto, saveThemePhoto } = useSettings()
   const [busy, setBusy] = useState(false)
 
   const handleFile = async (event) => {
@@ -304,9 +304,29 @@ function ThemePhotoField () {
       </div>
 
       <p className="hint">
-        Fotonya diperkecil dan disimpan di perangkat ini saja — tidak ikut ke spreadsheet. Lapisan
-        gelap di atasnya sengaja tebal supaya angka tetap terbaca di atas foto apa pun.
+        Fotonya diperkecil dan disimpan di perangkat ini saja — tidak ikut ke spreadsheet.
       </p>
+
+      <div className="mt-gap-normal">
+        <label className="label" htmlFor="glass-scrim">
+          Peredup foto
+        </label>
+        <input
+          id="glass-scrim"
+          type="range"
+          min="0"
+          max="0.85"
+          step="0.05"
+          value={settings.glassScrim}
+          onChange={(event) => updateSettings({ glassScrim: Number(event.target.value) })}
+          className="w-full accent-brand"
+        />
+        <p className="hint">
+          Foto terlihat {Math.round((1 - settings.glassScrim) * 100)}%. Geser sesukamu — kartunya
+          membawa kontrasnya sendiri, jadi angkanya tetap terbaca bahkan kalau peredupnya dimatikan
+          sepenuhnya.
+        </p>
+      </div>
     </div>
   )
 }

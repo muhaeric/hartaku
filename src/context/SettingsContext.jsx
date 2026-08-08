@@ -6,6 +6,12 @@ const STORAGE_KEY = 'hartaku.settings'
 
 const DEFAULT_SETTINGS = {
   theme: 'auto',
+  /*
+   * How much of the glass theme's picture is veiled. Safe at any value - the
+   * panels carry their own contrast - so this is genuinely taste, and it starts
+   * where the photo is clearly a photo rather than a texture.
+   */
+  glassScrim: 0.35,
   currency: 'IDR',
   dateFormat: 'DD/MM/YYYY',
   defaultType: 'expense',
@@ -50,6 +56,15 @@ export function SettingsProvider ({ children }) {
     media.addEventListener('change', paint)
     return () => media.removeEventListener('change', paint)
   }, [settings.theme])
+
+  /* Written as an inline custom property so it overrides the stylesheet's
+     fallback without the theme block having to know a setting exists. */
+  useEffect(() => {
+    const scrim = Number(settings.glassScrim)
+    const safe = Number.isFinite(scrim) ? Math.min(0.85, Math.max(0, scrim)) : DEFAULT_SETTINGS.glassScrim
+
+    document.documentElement.style.setProperty('--photo-scrim', String(safe))
+  }, [settings.glassScrim])
 
   const value = useMemo(
     () => ({
