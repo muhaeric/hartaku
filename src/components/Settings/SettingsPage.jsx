@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { CURRENCIES, DATE_FORMATS, THEMES } from '../../lib/constants.js'
+import { CURRENCIES, DATE_FORMATS, THEMES, isGlassTheme } from '../../lib/constants.js'
 import { extractSpreadsheetId } from '../../lib/spreadsheetId.js'
 import { fileToThemePhoto } from '../../lib/themePhoto.js'
 import Button from '../ui/Button.jsx'
@@ -48,9 +48,9 @@ export default function SettingsPage () {
           onChange={(theme) => updateSettings({ theme })}
         />
 
-        {/* Only the glass theme has anywhere to put a picture, so the control
-            appears with it rather than sitting inert under the other six. */}
-        {resolvedTheme === 'glass' && <ThemePhotoField />}
+        {/* Only the glass cuts have anywhere to put a picture, so the control
+            appears with them rather than sitting inert under the other six. */}
+        {isGlassTheme(resolvedTheme) && <ThemePhotoField />}
         <Row label="Mata uang" htmlFor="currency">
           <Select
             id="currency"

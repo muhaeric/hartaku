@@ -1,4 +1,5 @@
 import { useSettings } from '../../context/SettingsContext.jsx'
+import { isGlassTheme } from '../../lib/constants.js'
 
 /*
  * Ornament for the themed palettes. Everything here is inert and sits behind the
@@ -145,7 +146,7 @@ const BACKDROPS = {
 export default function ThemeBackdrop () {
   const { resolvedTheme, themePhoto } = useSettings()
 
-  if (resolvedTheme === 'glass') {
+  if (isGlassTheme(resolvedTheme)) {
     return (
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <GlassPhoto photo={themePhoto} />

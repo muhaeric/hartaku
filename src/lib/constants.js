@@ -95,9 +95,20 @@ export const THEMES = [
   { value: 'space', label: 'Luar Angkasa', decorated: true },
   { value: 'flower', label: 'Bunga', decorated: true },
   { value: 'animal', label: 'Hewan', decorated: true },
-  /** The only theme that takes a picture from the user rather than shipping one. */
-  { value: 'glass', label: 'Kaca', decorated: true, photo: true }
+  /** The only themes that take a picture from the user rather than shipping one. */
+  { value: 'glass', label: 'Kaca Gelap', decorated: true, photo: true },
+  { value: 'glass-light', label: 'Kaca Terang', decorated: true, photo: true }
 ]
+
+/**
+ * Both glass cuts share every rule except their palette, so the checks that ask
+ * "is a photo relevant here" go through this rather than comparing against one
+ * id and quietly missing the other. The stylesheet matches them the same way,
+ * with `[data-theme^='glass']`.
+ */
+export function isGlassTheme (theme) {
+  return String(theme || '').startsWith('glass')
+}
 
 /**
  * Category hues come from a fixed categorical theme, assigned in order and never
