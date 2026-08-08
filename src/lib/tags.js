@@ -94,9 +94,16 @@ export function hasTag (tags, tag) {
   return parseTags(tags).some((item) => item.toLowerCase() === key)
 }
 
-/** True when the row carries at least one of `wanted`. */
-export function hasAnyTag (tags, wanted) {
+/**
+ * True when the row carries every one of `wanted`.
+ *
+ * Narrowing rather than widening: picking a second tag asks "and also this",
+ * which is what makes a pair like `#kantor` + `#reimburse` useful. It differs
+ * from the category chips in the same filter bar, which widen - but a category
+ * is one value per row, so widening is the only thing they could mean.
+ */
+export function hasAllTags (tags, wanted) {
   if (!wanted.length) return true
   const carried = new Set(parseTags(tags).map((tag) => tag.toLowerCase()))
-  return wanted.some((tag) => carried.has(normalizeTag(tag).toLowerCase()))
+  return wanted.every((tag) => carried.has(normalizeTag(tag).toLowerCase()))
 }

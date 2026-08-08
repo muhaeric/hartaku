@@ -94,7 +94,9 @@ export const THEMES = [
   { value: 'ocean', label: 'Laut', decorated: true },
   { value: 'space', label: 'Luar Angkasa', decorated: true },
   { value: 'flower', label: 'Bunga', decorated: true },
-  { value: 'animal', label: 'Hewan', decorated: true }
+  { value: 'animal', label: 'Hewan', decorated: true },
+  /** The only theme that takes a picture from the user rather than shipping one. */
+  { value: 'glass', label: 'Kaca', decorated: true, photo: true }
 ]
 
 /**

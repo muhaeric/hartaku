@@ -159,6 +159,78 @@
   }
 
   /*
+   * Frosted panels over a picture. Dark-leaning on purpose: a scrim can be made
+   * arbitrarily dark to protect light text, but no scrim can protect dark text
+   * from a dark photo, so light-on-glass is the only version of this that can
+   * be made safe against a picture nobody has seen.
+   *
+   * `--photo-scrim` is not a taste setting. It is the thinnest veil that still
+   * clears every contrast floor when the photo behind it is pure white - the
+   * worst case for light text - searched for rather than chosen. Every step
+   * below it hides less of the photo and puts the body text nearer the floor;
+   * at 0.88 the tightest reading is 4.52:1 on chip text, and the photo is still
+   * legible as shape and colour through the blur.
+   */
+  [data-theme='glass'] {
+    color-scheme: dark;
+    --canvas: 15 18 32;
+    --surface: 255 255 255;
+    --hairline: 255 255 255;
+    --ink: 236 235 255;
+    --subtitle: 195 192 224;
+    --brand: 158 197 255;
+    --brand-hover: 184 211 255;
+    --brand-active: 210 226 255;
+    --brand-soft: 158 197 255;
+    --brand-soft-hover: 184 211 255;
+    --brand-onsoft: 207 224 255;
+    --brand-fg: 15 18 32;
+    --income: 95 214 180;
+    --expense: 255 157 178;
+    --warning: 255 209 102;
+    --decor: 158 197 255;
+    --tint: 255 255 255;
+    --photo-scrim: 0.88;
+  }
+
+  /*
+   * These override the utilities rather than the tokens because a token is a
+   * colour and this needs an alpha and a blur as well. `.card` and `.card-flush`
+   * are listed separately from `.bg-surface` on purpose: they `@apply` their
+   * background, so it compiles into their own rule where an override of the
+   * utility can never reach it.
+   */
+  [data-theme='glass'] .bg-surface,
+  [data-theme='glass'] .card,
+  [data-theme='glass'] .card-flush {
+    background-color: rgb(var(--surface) / 0.12);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  /* The two bars that ride over content are denser, so what scrolls beneath
+     them blurs away rather than showing through as legible text. */
+  [data-theme='glass'] .bg-surface\/95,
+  [data-theme='glass'] .bg-canvas\/90 {
+    background-color: rgb(var(--canvas) / 0.72);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    backdrop-filter: blur(20px) saturate(140%);
+  }
+
+  [data-theme='glass'] .card,
+  [data-theme='glass'] .card-flush,
+  [data-theme='glass'] .border-hairline,
+  [data-theme='glass'] .divide-hairline > * + * {
+    border-color: rgb(var(--hairline) / 0.16);
+  }
+
+  /* The soft chip is the accent at low alpha here, not a solid step: a solid
+     one would sit as an opaque patch on a panel that is otherwise see-through. */
+  [data-theme='glass'] .bg-brand-soft {
+    background-color: rgb(var(--brand-soft) / 0.22);
+  }
+
+  /*
    * Chromium keeps a transitioned property pinned to its old value when the
    * var() behind it changes, so swapping theme left every element carrying a
    * `transition` - buttons above all - painted in the previous colour until
@@ -182,7 +254,15 @@
       sans-serif;
   }
 
-  /* iOS zooms the page when a focused input is under 16px. */
+  /*
+   * iOS zooms the page when a focused control is under 16px, and does not zoom
+   * back out afterwards.
+   *
+   * This is a base-layer rule, so any text-size utility on a control beats it -
+   * `class="field text-caption"` silently reintroduces the zoom, which is how
+   * four of them had already picked it up. If a control needs to look smaller,
+   * shrink its box, never its font size.
+   */
   input,
   select,
   textarea {

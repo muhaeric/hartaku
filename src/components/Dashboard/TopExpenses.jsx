@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useSettings } from '../../context/SettingsContext.jsx'
+import { isImageIcon } from '../../lib/accountIcon.js'
 import { formatCurrency } from '../../lib/format.js'
 
 /** Neutral slot for the folded tail - it is a remainder, not a category. */
@@ -37,12 +38,24 @@ export default function TopExpenses ({ breakdown, categories, limit = 5, unit = 
     const byName = new Map(categories.map((category) => [category.name, category]))
     const sum = breakdown.reduce((carry, row) => carry + row.total, 0)
 
-    const head = breakdown.slice(0, limit).map((row) => ({
-      name: row.name,
-      total: row.total,
-      color: byName.get(row.name)?.color || REST_COLOR,
-      icon: byName.get(row.name)?.icon || ''
-    }))
+    const head = breakdown.slice(0, limit).map((row) => {
+      const item = byName.get(row.name)
+
+      return {
+        name: row.name,
+        total: row.total,
+        color: item?.color || REST_COLOR,
+        /*
+         * An account's icon can be an uploaded picture rather than an emoji,
+         * and both live in the same field. Printed into a text label a data URL
+         * does not fail loudly - it renders as several hundred characters of
+         * base64 and pushes the name out of its own row. The colour dot beside
+         * it already identifies the slice, so a picture simply has no glyph
+         * here.
+         */
+        icon: isImageIcon(item?.icon) ? '' : item?.icon || ''
+      }
+    })
 
     const restTotal = breakdown.slice(limit).reduce((carry, row) => carry + row.total, 0)
     if (restTotal > 0) {

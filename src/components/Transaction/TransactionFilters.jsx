@@ -147,9 +147,13 @@ export default function TransactionFilters ({
       {/*
         Not hidden alongside the category chips: a transfer carries no category
         but can carry tags, so filtering a transfer by tag is the one way to
-        find it. Two selected tags mean either, not both - the same widening the
-        category chips above already do, because two rules for two chip rows
-        sitting inches apart is a worse answer than one.
+        find it.
+
+        These narrow where the category chips widen. It reads like an
+        inconsistency and is not one: a row has exactly one category, so
+        stacking two of those could only ever mean "either" - there is no row
+        that is both. A row carries up to eight tags, so "and also this" is a
+        question that has answers, and it is the one worth asking.
       */}
       {tags.length > 0 && (
         <div className="-mx-page overflow-x-auto px-page">
