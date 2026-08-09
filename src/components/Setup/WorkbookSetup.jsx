@@ -45,7 +45,7 @@ export default function WorkbookSetup ({
           <input
             type="text"
             aria-label="ID atau URL spreadsheet"
-            className="field font-mono text-caption"
+            className="field font-mono"
             placeholder="1AbC…xyz atau https://docs.google.com/spreadsheets/d/…"
             value={sheetId}
             onChange={(event) => setSheetId(event.target.value)}

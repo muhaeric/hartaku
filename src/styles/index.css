@@ -159,6 +159,157 @@
   }
 
   /*
+   * Frosted panels over a picture, in a dark and a light cut.
+   *
+   * The safety lives in the PANEL, not in the scrim. This started the other way
+   * round - a nearly transparent panel, whose readability was inherited
+   * entirely from whatever was behind it, leaving no lever but to darken the
+   * whole photo to 12% and lose the reason for having one. A panel built from
+   * the canvas colour carries its own contrast instead: each variant clears
+   * every floor with the scrim at *zero*, over the worst photo for its own
+   * polarity - white for the dark cut, black for the light one.
+   *
+   * `--panel-alpha` is not shared, because the two are not symmetric. A dark
+   * canvas over a white photo lands low and buys contrast cheaply at 0.78; a
+   * light canvas over a black photo lands in mid grey, where a dark subtitle
+   * has nowhere left to go, so it needs 0.96 before every floor clears. The
+   * light cut is therefore the more solid-looking of the two, and that is a
+   * fact about the arithmetic rather than a decision.
+   *
+   * That leaves `--photo-scrim` free to be a taste dial, which is what the
+   * setting drives. What it still governs is text sitting directly on the
+   * canvas - headings, the top bar - and that is what the shadow is for,
+   * rather than paying for those few labels by dimming the entire picture.
+   */
+  [data-theme='glass'] {
+    color-scheme: dark;
+    --panel-alpha: 0.78;
+    --canvas: 15 18 32;
+    --surface: 255 255 255;
+    --hairline: 255 255 255;
+    --ink: 236 235 255;
+    --subtitle: 195 192 224;
+    --brand: 158 197 255;
+    --brand-hover: 184 211 255;
+    --brand-active: 210 226 255;
+    --brand-soft: 158 197 255;
+    --brand-soft-hover: 184 211 255;
+    --brand-onsoft: 207 224 255;
+    --brand-fg: 15 18 32;
+    --income: 95 214 180;
+    --expense: 255 157 178;
+    --warning: 255 209 102;
+    --decor: 158 197 255;
+    --tint: 255 255 255;
+    /* Overridden inline from the setting; this is the fallback. */
+    --photo-scrim: 0.35;
+  }
+
+  [data-theme='glass-light'] {
+    color-scheme: light;
+    --panel-alpha: 0.96;
+    --canvas: 242 244 251;
+    --surface: 255 255 255;
+    --hairline: 25 27 44;
+    --ink: 25 27 44;
+    --subtitle: 86 90 117;
+    --brand: 47 79 212;
+    --brand-hover: 37 64 178;
+    --brand-active: 29 51 145;
+    --brand-soft: 47 79 212;
+    --brand-soft-hover: 37 64 178;
+    --brand-onsoft: 37 55 155;
+    --brand-fg: 255 255 255;
+    --income: 10 107 77;
+    --expense: 194 42 60;
+    --warning: 154 90 6;
+    --decor: 47 79 212;
+    --tint: 0 0 0;
+    --photo-scrim: 0.35;
+  }
+
+  /*
+   * Headings and the top bar sit on the canvas, so at a thin scrim they are
+   * reading against the photo itself. A shadow buys that back locally instead
+   * of charging the whole picture for it. Panels reset it: their text is
+   * already on a guaranteed background, and a shadow there just looks smudged.
+   *
+   * The shadow has to invert with the variant. Light text is rescued by a dark
+   * halo and dark text by a light one; using the dark halo for both would leave
+   * the light cut's headings smudged and no more readable.
+   */
+  [data-theme='glass'] body {
+    text-shadow: 0 1px 3px rgb(0 0 0 / 0.85);
+  }
+
+  [data-theme='glass-light'] body {
+    text-shadow: 0 1px 3px rgb(255 255 255 / 0.9);
+  }
+
+  [data-theme^='glass'] .card,
+  [data-theme^='glass'] .card-flush,
+  [data-theme^='glass'] .bg-surface,
+  [data-theme^='glass'] .field {
+    text-shadow: none;
+  }
+
+  /*
+   * These override the utilities rather than the tokens because a token is a
+   * colour and this needs an alpha and a blur as well. `.card` and `.card-flush`
+   * are listed separately from `.bg-surface` on purpose: they `@apply` their
+   * background, so it compiles into their own rule where an override of the
+   * utility can never reach it.
+   */
+  [data-theme^='glass'] .bg-surface,
+  [data-theme^='glass'] .card,
+  [data-theme^='glass'] .card-flush {
+    background-color: rgb(var(--canvas) / var(--panel-alpha));
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  /*
+   * Fields take the tint but not the blur. A form can hold a dozen of them, and
+   * every backdrop-filter is its own compositing layer over the same photo - the
+   * cost is real and the effect is invisible inside a card that is already
+   * frosted.
+   *
+   * Tagged with the element name to win on specificity, not source order:
+   * `.field` applies `bg-surface`, so Tailwind emits its own
+   * `[data-theme=glass] .field` rule carrying the blur, and it lands after this
+   * one. Same weight, later position, and the blur came back.
+   */
+  [data-theme^='glass'] input.field,
+  [data-theme^='glass'] select.field,
+  [data-theme^='glass'] textarea.field {
+    background-color: rgb(var(--surface) / 0.1);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* The two bars that ride over content are denser, so what scrolls beneath
+     them blurs away rather than showing through as legible text. */
+  [data-theme^='glass'] .bg-surface\/95,
+  [data-theme^='glass'] .bg-canvas\/90 {
+    background-color: rgb(var(--canvas) / 0.72);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    backdrop-filter: blur(20px) saturate(140%);
+  }
+
+  [data-theme^='glass'] .card,
+  [data-theme^='glass'] .card-flush,
+  [data-theme^='glass'] .border-hairline,
+  [data-theme^='glass'] .divide-hairline > * + * {
+    border-color: rgb(var(--hairline) / 0.16);
+  }
+
+  /* The soft chip is the accent at low alpha here, not a solid step: a solid
+     one would sit as an opaque patch on a panel that is otherwise see-through. */
+  [data-theme^='glass'] .bg-brand-soft {
+    background-color: rgb(var(--brand-soft) / 0.22);
+  }
+
+  /*
    * Chromium keeps a transitioned property pinned to its old value when the
    * var() behind it changes, so swapping theme left every element carrying a
    * `transition` - buttons above all - painted in the previous colour until
@@ -182,7 +333,15 @@
       sans-serif;
   }
 
-  /* iOS zooms the page when a focused input is under 16px. */
+  /*
+   * iOS zooms the page when a focused control is under 16px, and does not zoom
+   * back out afterwards.
+   *
+   * This is a base-layer rule, so any text-size utility on a control beats it -
+   * `class="field text-caption"` silently reintroduces the zoom, which is how
+   * four of them had already picked it up. If a control needs to look smaller,
+   * shrink its box, never its font size.
+   */
   input,
   select,
   textarea {

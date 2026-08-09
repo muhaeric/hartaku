@@ -1,4 +1,5 @@
 import { useSettings } from '../../context/SettingsContext.jsx'
+import { isGlassTheme } from '../../lib/constants.js'
 
 /*
  * Ornament for the themed palettes. Everything here is inert and sits behind the
@@ -103,6 +104,37 @@ function AnimalTracks () {
   )
 }
 
+/**
+ * The glass theme's backdrop is the user's own picture, veiled by a scrim.
+ *
+ * The scrim is not styling. A frosted panel is only as readable as what shows
+ * through it, and the photo behind it is unknown - so `--photo-scrim` is set to
+ * the thinnest veil that still clears every contrast floor against a pure white
+ * photo, the worst case for light text. See the note in index.css.
+ *
+ * With no picture chosen the theme falls back to a wash of its own accent, so
+ * "Kaca" is a complete theme on its own rather than a prompt to go find a file.
+ */
+function GlassPhoto ({ photo }) {
+  return (
+    <>
+      {photo ? (
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url("${photo}")` }}
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-brand/40 via-transparent to-income/25" />
+      )}
+
+      <div
+        className="absolute inset-0 bg-canvas"
+        style={{ opacity: 'var(--photo-scrim, 0.88)' }}
+      />
+    </>
+  )
+}
+
 /** Terang and Gelap are deliberately absent - they render nothing. */
 const BACKDROPS = {
   ocean: OceanWaves,
@@ -112,9 +144,17 @@ const BACKDROPS = {
 }
 
 export default function ThemeBackdrop () {
-  const { resolvedTheme } = useSettings()
-  const Art = BACKDROPS[resolvedTheme]
+  const { resolvedTheme, themePhoto } = useSettings()
 
+  if (isGlassTheme(resolvedTheme)) {
+    return (
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <GlassPhoto photo={themePhoto} />
+      </div>
+    )
+  }
+
+  const Art = BACKDROPS[resolvedTheme]
   if (!Art) return null
 
   return (

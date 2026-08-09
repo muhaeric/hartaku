@@ -309,7 +309,7 @@ export default function ImportMoneyManager () {
                     <span className="min-w-0 flex-1 truncate text-body">{account.name}</span>
                     <select
                       aria-label={`Jenis akun ${account.name}`}
-                      className="field h-9 w-[128px] shrink-0 py-0 text-caption"
+                      className="field h-9 w-[128px] shrink-0 py-0"
                       value={account.kind}
                       onChange={(event) =>
                         setKinds((current) => ({ ...current, [account.name]: event.target.value }))

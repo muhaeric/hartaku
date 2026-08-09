@@ -4,8 +4,9 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { CURRENCIES, DATE_FORMATS, THEMES } from '../../lib/constants.js'
+import { CURRENCIES, DATE_FORMATS, THEMES, isGlassTheme } from '../../lib/constants.js'
 import { extractSpreadsheetId } from '../../lib/spreadsheetId.js'
+import { fileToThemePhoto } from '../../lib/themePhoto.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
 import { ExternalIcon, ScanIcon } from '../ui/icons.jsx'
@@ -46,6 +47,10 @@ export default function SettingsPage () {
           resolved={resolvedTheme}
           onChange={(theme) => updateSettings({ theme })}
         />
+
+        {/* Only the glass cuts have anywhere to put a picture, so the control
+            appears with them rather than sitting inert under the other six. */}
+        {isGlassTheme(resolvedTheme) && <ThemePhotoField />}
         <Row label="Mata uang" htmlFor="currency">
           <Select
             id="currency"
@@ -134,7 +139,7 @@ export default function SettingsPage () {
             <input
               id="sheet-id"
               type="text"
-              className="field flex-1 font-mono text-caption"
+              className="field flex-1 font-mono"
               placeholder="ID atau URL spreadsheet"
               value={sheetId}
               onChange={(event) => setSheetId(event.target.value)}
@@ -236,6 +241,96 @@ function Row ({ label, htmlFor, children }) {
   )
 }
 
+function ThemePhotoField () {
+  const toast = useToast()
+  const { settings, updateSettings, themePhoto, saveThemePhoto } = useSettings()
+  const [busy, setBusy] = useState(false)
+
+  const handleFile = async (event) => {
+    const file = event.target.files?.[0]
+    // Cleared straight away so picking the same file twice still fires.
+    event.target.value = ''
+    if (!file) return
+
+    setBusy(true)
+    try {
+      const encoded = await fileToThemePhoto(file)
+      if (!saveThemePhoto(encoded)) {
+        toast.error('Penyimpanan browser penuh, fotonya tidak bisa disimpan.')
+        return
+      }
+      toast.success('Foto latar dipasang.')
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div>
+      <span className="label">Foto latar</span>
+
+      <div className="flex items-center gap-3">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-control border border-hairline bg-tint/[0.06]">
+          {themePhoto ? (
+            <img src={themePhoto} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span aria-hidden="true" className="text-subtitle">
+              🖼️
+            </span>
+          )}
+        </span>
+
+        <div className="flex min-w-0 flex-1 flex-wrap gap-gap">
+          <label className="inline-flex">
+            <input type="file" accept="image/*" className="sr-only" onChange={handleFile} />
+            <span
+              role="button"
+              tabIndex={0}
+              aria-disabled={busy}
+              className="inline-flex h-9 cursor-pointer items-center rounded-control border border-hairline bg-surface px-3 text-caption font-semibold text-ink"
+            >
+              {busy ? 'Memproses…' : themePhoto ? 'Ganti foto' : 'Pilih foto'}
+            </span>
+          </label>
+
+          {themePhoto && (
+            <Button variant="ghost" size="sm" onClick={() => saveThemePhoto('')}>
+              Hapus
+            </Button>
+          )}
+        </div>
+      </div>
+
+      <p className="hint">
+        Fotonya diperkecil dan disimpan di perangkat ini saja — tidak ikut ke spreadsheet.
+      </p>
+
+      <div className="mt-gap-normal">
+        <label className="label" htmlFor="glass-scrim">
+          Peredup foto
+        </label>
+        <input
+          id="glass-scrim"
+          type="range"
+          min="0"
+          max="0.85"
+          step="0.05"
+          value={settings.glassScrim}
+          onChange={(event) => updateSettings({ glassScrim: Number(event.target.value) })}
+          className="w-full accent-brand"
+        />
+        <p className="hint">
+          Foto terlihat {Math.round((1 - settings.glassScrim) * 100)}%. Geser sesukamu — kartunya
+          membawa kontrasnya sendiri, jadi angkanya tetap terbaca bahkan kalau peredupnya dimatikan
+          sepenuhnya.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 /**
  * Each tile carries its own `data-theme`, so the palette variables resolve
  * inside it and the preview is painted by the real theme rather than by a copy
@@ -287,7 +382,7 @@ function Select ({ id, value, onChange, options }) {
   return (
     <select
       id={id}
-      className="field h-10 truncate py-0 text-caption"
+      className="field h-10 truncate py-0"
       value={value}
       onChange={(event) => onChange(event.target.value)}
     >

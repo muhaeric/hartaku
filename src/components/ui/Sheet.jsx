@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { CloseIcon } from './icons.jsx'
 
 /**
@@ -6,6 +6,8 @@ import { CloseIcon } from './icons.jsx'
  * every overlay in the app has the same geometry and dismiss behaviour.
  */
 export default function Sheet ({ open, title, description, onClose, children, footer, size = 'md' }) {
+  const [keyboard, setKeyboard] = useState(0)
+
   useEffect(() => {
     if (!open) return undefined
 
@@ -23,10 +25,42 @@ export default function Sheet ({ open, title, description, onClose, children, fo
     }
   }, [open, onClose])
 
+  /*
+   * A `position: fixed` sheet is anchored to the layout viewport, which the
+   * on-screen keyboard does not shrink - so the keyboard opens straight over
+   * the bottom of the sheet, hiding the field being typed into and whatever
+   * buttons sat under it. The visual viewport does shrink, and the difference
+   * between the two is exactly how much of the sheet is buried.
+   *
+   * `offsetTop` is part of it: iOS scrolls the visual viewport up to reveal a
+   * focused field, and without that term the sheet drifts by however far it
+   * scrolled.
+   */
+  useEffect(() => {
+    const viewport = window.visualViewport
+    if (!open || !viewport) return undefined
+
+    const sync = () =>
+      setKeyboard(Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop)))
+
+    sync()
+    viewport.addEventListener('resize', sync)
+    viewport.addEventListener('scroll', sync)
+
+    return () => {
+      viewport.removeEventListener('resize', sync)
+      viewport.removeEventListener('scroll', sync)
+      setKeyboard(0)
+    }
+  }, [open])
+
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-40 flex animate-fade-in items-end justify-center sm:items-center">
+    <div
+      className="fixed inset-0 z-40 flex animate-fade-in items-end justify-center sm:items-center"
+      style={{ paddingBottom: keyboard || undefined }}
+    >
       <div
         className="absolute inset-0 bg-ink/40 backdrop-blur-[2px]"
         onClick={onClose}
@@ -37,9 +71,12 @@ export default function Sheet ({ open, title, description, onClose, children, fo
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`relative flex max-h-[92dvh] w-full animate-slide-up flex-col rounded-t-sheet bg-surface shadow-xl sm:rounded-sheet ${
+        className={`relative flex w-full animate-slide-up flex-col rounded-t-sheet bg-surface shadow-xl sm:rounded-sheet ${
           size === 'lg' ? 'sm:max-w-2xl' : 'sm:max-w-md'
         }`}
+        /* The cap has to come down by the same amount the sheet moved up, or a
+           tall sheet pushed clear of the keyboard runs off the top instead. */
+        style={{ maxHeight: `calc(92dvh - ${keyboard}px)` }}
       >
         {/* Grab handle: the affordance people look for on a sheet. */}
         <div className="flex justify-center pt-2 sm:hidden" aria-hidden="true">

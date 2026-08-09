@@ -5,7 +5,7 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { ACCOUNT_KINDS, CATEGORY_TYPES, PAGE_SIZE } from '../../lib/constants.js'
 import { ALL_MONTHS, buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
 import { readLastAccount, writeLastAccount } from '../../lib/lastAccount.js'
-import { collectTags, hasAnyTag, normalizeTags } from '../../lib/tags.js'
+import { collectTags, hasAllTags, normalizeTags } from '../../lib/tags.js'
 import { filterByMonth, groupByDay, monthsWithData, summarize } from '../../lib/summary.js'
 import Button from '../ui/Button.jsx'
 import { Card } from '../ui/Card.jsx'
@@ -129,7 +129,7 @@ export default function TransactionList () {
           transaction.account === filters.account ||
           transaction.toAccount === filters.account
       )
-      .filter((transaction) => hasAnyTag(transaction.tags, filters.tags))
+      .filter((transaction) => hasAllTags(transaction.tags, filters.tags))
       .filter(
         (transaction) =>
           !search ||
@@ -598,8 +598,9 @@ export default function TransactionList () {
         onClose={() => !busy && closeTagging()}
       >
         <div className="space-y-gap-normal">
+          {/* Not autofocused: the sheet opening threw the keyboard up over its
+              own buttons before anyone had decided to type. */}
           <TagInput
-            autoFocus
             value={pendingTags}
             suggestions={tagSuggestions}
             onChange={setPendingTags}
