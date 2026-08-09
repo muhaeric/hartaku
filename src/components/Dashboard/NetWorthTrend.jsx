@@ -37,7 +37,10 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
     [accounts, transactions, goldLots, period]
   )
 
-  const money = (value, compact = false) => formatCurrency(value, settings.currency, { compact })
+  // Every compact figure in this block is one of several read together, so they
+  // all keep their decimal rather than rounding to the nearest million.
+  const money = (value, compact = false) =>
+    formatCurrency(value, settings.currency, { compact, precise: compact })
   const bucket = PERIODS[period]
 
   const geometry = useMemo(() => {
@@ -244,7 +247,13 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
                 The step against the period before is not the same number as
                 income minus spending to its right: a transfer into an account
                 that has since been deleted moves the total while being neither.
-                They are labelled apart so that neither has to lie.
+                The percentage is kept apart from the trio for that reason.
+
+                The trio carries no words - green in, red out, grey for the
+                difference - because three short figures read faster than three
+                figures wearing labels, and the same green and red already mean
+                the same thing in the summary above. Colour is not a label
+                though, so the words stay in the accessibility tree.
               */}
               <div className="mt-0.5 flex items-baseline justify-between gap-2 text-[11px] leading-4">
                 <span
@@ -260,10 +269,21 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
                 </span>
 
                 <span className="amount min-w-0 truncate text-right text-subtitle">
-                  <span className="text-income">{money(row.income, true)}</span> masuk ·{' '}
-                  <span className="text-expense">{money(row.expense, true)}</span> keluar ·{' '}
-                  {row.net >= 0 ? '+' : '−'}
-                  {money(Math.abs(row.net), true)}
+                  <span className="text-income">
+                    {money(row.income, true)}
+                    <span className="sr-only"> masuk</span>
+                  </span>
+                  {' · '}
+                  <span className="text-expense">
+                    {money(row.expense, true)}
+                    <span className="sr-only"> keluar</span>
+                  </span>
+                  {' · '}
+                  <span>
+                    {row.net >= 0 ? '+' : '−'}
+                    {money(Math.abs(row.net), true)}
+                    <span className="sr-only"> selisih</span>
+                  </span>
                 </span>
               </div>
             </li>

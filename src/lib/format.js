@@ -21,16 +21,32 @@ function currencyConfig (code) {
   return CURRENCIES.find((item) => item.code === code) || CURRENCIES[0]
 }
 
-export function formatCurrency (amount, currencyCode = 'IDR', { compact = false } = {}) {
+/**
+ * `compact` alone rounds to whole units - "Rp16 jt" - which is what a headline
+ * figure wants. `precise` keeps one decimal on top of it, for the places where
+ * several compact figures sit side by side and are meant to reconcile: rounded
+ * to units, "Rp16 jt" less "Rp15 jt" reads as a million that is really four
+ * hundred thousand, and the row looks like it does not add up.
+ */
+export function formatCurrency (
+  amount,
+  currencyCode = 'IDR',
+  { compact = false, precise = false } = {}
+) {
   const config = currencyConfig(currencyCode)
   const value = Number(amount) || 0
+  const fixed = config.fractionDigits
+
+  const digits =
+    compact && precise
+      ? { minimumFractionDigits: 0, maximumFractionDigits: 1 }
+      : { minimumFractionDigits: fixed, maximumFractionDigits: fixed }
 
   return new Intl.NumberFormat(config.locale, {
     style: 'currency',
     currency: config.code,
-    minimumFractionDigits: config.fractionDigits,
-    maximumFractionDigits: config.fractionDigits,
-    notation: compact ? 'compact' : 'standard'
+    notation: compact ? 'compact' : 'standard',
+    ...digits
   }).format(value)
 }
 

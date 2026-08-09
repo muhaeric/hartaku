@@ -101,23 +101,21 @@ export default function Dashboard () {
 
       {/*
         One question - where the month went - asked three ways, so they belong
-        in one slot rather than three stacked sections. Account and tag lead
-        because they were the two asked for; category keeps its place at the end
-        rather than being dropped, since it is the only one of the three that
-        partitions the month and so the only one whose ring adds up.
+        in one slot rather than three stacked sections. Category opens because
+        it is the only one of the three that partitions the month, so its ring
+        is the only one that adds up to the total above it; tag and account
+        follow as the two ways of cutting that same money differently.
       */}
       <div className="space-y-gap-normal">
         <SectionHeader title="Pengeluaran terbesar" />
         <Card flush as="div">
           <Carousel
-            label="Pengeluaran terbesar, per akun, tag dan kategori"
+            label="Pengeluaran terbesar, per kategori, tag dan akun"
             slides={[
               {
-                key: 'account',
-                title: 'Per akun',
-                content: (
-                  <TopExpenses breakdown={byAccount} categories={accounts} unit="akun" />
-                )
+                key: 'category',
+                title: 'Per kategori',
+                content: <TopExpenses breakdown={breakdown} categories={categories} />
               },
               {
                 key: 'tag',
@@ -125,9 +123,11 @@ export default function Dashboard () {
                 content: <TagSpending breakdown={tags} />
               },
               {
-                key: 'category',
-                title: 'Per kategori',
-                content: <TopExpenses breakdown={breakdown} categories={categories} />
+                key: 'account',
+                title: 'Per akun',
+                content: (
+                  <TopExpenses breakdown={byAccount} categories={accounts} unit="akun" />
+                )
               }
             ]}
           />
