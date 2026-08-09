@@ -45,6 +45,22 @@ export default function TransactionFilters ({
   }
 
   /**
+   * A-Z rather than the order the sheet stores them in. The strip scrolls, so a
+   * chip past the third one is found by scrolling to where it ought to be, and
+   * alphabetical is the only ordering a visitor can predict without opening the
+   * category manager. Sorting a copy leaves the stored `sort_order` alone -
+   * that one still drives the pickers, where the list is short and hand-ordered
+   * on purpose.
+   */
+  const chips = useMemo(
+    () =>
+      [...categories].sort((a, b) =>
+        a.name.localeCompare(b.name, 'id-ID', { sensitivity: 'base', numeric: true })
+      ),
+    [categories]
+  )
+
+  /**
    * Archived accounts are not offered, but one that is already selected stays in
    * the list: a native select whose value is missing from its options renders
    * blank, which would read as "no filter" while the list stayed filtered.
@@ -117,7 +133,7 @@ export default function TransactionFilters ({
       {categories.length > 0 && filters.type !== 'transfer' && (
         <div className="-mx-page overflow-x-auto px-page">
           <div className="flex gap-1.5 pb-0.5" role="group" aria-label="Filter kategori">
-            {categories.map((category) => {
+            {chips.map((category) => {
               const active = filters.categories.includes(category.name)
               return (
                 <button

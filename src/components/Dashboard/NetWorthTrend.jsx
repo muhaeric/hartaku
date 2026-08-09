@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { PERIODS } from '../../lib/dates.js'
 import { formatCurrency, formatPercent } from '../../lib/format.js'
@@ -32,12 +32,25 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
   const [active, setActive] = useState(null)
   const [showTable, setShowTable] = useState(false)
 
+  /**
+   * The chart takes focus because the arrow keys drive it, and the app rings
+   * whatever holds focus. That ring belongs to the keyboard: a tap already says
+   * where it landed, and the ring only boxes in the thing being dragged across.
+   * `:focus-visible` will not make the distinction on WebKit, so this does - the
+   * pointer event arrives before the focus event, which is the whole trick.
+   */
+  const viaPointer = useRef(false)
+  const [ringed, setRinged] = useState(false)
+
   const series = useMemo(
     () => netWorthHistory(accounts, transactions, goldLots, period, POINTS[period]),
     [accounts, transactions, goldLots, period]
   )
 
-  const money = (value, compact = false) => formatCurrency(value, settings.currency, { compact })
+  // Every compact figure in this block is one of several read together, so they
+  // all keep their decimal rather than rounding to the nearest million.
+  const money = (value, compact = false) =>
+    formatCurrency(value, settings.currency, { compact, precise: compact })
   const bucket = PERIODS[period]
 
   const geometry = useMemo(() => {
@@ -97,20 +110,32 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
           <div className="relative">
             <svg
               viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-              className="mt-2 w-full select-none"
+              className={`mt-2 w-full select-none ${ringed ? '' : 'focus-ring-off'}`}
               role="img"
               aria-label={`Riwayat total aset per ${bucket.label.toLowerCase()}, ${bucket.title(
                 first.key
               )} sampai ${bucket.title(series[series.length - 1].key)}`}
               tabIndex={0}
-              onPointerDown={pick}
+              onPointerDown={(event) => {
+                viaPointer.current = true
+                setRinged(false)
+                pick(event)
+              }}
               onPointerMove={(event) => event.buttons && pick(event)}
               onMouseMove={pick}
               onMouseLeave={() => setActive(null)}
+              onFocus={() => setRinged(!viaPointer.current)}
+              onBlur={() => {
+                viaPointer.current = false
+                setRinged(false)
+              }}
               onKeyDown={(event) => {
                 if (event.key === 'ArrowLeft') step(-1)
                 else if (event.key === 'ArrowRight') step(1)
                 else return
+                // Reaching for the keys is the one moment the ring is wanted,
+                // whether or not a tap put the focus here first.
+                setRinged(true)
                 event.preventDefault()
               }}
             >
@@ -244,7 +269,13 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
                 The step against the period before is not the same number as
                 income minus spending to its right: a transfer into an account
                 that has since been deleted moves the total while being neither.
-                They are labelled apart so that neither has to lie.
+                The percentage is kept apart from the trio for that reason.
+
+                The trio carries no words - green in, red out, grey for the
+                difference - because three short figures read faster than three
+                figures wearing labels, and the same green and red already mean
+                the same thing in the summary above. Colour is not a label
+                though, so the words stay in the accessibility tree.
               */}
               <div className="mt-0.5 flex items-baseline justify-between gap-2 text-[11px] leading-4">
                 <span
@@ -260,10 +291,21 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
                 </span>
 
                 <span className="amount min-w-0 truncate text-right text-subtitle">
-                  <span className="text-income">{money(row.income, true)}</span> masuk ·{' '}
-                  <span className="text-expense">{money(row.expense, true)}</span> keluar ·{' '}
-                  {row.net >= 0 ? '+' : '−'}
-                  {money(Math.abs(row.net), true)}
+                  <span className="text-income">
+                    {money(row.income, true)}
+                    <span className="sr-only"> masuk</span>
+                  </span>
+                  {' · '}
+                  <span className="text-expense">
+                    {money(row.expense, true)}
+                    <span className="sr-only"> keluar</span>
+                  </span>
+                  {' · '}
+                  <span>
+                    {row.net >= 0 ? '+' : '−'}
+                    {money(Math.abs(row.net), true)}
+                    <span className="sr-only"> selisih</span>
+                  </span>
                 </span>
               </div>
             </li>

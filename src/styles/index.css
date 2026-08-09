@@ -405,4 +405,20 @@
   .divide-hairline > * + * {
     @apply border-t border-hairline;
   }
+
+  /*
+   * Opt-out from the global focus ring, for a control that is focusable only so
+   * the keyboard can drive it.
+   *
+   * WebKit counts a tap on a `tabindex` element as focus-visible, so the ring
+   * meant for Tab was landing on every tap - and on something like the trend
+   * chart, which is dragged across rather than pressed, that is a box drawn
+   * around the whole thing for the length of the gesture. A selector cannot
+   * tell a tap from a Tab; the component can, because the pointer event reaches
+   * it first, so it switches this on for the taps and off again for the keys.
+   */
+  .focus-ring-off:focus {
+    outline: none;
+    box-shadow: none;
+  }
 }
