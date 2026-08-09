@@ -7,7 +7,7 @@ import { Card, GroupLabel, SectionHeader } from '../ui/Card.jsx'
 import ListRow, { RowIcon } from '../ui/ListRow.jsx'
 
 /** Accounts grouped by kind, with gold listed alongside as an investment. */
-export default function AccountBalances ({ balances, gold }) {
+export default function AccountBalances ({ balances, gold, archived = { count: 0, total: 0 } }) {
   const { settings } = useSettings()
   const money = (value) => formatCurrency(value, settings.currency)
 
@@ -61,11 +61,10 @@ export default function AccountBalances ({ balances, gold }) {
                   to={accountTransactionsPath(account.name)}
                   leading={<RowIcon icon={account.icon} color={account.color} />}
                   title={account.name}
-                  /* The group heading already names the kind - repeating it on
-                     every row was noise competing with the balance. An archived
-                     account only reaches this list while it still holds money,
-                     and that needs saying or it reads as a stray. */
-                  subtitle={account.archived ? 'Arsip' : null}
+                  /* No subtitle: the group heading already names the kind, and
+                     repeating it on every row was noise competing with the
+                     balance. Nothing else needs saying here now that archived
+                     accounts do not reach this list at all. */
                   trailing={
                     <span className={balance < 0 ? 'text-expense' : ''}>
                       {money(balance)}
@@ -107,6 +106,19 @@ export default function AccountBalances ({ balances, gold }) {
               />
             </div>
           </div>
+        )}
+
+        {/*
+          The one thing the list cannot say by adding up: money sitting in an
+          account that has been put away. It is still in the total at the top of
+          the page, so without this line the two figures would differ by an
+          amount with no explanation anywhere on screen. A line, not rows - the
+          accounts stay archived.
+        */}
+        {archived.count > 0 && (
+          <p className="border-t border-hairline px-page py-2 text-caption text-subtitle">
+            Total aset termasuk {money(archived.total)} di {archived.count} akun arsip.
+          </p>
         )}
       </Card>
     </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { PERIODS } from '../../lib/dates.js'
 import { formatCurrency, formatPercent } from '../../lib/format.js'
@@ -31,6 +31,16 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
   const [period, setPeriod] = useState('month')
   const [active, setActive] = useState(null)
   const [showTable, setShowTable] = useState(false)
+
+  /**
+   * The chart takes focus because the arrow keys drive it, and the app rings
+   * whatever holds focus. That ring belongs to the keyboard: a tap already says
+   * where it landed, and the ring only boxes in the thing being dragged across.
+   * `:focus-visible` will not make the distinction on WebKit, so this does - the
+   * pointer event arrives before the focus event, which is the whole trick.
+   */
+  const viaPointer = useRef(false)
+  const [ringed, setRinged] = useState(false)
 
   const series = useMemo(
     () => netWorthHistory(accounts, transactions, goldLots, period, POINTS[period]),
@@ -100,20 +110,32 @@ export default function NetWorthTrend ({ accounts, transactions, goldLots, holds
           <div className="relative">
             <svg
               viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-              className="mt-2 w-full select-none"
+              className={`mt-2 w-full select-none ${ringed ? '' : 'focus-ring-off'}`}
               role="img"
               aria-label={`Riwayat total aset per ${bucket.label.toLowerCase()}, ${bucket.title(
                 first.key
               )} sampai ${bucket.title(series[series.length - 1].key)}`}
               tabIndex={0}
-              onPointerDown={pick}
+              onPointerDown={(event) => {
+                viaPointer.current = true
+                setRinged(false)
+                pick(event)
+              }}
               onPointerMove={(event) => event.buttons && pick(event)}
               onMouseMove={pick}
               onMouseLeave={() => setActive(null)}
+              onFocus={() => setRinged(!viaPointer.current)}
+              onBlur={() => {
+                viaPointer.current = false
+                setRinged(false)
+              }}
               onKeyDown={(event) => {
                 if (event.key === 'ArrowLeft') step(-1)
                 else if (event.key === 'ArrowRight') step(1)
                 else return
+                // Reaching for the keys is the one moment the ring is wanted,
+                // whether or not a tap put the focus here first.
+                setRinged(true)
                 event.preventDefault()
               }}
             >

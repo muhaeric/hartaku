@@ -40,15 +40,36 @@ export default function Dashboard () {
   )
 
   /**
-   * Archived accounts drop off the list once they are empty, which is what
-   * archiving one is normally for. One still holding money stays on - it is part
-   * of the net worth above it, and a list that quietly omitted it would stop
-   * adding up to the figure it sits under.
+   * Archiving an account takes it off this list, full stop - a leftover balance
+   * no longer keeps it here.
+   *
+   * The earlier rule kept one that still held money, so that the list would add
+   * up to the total above it. In practice that meant an account someone had
+   * deliberately put away kept reappearing on the home screen over a few
+   * thousand rupiah, which is what archiving was meant to stop. The money is
+   * still counted in the total - it exists, and writing it off here would be a
+   * lie in the other direction - so the list can now sit slightly under the
+   * figure above it. The place to see those accounts is Kelola, where they are
+   * grouped under Arsip with their balances.
    */
   const listed = useMemo(
-    () => balances.filter((entry) => !entry.account.archived || entry.balance !== 0),
+    () => balances.filter((entry) => !entry.account.archived),
     [balances]
   )
+
+  /**
+   * What the list stops showing but the total above it keeps counting, sent
+   * through as one figure rather than as rows. A single line is enough to make
+   * the two numbers reconcile, and it is the whole reason to mention the
+   * archive here at all - putting the accounts back would undo the archiving.
+   */
+  const archived = useMemo(() => {
+    const held = balances.filter((entry) => entry.account.archived && entry.balance !== 0)
+    return {
+      count: held.length,
+      total: held.reduce((sum, entry) => sum + entry.balance, 0)
+    }
+  }, [balances])
 
   const gold = useMemo(
     () => goldSummary(goldLots, quote?.buybackPerGram),
@@ -89,7 +110,7 @@ export default function Dashboard () {
         />
       </NetWorthCard>
 
-      <AccountBalances balances={listed} gold={gold} />
+      <AccountBalances balances={listed} gold={gold} archived={archived} />
 
       <div className="space-y-gap-normal">
         <SectionHeader
