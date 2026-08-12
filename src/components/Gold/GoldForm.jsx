@@ -4,6 +4,7 @@ import { LIMITS } from '../../lib/constants.js'
 import { accountOptionLabel } from '../../lib/accountIcon.js'
 import { isFutureDate, todayIso } from '../../lib/dates.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import Button from '../ui/Button.jsx'
 import Sheet from '../ui/Sheet.jsx'
 
@@ -141,7 +142,7 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
             onChange={(event) => patch({ fromAccount: event.target.value })}
           >
             <option value="">Tidak dipotong dari akun</option>
-            {accounts.map((account) => (
+            {sortByLabel(accounts, (account) => account.name).map((account) => (
               <option key={account.id} value={account.name}>
                 {accountOptionLabel(account)}
                 {account.archived ? ' (arsip)' : ''}

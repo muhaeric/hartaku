@@ -3,6 +3,7 @@ import MonthStepper from '../ui/MonthStepper.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
 import SelectPill from '../ui/SelectPill.jsx'
 import { CloseIcon, SearchIcon } from '../ui/icons.jsx'
+import { sortByLabel, sortOptions } from '../../lib/sortOptions.js'
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'Semua' },
@@ -48,17 +49,11 @@ export default function TransactionFilters ({
    * A-Z rather than the order the sheet stores them in. The strip scrolls, so a
    * chip past the third one is found by scrolling to where it ought to be, and
    * alphabetical is the only ordering a visitor can predict without opening the
-   * category manager. Sorting a copy leaves the stored `sort_order` alone -
-   * that one still drives the pickers, where the list is short and hand-ordered
-   * on purpose.
+   * category manager - which is why every picker in the app now shares it.
+   * Sorting a copy leaves the stored `sort_order` alone; that one still drives
+   * the manager screens, where rows are reordered by hand.
    */
-  const chips = useMemo(
-    () =>
-      [...categories].sort((a, b) =>
-        a.name.localeCompare(b.name, 'id-ID', { sensitivity: 'base', numeric: true })
-      ),
-    [categories]
-  )
+  const chips = useMemo(() => sortByLabel(categories, (category) => category.name), [categories])
 
   /**
    * Archived accounts are not offered, but one that is already selected stays in
@@ -75,7 +70,7 @@ export default function TransactionFilters ({
       options.push({ value: filters.account, label: `${filters.account} (arsip)` })
     }
 
-    return options
+    return sortOptions(options)
   }, [accounts, filters.account])
 
   return (

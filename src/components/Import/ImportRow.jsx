@@ -1,9 +1,10 @@
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { TRANSACTION_TYPES } from '../../lib/constants.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import { Card } from '../ui/Card.jsx'
 
-const TYPES = TRANSACTION_TYPES.filter((type) => type.value !== 'transfer')
+const TYPES = sortByLabel(TRANSACTION_TYPES.filter((type) => type.value !== 'transfer'))
 
 /**
  * One detected transaction, editable in place. Everything OCR guessed is a
@@ -15,8 +16,9 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
   const amount = parseAmount(item.amount)
   const validAmount = Number.isFinite(amount) && amount > 0
 
-  const visibleCategories = categories.filter(
-    (category) => category.type === item.type || category.type === 'both'
+  const visibleCategories = sortByLabel(
+    categories.filter((category) => category.type === item.type || category.type === 'both'),
+    (category) => category.name
   )
 
   return (

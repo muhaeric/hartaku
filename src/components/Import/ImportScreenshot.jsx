@@ -7,6 +7,7 @@ import { accountOptionLabel } from '../../lib/accountIcon.js'
 import { todayIso } from '../../lib/dates.js'
 import { parseAmount } from '../../lib/format.js'
 import { parseTransactions } from '../../lib/receiptParser.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import { readImageText, releaseOcr } from '../../services/ocr.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
@@ -168,7 +169,7 @@ export default function ImportScreenshot () {
               onChange={(event) => setAccount(event.target.value)}
             >
               <option value="">Pilih akun…</option>
-              {accounts.map((item) => (
+              {sortByLabel(accounts, (item) => item.name).map((item) => (
                 <option key={item.id} value={item.name}>
                   {accountOptionLabel(item)}
                 </option>

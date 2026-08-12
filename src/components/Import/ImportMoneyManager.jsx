@@ -6,6 +6,7 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { ACCOUNT_KINDS, CATEGORY_COLORS } from '../../lib/constants.js'
 import { formatCurrency, formatDate } from '../../lib/format.js'
 import { parseMoneyManager } from '../../lib/moneyManager.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import { readWorkbook } from '../../lib/xlsx.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
@@ -315,7 +316,7 @@ export default function ImportMoneyManager () {
                         setKinds((current) => ({ ...current, [account.name]: event.target.value }))
                       }
                     >
-                      {ACCOUNT_KINDS.map((kind) => (
+                      {sortByLabel(ACCOUNT_KINDS).map((kind) => (
                         <option key={kind.value} value={kind.value}>
                           {kind.label}
                         </option>

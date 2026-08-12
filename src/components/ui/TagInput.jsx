@@ -1,5 +1,6 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import { LIMITS } from '../../lib/constants.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import { normalizeTag } from '../../lib/tags.js'
 import { ChevronDownIcon, CloseIcon, PlusIcon } from './icons.jsx'
 
@@ -39,12 +40,19 @@ export default function TagInput ({
   const clean = normalizeTag(pending)
   const query = clean.toLowerCase()
 
+  /**
+   * Which eight get offered is still decided by how often they are used; how
+   * those eight are ordered on screen is alphabetical, like every other picker.
+   * Relevance picks the shortlist, A-Z makes the shortlist readable.
+   */
   const options = useMemo(() => {
-    const matches = suggestions
-      .filter((tag) => !chosen.has(tag.toLowerCase()))
-      .filter((tag) => !query || tag.toLowerCase().includes(query))
-      .slice(0, 8)
-      .map((tag) => ({ kind: 'existing', value: tag }))
+    const matches = sortByLabel(
+      suggestions
+        .filter((tag) => !chosen.has(tag.toLowerCase()))
+        .filter((tag) => !query || tag.toLowerCase().includes(query))
+        .slice(0, 8),
+      (tag) => tag
+    ).map((tag) => ({ kind: 'existing', value: tag }))
 
     const known =
       chosen.has(query) || suggestions.some((tag) => tag.toLowerCase() === query)
