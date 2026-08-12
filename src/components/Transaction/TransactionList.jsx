@@ -5,6 +5,7 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { ACCOUNT_KINDS, CATEGORY_TYPES, PAGE_SIZE } from '../../lib/constants.js'
 import { ALL_MONTHS, buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
 import { readLastAccount, writeLastAccount } from '../../lib/lastAccount.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import { collectTags, hasAllTags, normalizeTags } from '../../lib/tags.js'
 import { filterByMonth, groupByDay, monthsWithData, summarize } from '../../lib/summary.js'
 import Button from '../ui/Button.jsx'
@@ -554,7 +555,7 @@ export default function TransactionList () {
         {moveTarget === 'account' ? (
           <>
             <div className="divide-hairline">
-              {activeAccounts.map((account) => (
+              {sortByLabel(activeAccounts, (account) => account.name).map((account) => (
                 <ListRow
                   key={account.id}
                   leading={<RowIcon icon={account.icon} color={account.color} />}
@@ -573,7 +574,7 @@ export default function TransactionList () {
         ) : (
           <>
             <div className="divide-hairline">
-              {categories.map((category) => (
+              {sortByLabel(categories, (category) => category.name).map((category) => (
                 <ListRow
                   key={category.id}
                   leading={<RowIcon icon={category.icon} color={category.color} />}

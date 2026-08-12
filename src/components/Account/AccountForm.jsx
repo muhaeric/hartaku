@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { ACCOUNT_KINDS, CATEGORY_COLORS, LIMITS } from '../../lib/constants.js'
 import { fileToAccountIcon, isImageIcon } from '../../lib/accountIcon.js'
 import { parseAmount } from '../../lib/format.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import Button from '../ui/Button.jsx'
 import ColorPicker, { HEX_PATTERN } from '../ui/ColorPicker.jsx'
 import Sheet from '../ui/Sheet.jsx'
@@ -208,7 +209,7 @@ export default function AccountForm ({ open, initial, takenNames, onSubmit, onCl
               })
             }}
           >
-            {ACCOUNT_KINDS.map((kind) => (
+            {sortByLabel(ACCOUNT_KINDS).map((kind) => (
               <option key={kind.value} value={kind.value}>
                 {kind.icon} {kind.label}
               </option>

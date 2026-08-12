@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { CATEGORY_COLORS, CATEGORY_TYPES, LIMITS } from '../../lib/constants.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import Button from '../ui/Button.jsx'
 import ColorPicker, { HEX_PATTERN } from '../ui/ColorPicker.jsx'
 import Sheet from '../ui/Sheet.jsx'
@@ -99,7 +100,7 @@ export default function CategoryForm ({ open, initial, takenNames, onSubmit, onC
             value={draft.type}
             onChange={(event) => patch({ type: event.target.value })}
           >
-            {CATEGORY_TYPES.map((option) => (
+            {sortByLabel(CATEGORY_TYPES).map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

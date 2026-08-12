@@ -4,6 +4,7 @@ import { LIMITS, TRANSACTION_TYPES } from '../../lib/constants.js'
 import { accountOptionLabel } from '../../lib/accountIcon.js'
 import { isFutureDate, todayIso } from '../../lib/dates.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import { normalizeTags } from '../../lib/tags.js'
 import Button from '../ui/Button.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
@@ -176,7 +177,7 @@ export default function TransactionForm ({
               onChange={(event) => patch({ category: event.target.value })}
             >
               <option value="">Pilih…</option>
-              {visibleCategories.map((category) => (
+              {sortByLabel(visibleCategories, (category) => category.name).map((category) => (
                 <option key={category.id} value={category.name}>
                   {category.icon} {category.name}
                 </option>
@@ -262,7 +263,7 @@ function AccountSelect ({ id, value, accounts, invalid, onChange }) {
       onChange={(event) => onChange(event.target.value)}
     >
       <option value="">Pilih…</option>
-      {accounts.map((account) => (
+      {sortByLabel(accounts, (account) => account.name).map((account) => (
         <option key={account.id} value={account.name}>
           {accountOptionLabel(account)}
           {account.archived ? ' (arsip)' : ''}

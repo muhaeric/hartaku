@@ -6,6 +6,7 @@ import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { CURRENCIES, DATE_FORMATS, THEMES, isGlassTheme } from '../../lib/constants.js'
 import { extractSpreadsheetId } from '../../lib/spreadsheetId.js'
+import { sortOptions } from '../../lib/sortOptions.js'
 import { fileToThemePhoto } from '../../lib/themePhoto.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
@@ -378,6 +379,7 @@ function ThemePicker ({ value, resolved, onChange }) {
   )
 }
 
+/** Every list here is offered A-Z; "Tidak ada" keeps its place at the top. */
 function Select ({ id, value, onChange, options }) {
   return (
     <select
@@ -386,7 +388,7 @@ function Select ({ id, value, onChange, options }) {
       value={value}
       onChange={(event) => onChange(event.target.value)}
     >
-      {options.map((option) => (
+      {sortOptions(options).map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
         </option>
