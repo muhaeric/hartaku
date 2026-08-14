@@ -26,7 +26,7 @@ export default function ImportScreenshot () {
   const navigate = useNavigate()
   const toast = useToast()
   const { settings } = useSettings()
-  const { categories, activeAccounts: accounts, addTransactions } = useData()
+  const { activeCategories: categories, activeAccounts: accounts, addTransactions } = useData()
 
   const [account, setAccount] = useState(settings.defaultAccount || '')
   const [stage, setStage] = useState('setup')

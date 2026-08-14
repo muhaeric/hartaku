@@ -36,9 +36,11 @@ import {
   updateTransaction
 } from '../services/repository.js'
 import { ensureWorkbook, rememberSpreadsheetId } from '../services/workbook.js'
+import { ensureLocalWorkbook } from '../services/storage.js'
 import { clearCache, readCache, writeCache } from '../services/cache.js'
 import WorkbookSetup from '../components/Setup/WorkbookSetup.jsx'
 import { useAuth } from './AuthContext.jsx'
+import { useStorage } from './StorageContext.jsx'
 
 const DataContext = createContext(null)
 
@@ -72,7 +74,12 @@ function initialState () {
 
 export function DataProvider ({ children }) {
   const { status } = useAuth()
+  const { isLocal } = useStorage()
   const [state, setState] = useState(initialState)
+
+  // Read inside `load` without making every mode flip a new callback identity.
+  const local = useRef(isLocal)
+  local.current = isLocal
 
   // Mutations need to read the current lists (to spot renames) without turning
   // every list change into a new callback identity.
@@ -83,7 +90,9 @@ export function DataProvider ({ children }) {
     setState((current) => ({ ...current, loading: true, error: null, errorCode: null }))
 
     try {
-      const workbook = await ensureWorkbook({ spreadsheetId, allowCreate })
+      const workbook = local.current
+        ? await ensureLocalWorkbook()
+        : await ensureWorkbook({ spreadsheetId, allowCreate })
       const [transactions, categories, accounts, goldLots] = await Promise.all([
         listTransactions(workbook),
         listCategories(workbook),
@@ -133,10 +142,11 @@ export function DataProvider ({ children }) {
     state.goldLots
   ])
 
+  // Local mode has no session to wait for; the device is the credential.
   useEffect(() => {
-    if (status !== 'authenticated') return
+    if (!isLocal && status !== 'authenticated') return
     load()
-  }, [status, load])
+  }, [isLocal, status, load])
 
   const withWorkbook = useCallback(
     (fn) =>
@@ -317,6 +327,27 @@ export function DataProvider ({ children }) {
     [withWorkbook]
   )
 
+  /**
+   * Same entry point as `archiveAccount`, and for the same reason: the callers
+   * that hide a category hold its id, and assembling a whole record around one
+   * flag is how a stale copy of some other field gets written back over the
+   * good one.
+   */
+  const archiveCategory = useCallback(
+    withWorkbook(async (workbook, id, archived) => {
+      const category = latest.current.categories.find((item) => item.id === id)
+      if (!category) throw new Error('Kategori tidak ditemukan - mungkin sudah dihapus.')
+
+      const saved = await updateCategory(workbook, { ...category, archived })
+      setState((current) => ({
+        ...current,
+        categories: current.categories.map((item) => (item.id === saved.id ? saved : item))
+      }))
+      return saved
+    }),
+    [withWorkbook]
+  )
+
   const removeCategory = useCallback(
     withWorkbook(async (workbook, id) => {
       await deleteCategory(workbook, id)
@@ -476,10 +507,22 @@ export function DataProvider ({ children }) {
     [state.accounts]
   )
 
+  /**
+   * The same split for categories. `categories` stays the full set for the same
+   * reason: a transaction points at a category by name, so anything resolving
+   * one - a breakdown's colours, a rename, the detail page - has to keep seeing
+   * the archived ones.
+   */
+  const activeCategories = useMemo(
+    () => state.categories.filter((category) => !category.archived),
+    [state.categories]
+  )
+
   const value = useMemo(
     () => ({
       ...state,
       activeAccounts,
+      activeCategories,
       reload: load,
       addTransaction,
       addTransactions: addTransactionsBatch,
@@ -493,6 +536,7 @@ export function DataProvider ({ children }) {
       addCategory,
       addCategories: addCategoriesBatch,
       editCategory,
+      archiveCategory,
       removeCategory,
       addAccount,
       addAccounts: addAccountsBatch,
@@ -508,6 +552,7 @@ export function DataProvider ({ children }) {
     [
       state,
       activeAccounts,
+      activeCategories,
       load,
       addTransaction,
       addTransactionsBatch,
@@ -521,6 +566,7 @@ export function DataProvider ({ children }) {
       addCategory,
       addCategoriesBatch,
       editCategory,
+      archiveCategory,
       removeCategory,
       addAccount,
       addAccountsBatch,

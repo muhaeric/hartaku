@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { LIMITS, TRANSACTION_TYPES } from '../../lib/constants.js'
-import { accountOptionLabel } from '../../lib/accountIcon.js'
 import { isFutureDate, todayIso } from '../../lib/dates.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
 import { sortByLabel } from '../../lib/sortOptions.js'
 import { normalizeTags } from '../../lib/tags.js'
+import AccountPicker from '../ui/AccountPicker.jsx'
 import Button from '../ui/Button.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
 import TagInput from '../ui/TagInput.jsx'
@@ -143,8 +143,9 @@ export default function TransactionForm ({
           <label className="label" htmlFor="account">
             {transfer ? 'Dari akun' : 'Akun'}
           </label>
-          <AccountSelect
+          <AccountPicker
             id="account"
+            label={transfer ? 'Dari akun' : 'Akun'}
             value={draft.account}
             accounts={accounts}
             invalid={Boolean(errors.account)}
@@ -157,8 +158,9 @@ export default function TransactionForm ({
             <label className="label" htmlFor="to-account">
               Ke akun
             </label>
-            <AccountSelect
+            <AccountPicker
               id="to-account"
+              label="Ke akun"
               value={draft.toAccount}
               accounts={accounts.filter((account) => account.name !== draft.account)}
               invalid={Boolean(errors.toAccount)}
@@ -251,24 +253,5 @@ export default function TransactionForm ({
         </Button>
       </div>
     </form>
-  )
-}
-
-function AccountSelect ({ id, value, accounts, invalid, onChange }) {
-  return (
-    <select
-      id={id}
-      className={`field ${invalid ? 'field-error' : ''}`}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-    >
-      <option value="">Pilih…</option>
-      {sortByLabel(accounts, (account) => account.name).map((account) => (
-        <option key={account.id} value={account.name}>
-          {accountOptionLabel(account)}
-          {account.archived ? ' (arsip)' : ''}
-        </option>
-      ))}
-    </select>
   )
 }

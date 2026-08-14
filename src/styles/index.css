@@ -322,8 +322,20 @@
     transition: none !important;
   }
 
+  /*
+   * `overscroll-behavior-y: contain` turns off the browser's own pull-to-refresh
+   * and rubber-band chaining at the top of the page.
+   *
+   * Not cosmetic: Chrome on Android decides whether a downward drag at scroll
+   * zero belongs to its native refresh on the first touchmove, and once it has
+   * claimed the gesture every later `preventDefault` is ignored. The app's own
+   * pull-to-refresh was losing that race, so the drag either did nothing or
+   * reloaded the whole page - which is not the same thing at all, since a full
+   * reload throws away the view state the refresh was meant to keep.
+   */
   html {
     -webkit-text-size-adjust: 100%;
+    overscroll-behavior-y: contain;
   }
 
   body {

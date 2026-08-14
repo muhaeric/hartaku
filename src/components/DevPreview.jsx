@@ -18,6 +18,8 @@ import AccountBalances from './Dashboard/AccountBalances.jsx'
 import NetWorthCard from './Dashboard/NetWorthCard.jsx'
 import NetWorthTrend from './Dashboard/NetWorthTrend.jsx'
 import TopExpenses from './Dashboard/TopExpenses.jsx'
+import CategoryTrend from './Category/CategoryTrend.jsx'
+import AccountPicker from './ui/AccountPicker.jsx'
 import Button from './ui/Button.jsx'
 import { Card, SectionHeader } from './ui/Card.jsx'
 import KebabMenu from './ui/KebabMenu.jsx'
@@ -72,7 +74,45 @@ const CATEGORIES = [
   { id: 'c1', name: 'Food & Beverages', color: '#eb6834' },
   { id: 'c2', name: 'Transportation', color: '#2a78d6' },
   { id: 'c3', name: 'Utilities', color: '#eda100' },
-  { id: 'c4', name: 'Household', color: '#e87ba4' }
+  { id: 'c4', name: 'Household', color: '#e87ba4' },
+  { id: 'c5', name: 'Entertainment', color: '#008300' },
+  { id: 'c6', name: 'Kesehatan', color: '#4a3aa7' },
+  { id: 'c7', name: 'Pendidikan', color: '#e34948' },
+  { id: 'c8', name: 'Zakat', color: '#1baf7a' }
+]
+
+/** One expense per category, so the ring has a long tail to draw. */
+const SPREAD = CATEGORIES.map((category, index) => ({
+  id: `s${index}`,
+  date: '2026-08-04',
+  type: 'expense',
+  amount: 1_200_000 - index * 140_000,
+  category: category.name,
+  account: 'Bank Mandiri',
+  description: '',
+  createdAt: ''
+}))
+
+const TREND = [
+  { key: '2026-04', total: 41800 },
+  { key: '2026-05', total: 145000 },
+  { key: '2026-06', total: 1926300 },
+  { key: '2026-07', total: 8113466 },
+  { key: '2026-08', total: 1114500 },
+  { key: '2026-09', total: 0 },
+  { key: '2026-10', total: 0 }
+]
+
+/**
+ * A one-pixel picture stands in for an uploaded logo - what matters here is
+ * that the field draws the picture rather than the emoji for its kind.
+ */
+const UPLOADED =
+  'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8"%3E%3Crect width="8" height="8" fill="%230a5"/%3E%3C/svg%3E'
+
+const PICKER_ACCOUNTS = [
+  { id: 'p1', name: 'Bank BCA', kind: 'bank', icon: UPLOADED, color: '#2a78d6' },
+  ...ACCOUNTS
 ]
 
 export default function DevPreview () {
@@ -170,10 +210,42 @@ export default function DevPreview () {
           density and type-scale regressions, which a copy would not show. */}
       <AccountBalances balances={balances} gold={goldSummary([], null)} />
 
+      {/* Eight categories, all of them listed: the tail is no longer folded
+          into "Lainnya", so this is where a colour repeat would show up. */}
       <div className="space-y-gap-normal">
         <SectionHeader title="Pengeluaran terbesar" />
         <Card flush as="div">
-          <TopExpenses breakdown={categoryBreakdown(TRANSACTIONS, 'expense')} categories={CATEGORIES} />
+          <TopExpenses
+            breakdown={categoryBreakdown(SPREAD, 'expense')}
+            categories={CATEGORIES}
+            linkFor={(name) => `/categories/${encodeURIComponent(name)}?month=2026-08`}
+          />
+        </Card>
+      </div>
+
+      <div className="space-y-gap-normal">
+        <SectionHeader title="Kategori: satu bulan ke belakang" />
+        <Card>
+          <CategoryTrend
+            series={TREND}
+            selected="2026-08"
+            color="#e87ba4"
+            onSelect={() => {}}
+          />
+        </Card>
+      </div>
+
+      {/* The picker exists because an uploaded picture has no textual form -
+          "Bank BCA" here carries one, and it has to survive into the field. */}
+      <div className="space-y-gap-normal">
+        <SectionHeader title="Pemilih akun" />
+        <Card>
+          <AccountPicker
+            id="preview-account"
+            value="Bank BCA"
+            accounts={PICKER_ACCOUNTS}
+            onChange={() => {}}
+          />
         </Card>
       </div>
 

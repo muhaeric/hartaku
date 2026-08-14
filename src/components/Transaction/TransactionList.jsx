@@ -41,6 +41,7 @@ export default function TransactionList () {
   const {
     transactions,
     categories,
+    activeCategories,
     accounts,
     activeAccounts,
     loading,
@@ -574,7 +575,7 @@ export default function TransactionList () {
         ) : (
           <>
             <div className="divide-hairline">
-              {sortByLabel(categories, (category) => category.name).map((category) => (
+              {sortByLabel(activeCategories, (category) => category.name).map((category) => (
                 <ListRow
                   key={category.id}
                   leading={<RowIcon icon={category.icon} color={category.color} />}

@@ -267,6 +267,29 @@ export function categoryBreakdown (transactions, type = 'expense') {
 }
 
 /**
+ * What one category came to in each of the given months, in the order asked
+ * for. Months with nothing in them come back as zero rather than missing: the
+ * gap is the point - a line that skips them would draw a category as though it
+ * had been steady while it was actually dormant.
+ *
+ * The flow is a parameter because the same shape answers both questions, and
+ * the caller knows which one it is looking at.
+ */
+export function categoryMonthlyTotals (transactions, category, monthKeys, type = 'expense') {
+  const totals = new Map(monthKeys.map((key) => [key, 0]))
+
+  for (const transaction of transactions) {
+    if (transaction.type !== type) continue
+    if ((transaction.category || 'Tanpa kategori') !== category) continue
+
+    const key = monthKeyOf(transaction.date)
+    if (totals.has(key)) totals.set(key, totals.get(key) + transaction.amount)
+  }
+
+  return monthKeys.map((key) => ({ key, total: totals.get(key) }))
+}
+
+/**
  * Totals per tag for one flow, largest first.
  *
  * Deliberately not shaped like `categoryBreakdown`, because tags are not a

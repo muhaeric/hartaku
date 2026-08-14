@@ -52,8 +52,18 @@ export default function TransactionFilters ({
    * category manager - which is why every picker in the app now shares it.
    * Sorting a copy leaves the stored `sort_order` alone; that one still drives
    * the manager screens, where rows are reordered by hand.
+   *
+   * Archived categories are not offered, with the same exception the account
+   * filter makes: one that is already switched on stays on the strip, or the
+   * list would sit filtered by something with no chip left to switch off.
    */
-  const chips = useMemo(() => sortByLabel(categories, (category) => category.name), [categories])
+  const chips = useMemo(() => {
+    const offered = categories.filter(
+      (category) => !category.archived || filters.categories.includes(category.name)
+    )
+
+    return sortByLabel(offered, (category) => category.name)
+  }, [categories, filters.categories])
 
   /**
    * Archived accounts are not offered, but one that is already selected stays in
@@ -125,7 +135,7 @@ export default function TransactionFilters ({
       />
 
       {/* Transfers carry no category, so the chips would filter them all out. */}
-      {categories.length > 0 && filters.type !== 'transfer' && (
+      {chips.length > 0 && filters.type !== 'transfer' && (
         <div className="-mx-page overflow-x-auto px-page">
           <div className="flex gap-1.5 pb-0.5" role="group" aria-label="Filter kategori">
             {chips.map((category) => {
@@ -148,6 +158,7 @@ export default function TransactionFilters ({
                     aria-hidden="true"
                   />
                   {category.name}
+                  {category.archived && <span className="font-normal"> (arsip)</span>}
                 </button>
               )
             })}

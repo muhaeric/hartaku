@@ -20,6 +20,7 @@ export default function TransactionFormPage () {
   const {
     transactions,
     categories,
+    activeCategories,
     accounts,
     activeAccounts,
     loading,
@@ -60,6 +61,21 @@ export default function TransactionFormPage () {
 
     return kept.length ? [...activeAccounts, ...kept] : activeAccounts
   }, [accounts, activeAccounts, draft.account, draft.toAccount])
+
+  /** Archived categories get the same exception as archived accounts: the one
+   *  this transaction is already filed under stays offered, or fixing an amount
+   *  would quietly become "and pick a new category too". */
+  const formCategories = useMemo(() => {
+    if (!draft.category) return activeCategories
+    if (activeCategories.some((category) => category.name === draft.category)) {
+      return activeCategories
+    }
+
+    const kept = categories.filter(
+      (category) => category.archived && category.name === draft.category
+    )
+    return kept.length ? [...activeCategories, ...kept] : activeCategories
+  }, [categories, activeCategories, draft.category])
 
   const tagSuggestions = useMemo(() => collectTags(transactions), [transactions])
 
@@ -152,7 +168,7 @@ export default function TransactionFormPage () {
         <TransactionForm
           draft={draft}
           setDraft={setDraft}
-          categories={categories}
+          categories={formCategories}
           accounts={formAccounts}
           tagSuggestions={tagSuggestions}
           busy={busy}
