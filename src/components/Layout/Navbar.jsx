@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useData } from '../../context/DataContext.jsx'
+import { useStorage } from '../../context/StorageContext.jsx'
 import { ExternalIcon, RefreshIcon } from '../ui/icons.jsx'
-import { PAGE_TITLES } from './navigation.js'
+import { pageTitle } from './navigation.js'
 
 export default function Navbar () {
   const { pathname } = useLocation()
   const { user, signOut } = useAuth()
+  const { isLocal } = useStorage()
   const { workbook, reload, loading, staleSince } = useData()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
@@ -28,7 +30,7 @@ export default function Navbar () {
       <div className="mx-auto flex max-w-2xl items-center gap-1 px-page pb-2 pt-2">
         {/* Page title carries the hierarchy, so the bar itself stays chrome-free. */}
         <h1 className="flex-1 truncate text-page-title font-bold tracking-tight">
-          {PAGE_TITLES[pathname] || 'Hartaku'}
+          {pageTitle(pathname)}
         </h1>
 
         <button
@@ -52,11 +54,15 @@ export default function Navbar () {
           <button
             type="button"
             onClick={() => setMenuOpen((open) => !open)}
-            aria-label="Menu akun"
+            aria-label={isLocal ? 'Menu penyimpanan' : 'Menu akun'}
             aria-expanded={menuOpen}
             className="tap flex items-center justify-center rounded-full"
           >
-            {user?.picture ? (
+            {isLocal ? (
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-soft text-[15px] text-brand-onsoft">
+                📱
+              </span>
+            ) : user?.picture ? (
               <img
                 src={user.picture}
                 alt=""
@@ -70,7 +76,26 @@ export default function Navbar () {
             )}
           </button>
 
-          {menuOpen && (
+          {menuOpen && isLocal ? (
+            /* No session, so nothing to sign out of. What this menu owes the
+               user is where the data is and how to get a copy of it out. */
+            <div className="absolute right-0 z-20 mt-1 w-60 animate-fade-in overflow-hidden rounded-control border border-hairline bg-surface shadow-lg">
+              <div className="border-b border-hairline px-3 py-2.5">
+                <p className="truncate text-body font-semibold">Penyimpanan device</p>
+                <p className="text-caption text-subtitle">
+                  Tanpa akun — data ada di browser ini
+                </p>
+              </div>
+
+              <Link
+                to="/settings"
+                onClick={() => setMenuOpen(false)}
+                className="block px-3 py-2.5 text-body font-medium text-brand transition hover:bg-tint/5"
+              >
+                Cadangkan atau pindah ke Google
+              </Link>
+            </div>
+          ) : menuOpen ? (
             <div className="absolute right-0 z-20 mt-1 w-60 animate-fade-in overflow-hidden rounded-control border border-hairline bg-surface shadow-lg">
               <div className="border-b border-hairline px-3 py-2.5">
                 <p className="truncate text-body font-semibold">{user?.name}</p>
@@ -99,7 +124,7 @@ export default function Navbar () {
                 Keluar
               </button>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </header>

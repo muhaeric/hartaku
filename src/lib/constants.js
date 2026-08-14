@@ -26,6 +26,7 @@ export const TRANSACTION_HEADERS = [
   'tags'
 ]
 
+/** `archived` is appended for the same reason `to_account` is: columns are positional. */
 export const CATEGORY_HEADERS = [
   'id',
   'name',
@@ -33,7 +34,8 @@ export const CATEGORY_HEADERS = [
   'color',
   'icon',
   'description',
-  'sort_order'
+  'sort_order',
+  'archived'
 ]
 
 /** One row per gold purchase. `price_per_gram` is derived, stored for readability. */

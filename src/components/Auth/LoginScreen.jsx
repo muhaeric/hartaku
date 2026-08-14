@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useStorage } from '../../context/StorageContext.jsx'
 import { LANDING } from '../../lib/landing.js'
 import Button from '../ui/Button.jsx'
 import { GoogleIcon } from '../ui/icons.jsx'
@@ -16,6 +17,7 @@ import { GoogleIcon } from '../ui/icons.jsx'
  */
 export default function LoginScreen () {
   const { signIn, error } = useAuth()
+  const { chooseLocal } = useStorage()
   const [busy, setBusy] = useState(false)
 
   const handleSignIn = async () => {
@@ -58,6 +60,30 @@ export default function LoginScreen () {
           {!busy && <GoogleIcon />}
           Masuk dengan Google
         </Button>
+
+        {/*
+          Offered as the second option, not hidden behind a link: for someone
+          who only wants to try the app, handing over a Google account first is
+          the whole reason they leave. The trade is spelled out here rather than
+          discovered later - this mode has no copy anywhere but this device.
+        */}
+        <div className="mt-3">
+          <Button
+            variant="secondary"
+            size="lg"
+            className="w-full justify-center"
+            disabled={busy}
+            onClick={chooseLocal}
+          >
+            Pakai tanpa akun
+          </Button>
+          <p className="hint text-center">
+            Datanya disimpan di browser ini saja — tanpa akun, tanpa spreadsheet. Cepat untuk
+            mencoba, tapi ikut terhapus kalau data browser dibersihkan, dan tidak tersambung ke
+            perangkat lain. Cadangkan ke file lewat Pengaturan, dan kamu bisa pindah ke Google
+            kapan saja tanpa kehilangan catatan.
+          </p>
+        </div>
       </div>
 
       <section className="mt-8" aria-labelledby="features-heading">

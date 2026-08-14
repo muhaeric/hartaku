@@ -9,15 +9,29 @@ import ConfirmDialog from '../ui/ConfirmDialog.jsx'
 import { EmptyState } from '../ui/Feedback.jsx'
 import KebabMenu from '../ui/KebabMenu.jsx'
 import ListRow, { RowIcon } from '../ui/ListRow.jsx'
-import { PencilIcon, PlusIcon, TrashIcon } from '../ui/icons.jsx'
+import { ArchiveIcon, PencilIcon, PlusIcon, TrashIcon, UnarchiveIcon } from '../ui/icons.jsx'
 import CategoryForm, { emptyCategory } from './CategoryForm.jsx'
 
 export default function CategoryManager () {
   const toast = useToast()
-  const { categories, transactions, addCategory, editCategory, removeCategory } = useData()
+  const {
+    categories,
+    transactions,
+    addCategory,
+    editCategory,
+    archiveCategory,
+    removeCategory
+  } = useData()
 
   const [editing, setEditing] = useState(null)
   const [pendingDelete, setPendingDelete] = useState(null)
+  const [pendingArchive, setPendingArchive] = useState(null)
+  const [showArchived, setShowArchived] = useState(false)
+
+  // Archived categories keep every transaction filed under them; they are only
+  // taken off the lists where something new would be filed.
+  const live = categories.filter((category) => !category.archived)
+  const archived = categories.filter((category) => category.archived)
 
   /** How many transactions reference each category - blocks unsafe deletes. */
   const usage = useMemo(() => {
@@ -42,7 +56,7 @@ export default function CategoryManager () {
         await editCategory(values)
         toast.success('Kategori diperbarui!')
       } else {
-        await addCategory({ ...values, sortOrder: categories.length })
+        await addCategory({ ...values, sortOrder: categories.length, archived: false })
         toast.success('Kategori ditambahkan!')
       }
     } catch (err) {
@@ -60,11 +74,74 @@ export default function CategoryManager () {
     }
   }
 
+  const handleArchive = async (category, archive) => {
+    try {
+      await archiveCategory(category.id, archive)
+      // The row has just left the archive, so leaving that section open would
+      // leave it on screen in a list it is no longer in.
+      if (!archive) setShowArchived(false)
+      toast.success(
+        archive ? `"${category.name}" diarsipkan.` : `"${category.name}" ditampilkan lagi.`
+      )
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setPendingArchive(null)
+    }
+  }
+
+  const renderRow = (category) => {
+    const inUse = usage.get(category.name) || 0
+
+    return (
+      <li key={category.id}>
+        <ListRow
+          /* The row leads to its transactions; editing stays on the
+             kebab, matching how account rows already behave. */
+          to={categoryTransactionsPath(category.name)}
+          leading={<RowIcon icon={category.icon} color={category.color} />}
+          title={category.name}
+          subtitle={CATEGORY_TYPES.find((type) => type.value === category.type)?.label}
+          meta={inUse > 0 ? `${inUse} transaksi` : null}
+          action={
+            <KebabMenu
+              label={`Aksi untuk ${category.name}`}
+              items={[
+                {
+                  label: 'Ubah',
+                  icon: <PencilIcon className="h-4 w-4" />,
+                  onSelect: () => setEditing(category)
+                },
+                category.archived
+                  ? {
+                      label: 'Tampilkan lagi',
+                      icon: <UnarchiveIcon className="h-4 w-4" />,
+                      onSelect: () => handleArchive(category, false)
+                    }
+                  : {
+                      label: 'Arsipkan',
+                      icon: <ArchiveIcon className="h-4 w-4" />,
+                      onSelect: () => setPendingArchive({ ...category, inUse })
+                    },
+                {
+                  label: 'Hapus',
+                  icon: <TrashIcon className="h-4 w-4" />,
+                  destructive: true,
+                  onSelect: () => setPendingDelete({ ...category, inUse })
+                }
+              ]}
+            />
+          }
+        />
+      </li>
+    )
+  }
+
   return (
     <div className="space-y-gap-normal">
       <SectionHeader
         title="Kategori"
-        hint={`${categories.length} kategori`}
+        hint={`${live.length} kategori${archived.length ? ` · ${archived.length} diarsipkan` : ''}`}
         action={
           <Button size="sm" onClick={() => setEditing(emptyCategory())}>
             <PlusIcon className="h-4 w-4" />
@@ -73,54 +150,50 @@ export default function CategoryManager () {
         }
       />
 
-      {!categories.length ? (
+      {!live.length ? (
         <Card flush as="div">
           <EmptyState
             icon="🏷️"
-            title="Belum ada kategori"
-            description="Tambahkan kategori pertama."
+            title={archived.length ? 'Semua kategori diarsipkan' : 'Belum ada kategori'}
+            description={
+              archived.length
+                ? 'Tampilkan salah satu dari arsip di bawah, atau tambahkan yang baru.'
+                : 'Tambahkan kategori pertama.'
+            }
             actionLabel="Tambah kategori"
             onAction={() => setEditing(emptyCategory())}
           />
         </Card>
       ) : (
         <Card flush as="ul" className="divide-hairline overflow-hidden">
-          {categories.map((category) => {
-            const inUse = usage.get(category.name) || 0
-
-            return (
-              <li key={category.id}>
-                <ListRow
-                  /* The row leads to its transactions; editing stays on the
-                     kebab, matching how account rows already behave. */
-                  to={categoryTransactionsPath(category.name)}
-                  leading={<RowIcon icon={category.icon} color={category.color} />}
-                  title={category.name}
-                  subtitle={CATEGORY_TYPES.find((type) => type.value === category.type)?.label}
-                  meta={inUse > 0 ? `${inUse} transaksi` : null}
-                  action={
-                    <KebabMenu
-                      label={`Aksi untuk ${category.name}`}
-                      items={[
-                        {
-                          label: 'Ubah',
-                          icon: <PencilIcon className="h-4 w-4" />,
-                          onSelect: () => setEditing(category)
-                        },
-                        {
-                          label: 'Hapus',
-                          icon: <TrashIcon className="h-4 w-4" />,
-                          destructive: true,
-                          onSelect: () => setPendingDelete({ ...category, inUse })
-                        }
-                      ]}
-                    />
-                  }
-                />
-              </li>
-            )
-          })}
+          {live.map(renderRow)}
         </Card>
+      )}
+
+      {archived.length > 0 && (
+        <div className="space-y-gap">
+          <button
+            type="button"
+            onClick={() => setShowArchived((current) => !current)}
+            aria-expanded={showArchived}
+            className="flex w-full items-center justify-between gap-3 text-caption font-semibold text-subtitle transition hover:text-ink"
+          >
+            <span>Arsip ({archived.length})</span>
+            <span>{showArchived ? 'Sembunyikan' : 'Lihat'}</span>
+          </button>
+
+          {showArchived && (
+            <>
+              <Card flush as="ul" className="divide-hairline overflow-hidden opacity-75">
+                {archived.map(renderRow)}
+              </Card>
+              <p className="hint">
+                Kategori yang diarsipkan tidak muncul saat mencatat transaksi, tapi transaksi
+                lamanya tetap ada dan tetap dihitung di laporan.
+              </p>
+            </>
+          )}
+        </div>
       )}
 
       {editing && (
@@ -135,6 +208,20 @@ export default function CategoryManager () {
       )}
 
       <ConfirmDialog
+        open={Boolean(pendingArchive)}
+        title="Arsipkan kategori?"
+        message={
+          pendingArchive?.inUse
+            ? `"${pendingArchive?.name}" tidak akan muncul lagi saat mencatat transaksi. ${pendingArchive?.inUse} transaksi yang sudah memakainya tetap utuh dan tetap dihitung di laporan.`
+            : `"${pendingArchive?.name}" tidak akan muncul lagi saat mencatat transaksi, dan kamu bisa menampilkannya lagi kapan saja.`
+        }
+        confirmLabel="Arsipkan"
+        destructive={false}
+        onConfirm={() => handleArchive(pendingArchive, true)}
+        onClose={() => setPendingArchive(null)}
+      />
+
+      <ConfirmDialog
         open={Boolean(pendingDelete) && !pendingDelete?.inUse}
         title="Hapus kategori?"
         message={`Kategori "${pendingDelete?.name}" akan dihapus. Tindakan ini tidak bisa dibatalkan.`}
@@ -145,7 +232,7 @@ export default function CategoryManager () {
       <ConfirmDialog
         open={Boolean(pendingDelete?.inUse)}
         title="Kategori masih dipakai"
-        message={`"${pendingDelete?.name}" dipakai oleh ${pendingDelete?.inUse} transaksi. Pindahkan transaksi tersebut ke kategori lain dulu sebelum menghapusnya. Kalau cuma mau ganti nama, pakai Ubah — transaksi lamanya ikut diperbarui otomatis.`}
+        message={`"${pendingDelete?.name}" dipakai oleh ${pendingDelete?.inUse} transaksi, jadi tidak bisa dihapus. Kalau cuma ingin menyembunyikannya dari pencatatan, pakai Arsipkan — transaksinya tetap utuh. Kalau cuma mau ganti nama, pakai Ubah — transaksi lamanya ikut diperbarui otomatis.`}
         confirmLabel="Mengerti"
         cancelLabel="Tutup"
         destructive={false}

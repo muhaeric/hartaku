@@ -113,7 +113,10 @@ export function RowIcon ({ icon, color, size = 'md' }) {
       {isImageIcon(icon) ? (
         <img src={icon} alt="" className="h-full w-full object-cover" />
       ) : (
-        icon
+        /* A record that reached here without an icon - written by hand into the
+           sheet, or carried in by an import that did not set one - drew an empty
+           tile, which reads as a broken row rather than as a plain one. */
+        icon || '•'
       )}
     </span>
   )

@@ -136,7 +136,17 @@ export default function Dashboard () {
               {
                 key: 'category',
                 title: 'Per kategori',
-                content: <TopExpenses breakdown={breakdown} categories={categories} />
+                content: (
+                  <TopExpenses
+                    breakdown={breakdown}
+                    categories={categories}
+                    /* The month travels with the link: the page it opens is
+                       about this month's spending, not today's. */
+                    linkFor={(name) =>
+                      `/categories/${encodeURIComponent(name)}?month=${month}`
+                    }
+                  />
+                )
               },
               {
                 key: 'tag',

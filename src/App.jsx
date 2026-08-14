@@ -1,6 +1,9 @@
+import { useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AuthCallback from './components/Auth/AuthCallback.jsx'
 import LoginScreen from './components/Auth/LoginScreen.jsx'
+import LocalMigration from './components/Setup/LocalMigration.jsx'
+import CategoryDetail from './components/Category/CategoryDetail.jsx'
 import Dashboard from './components/Dashboard/Dashboard.jsx'
 import DevPreview from './components/DevPreview.jsx'
 import ImportMoneyManager from './components/Import/ImportMoneyManager.jsx'
@@ -14,29 +17,44 @@ import { LoadingBlock } from './components/ui/Feedback.jsx'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import { DataProvider } from './context/DataContext.jsx'
 import { SettingsProvider } from './context/SettingsContext.jsx'
+import { StorageProvider, useStorage } from './context/StorageContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
 
 export default function App () {
   return (
     <SettingsProvider>
       <ToastProvider>
-        <AuthProvider>
-          <Routes>
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            {/* Layout harness; excluded from production builds. */}
-            {import.meta.env.DEV && <Route path="/__preview" element={<DevPreview />} />}
-            <Route path="/*" element={<AuthenticatedApp />} />
-          </Routes>
-        </AuthProvider>
+        <StorageProvider>
+          <AuthProvider>
+            <Routes>
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              {/* Layout harness; excluded from production builds. */}
+              {import.meta.env.DEV && <Route path="/__preview" element={<DevPreview />} />}
+              <Route path="/*" element={<AuthenticatedApp />} />
+            </Routes>
+          </AuthProvider>
+        </StorageProvider>
       </ToastProvider>
     </SettingsProvider>
   )
 }
 
+/**
+ * The gate. In Google mode it is a session; in device mode there is nothing to
+ * check - the browser profile is the credential, so the app opens straight
+ * away and never waits on an auth call it does not need.
+ */
 function AuthenticatedApp () {
   const { status } = useAuth()
+  const { isLocal, migrating, startMigration } = useStorage()
 
-  if (status === 'loading') {
+  // Consent was declined or the tab came back without a session: drop the
+  // pending migration rather than showing that screen on every future open.
+  useEffect(() => {
+    if (isLocal && migrating && status === 'anonymous') startMigration(false)
+  }, [isLocal, migrating, status, startMigration])
+
+  if (status === 'loading' && (!isLocal || migrating)) {
     return (
       <div className="flex min-h-dvh items-center justify-center">
         <LoadingBlock label="Menyiapkan aplikasi…" />
@@ -44,7 +62,8 @@ function AuthenticatedApp () {
     )
   }
 
-  if (status === 'anonymous') return <LoginScreen />
+  if (!isLocal && status === 'anonymous') return <LoginScreen />
+  if (isLocal && migrating && status === 'authenticated') return <LocalMigration />
 
   return (
     <DataProvider>
@@ -58,6 +77,7 @@ function AuthenticatedApp () {
           <Route path="transactions/:id/edit" element={<TransactionFormPage />} />
           <Route path="manage" element={<ManagePage />} />
           <Route path="categories" element={<Navigate to="/manage?tab=categories" replace />} />
+          <Route path="categories/:name" element={<CategoryDetail />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

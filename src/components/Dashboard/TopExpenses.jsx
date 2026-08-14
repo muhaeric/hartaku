@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { isImageIcon } from '../../lib/accountIcon.js'
 import { formatCurrency } from '../../lib/format.js'
 
-/** Neutral slot for the folded tail - it is a remainder, not a category. */
-const REST_COLOR = '#94a3b8'
-const REST_LABEL = 'Lainnya'
+/** Fallback for a slice with no record behind it, like "Tanpa kategori". */
+const FALLBACK_COLOR = '#94a3b8'
 
 const SIZE = 160
 const RADIUS = 62
@@ -19,13 +19,17 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 /**
  * Where the month's money went, as part-to-whole.
  *
- * The tail is folded into one "Lainnya" slice rather than drawn: past six
- * segments the arcs get too thin to compare and the colours start repeating.
- * Every slice is listed underneath with its share and its amount, so nothing
- * here is reachable only by hovering - the ring is the glance, the list is the
- * answer.
+ * Every row that spent money gets its own slice and its own line. The tail used
+ * to be folded into one "Lainnya" remainder, which kept the ring tidy at the
+ * cost of the answer: the question people bring here is which category the
+ * money went to, and a category answering that with "Lainnya" is not an answer.
+ * Past the palette's eight hues the colours repeat, so the dot is a locator for
+ * the ring rather than a key - every slice is named on its own row beside it.
+ *
+ * `linkFor` turns a row into a link when the caller has somewhere for it to go;
+ * without it the row stays a button that only highlights its slice.
  */
-export default function TopExpenses ({ breakdown, categories, limit = 5, unit = 'kategori' }) {
+export default function TopExpenses ({ breakdown, categories, unit = 'kategori', linkFor }) {
   const { settings } = useSettings()
   const [active, setActive] = useState(null)
 
@@ -38,13 +42,13 @@ export default function TopExpenses ({ breakdown, categories, limit = 5, unit = 
     const byName = new Map(categories.map((category) => [category.name, category]))
     const sum = breakdown.reduce((carry, row) => carry + row.total, 0)
 
-    const head = breakdown.slice(0, limit).map((row) => {
+    const head = breakdown.map((row) => {
       const item = byName.get(row.name)
 
       return {
         name: row.name,
         total: row.total,
-        color: item?.color || REST_COLOR,
+        color: item?.color || FALLBACK_COLOR,
         /*
          * An account's icon can be an uploaded picture rather than an emoji,
          * and both live in the same field. Printed into a text label a data URL
@@ -57,19 +61,8 @@ export default function TopExpenses ({ breakdown, categories, limit = 5, unit = 
       }
     })
 
-    const restTotal = breakdown.slice(limit).reduce((carry, row) => carry + row.total, 0)
-    if (restTotal > 0) {
-      head.push({
-        name: REST_LABEL,
-        total: restTotal,
-        color: REST_COLOR,
-        icon: '',
-        count: breakdown.length - limit
-      })
-    }
-
     return { slices: head, total: sum }
-  }, [breakdown, categories, limit])
+  }, [breakdown, categories])
 
   if (!slices.length) {
     return (
@@ -148,17 +141,18 @@ export default function TopExpenses ({ breakdown, categories, limit = 5, unit = 
       </div>
 
       <ul className="mt-3 space-y-0.5">
-        {slices.map((slice, index) => (
-          <li key={slice.name}>
-            <button
-              type="button"
-              className="flex w-full items-center gap-2 rounded-[10px] px-1 py-1 text-left transition hover:bg-tint/[0.04]"
-              onMouseEnter={() => setActive(index)}
-              onMouseLeave={() => setActive(null)}
-              onFocus={() => setActive(index)}
-              onBlur={() => setActive(null)}
-              onClick={() => setActive((current) => (current === index ? null : index))}
-            >
+        {slices.map((slice, index) => {
+          const to = linkFor?.(slice.name) || null
+
+          const highlight = {
+            onMouseEnter: () => setActive(index),
+            onMouseLeave: () => setActive(null),
+            onFocus: () => setActive(index),
+            onBlur: () => setActive(null)
+          }
+
+          const body = (
+            <>
               <span
                 className="h-2.5 w-2.5 shrink-0 rounded-full ring-1 ring-tint/15"
                 style={{ backgroundColor: slice.color }}
@@ -167,12 +161,6 @@ export default function TopExpenses ({ breakdown, categories, limit = 5, unit = 
               <span className="min-w-0 flex-1 truncate text-caption">
                 {slice.icon ? `${slice.icon} ` : ''}
                 {slice.name}
-                {slice.count ? (
-                  <span className="text-subtitle">
-                    {' '}
-                    · {slice.count} {unit}
-                  </span>
-                ) : null}
               </span>
               <span className="amount w-10 shrink-0 text-right text-caption text-subtitle">
                 {percentLabel(slice.total)}
@@ -180,9 +168,31 @@ export default function TopExpenses ({ breakdown, categories, limit = 5, unit = 
               <span className="amount shrink-0 text-caption font-medium">
                 {money(slice.total)}
               </span>
-            </button>
-          </li>
-        ))}
+            </>
+          )
+
+          const shared =
+            'flex w-full items-center gap-2 rounded-[10px] px-1 py-1 text-left transition hover:bg-tint/[0.04]'
+
+          return (
+            <li key={slice.name}>
+              {to ? (
+                <Link to={to} className={shared} {...highlight}>
+                  {body}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className={shared}
+                  {...highlight}
+                  onClick={() => setActive((current) => (current === index ? null : index))}
+                >
+                  {body}
+                </button>
+              )}
+            </li>
+          )
+        })}
       </ul>
     </div>
   )

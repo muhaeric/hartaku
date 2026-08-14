@@ -219,7 +219,7 @@ async function seedAccounts (workbook) {
 }
 
 async function seedCategories (workbook) {
-  const rows = await getValues(workbook.spreadsheetId, `${SHEET.categories}!A2:G`)
+  const rows = await getValues(workbook.spreadsheetId, `${SHEET.categories}!A2:H`)
   if (rows.some((row) => row[0])) return
 
   const seeded = DEFAULT_CATEGORIES.map((category, index) => [
@@ -229,7 +229,8 @@ async function seedCategories (workbook) {
     category.color,
     category.icon,
     '',
-    index
+    index,
+    ''
   ])
 
   await appendValues(workbook.spreadsheetId, `${SHEET.categories}!A1`, seeded)

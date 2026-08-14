@@ -50,6 +50,23 @@ export function formatCurrency (
   }).format(value)
 }
 
+/**
+ * "8,1 jt" - the number without its currency, for labels printed directly on a
+ * chart. Seven of these sit side by side on a 320-unit axis, and three
+ * characters of "Rp " on each is the difference between labels that clear one
+ * another and labels that collide. The currency still decides the locale, and
+ * the figure is spelled out in full in the chart's description and tooltip.
+ */
+export function formatCompactNumber (amount, currencyCode = 'IDR') {
+  const config = currencyConfig(currencyCode)
+
+  return new Intl.NumberFormat(config.locale, {
+    notation: 'compact',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1
+  }).format(Number(amount) || 0)
+}
+
 export function formatAmountInput (raw, currencyCode = 'IDR') {
   const config = currencyConfig(currencyCode)
   const value = Number(raw)

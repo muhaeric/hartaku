@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
+import { useStorage } from '../../context/StorageContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { CURRENCIES, DATE_FORMATS, THEMES, isGlassTheme } from '../../lib/constants.js'
 import { extractSpreadsheetId } from '../../lib/spreadsheetId.js'
@@ -11,12 +12,14 @@ import { fileToThemePhoto } from '../../lib/themePhoto.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
 import { ExternalIcon, ScanIcon } from '../ui/icons.jsx'
+import LocalDataSection from './LocalDataSection.jsx'
 
 export default function SettingsPage () {
   const toast = useToast()
   const { user, signOut } = useAuth()
+  const { isLocal } = useStorage()
   const { settings, updateSettings, resetSettings, resolvedTheme } = useSettings()
-  const { categories, activeAccounts, workbook, useSpreadsheet } = useData()
+  const { activeCategories, activeAccounts, workbook, useSpreadsheet } = useData()
 
   const [sheetId, setSheetId] = useState('')
   const [switching, setSwitching] = useState(false)
@@ -103,14 +106,24 @@ export default function SettingsPage () {
             onChange={(defaultCategory) => updateSettings({ defaultCategory })}
             options={[
               { value: '', label: 'Tidak ada' },
-              ...categories.map((category) => ({ value: category.name, label: category.name }))
+              ...activeCategories.map((category) => ({
+                value: category.name,
+                label: category.name
+              }))
             ]}
           />
         </Row>
       </Section>
 
-      <Section title="Sumber data">
-        {workbook ? (
+      {/* One section, two very different stories about where the money is
+          written down. */}
+      {isLocal ? (
+        <Section title="Sumber data">
+          <LocalDataSection />
+        </Section>
+      ) : (
+        <Section title="Sumber data">
+          {workbook ? (
           <div className="space-y-1">
             <p className="text-body">{workbook.title}</p>
             <p className="break-all font-mono text-caption text-subtitle">
@@ -151,10 +164,14 @@ export default function SettingsPage () {
           </div>
           <p className="hint">
             Pakai ini untuk membuka spreadsheet yang sama dari perangkat lain. Hanya spreadsheet
-            yang dibuat aplikasi ini yang bisa dibuka — batas izin <code>drive.file</code>.
-          </p>
-        </div>
-      </Section>
+              yang dibuat aplikasi ini yang bisa dibuka — batas izin <code>drive.file</code>.
+            </p>
+          </div>
+
+          {/* Only rendered when a device copy is actually still there. */}
+          <LocalDataSection />
+        </Section>
+      )}
 
       <Section title="Import data">
         <Link
@@ -185,22 +202,28 @@ export default function SettingsPage () {
             Syarat &amp; Ketentuan
           </a>
         </div>
-        <p className="hint">
-          Cabut akses aplikasi kapan saja lewat{' '}
-          <a
-            className="font-medium text-brand"
-            href="https://myaccount.google.com/permissions"
-            target="_blank"
-            rel="noreferrer"
-          >
-            izin akun Google
-          </a>
-          .
-        </p>
+        {!isLocal && (
+          <p className="hint">
+            Cabut akses aplikasi kapan saja lewat{' '}
+            <a
+              className="font-medium text-brand"
+              href="https://myaccount.google.com/permissions"
+              target="_blank"
+              rel="noreferrer"
+            >
+              izin akun Google
+            </a>
+            .
+          </p>
+        )}
       </Section>
 
-      <Section title="Akun">
-        <p className="text-body text-subtitle">{user?.email}</p>
+      {/* Without a session there is nothing to sign out of, so the section is
+          about the app rather than about an account. */}
+      <Section title={isLocal ? 'Aplikasi' : 'Akun'}>
+        <p className="text-body text-subtitle">
+          {isLocal ? 'Dipakai tanpa akun — tidak ada sesi yang tersimpan.' : user?.email}
+        </p>
         <div className="flex flex-col gap-gap sm:flex-row">
           <Button
             variant="secondary"
@@ -212,9 +235,11 @@ export default function SettingsPage () {
           >
             Reset pengaturan
           </Button>
-          <Button variant="danger" className="justify-center" onClick={signOut}>
-            Keluar
-          </Button>
+          {!isLocal && (
+            <Button variant="danger" className="justify-center" onClick={signOut}>
+              Keluar
+            </Button>
+          )}
         </div>
       </Section>
     </>

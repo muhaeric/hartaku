@@ -17,3 +17,23 @@ export const PAGE_TITLES = {
   '/manage': 'Akun & Kategori',
   '/settings': 'Pengaturan'
 }
+
+/**
+ * The bar's title for a path. A category detail page is titled by the category
+ * itself - the name is the whole subject of the screen, and a fixed "Kategori"
+ * would say less than the heading already on the page.
+ */
+export function pageTitle (pathname) {
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname]
+
+  const category = pathname.match(/^\/categories\/(.+)$/)
+  if (category) {
+    try {
+      return decodeURIComponent(category[1])
+    } catch {
+      return category[1]
+    }
+  }
+
+  return 'Hartaku'
+}
