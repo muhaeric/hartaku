@@ -16,6 +16,7 @@ export default function CategoryPicker ({
   onChange,
   label = 'Kategori',
   placeholder = 'Pilih…',
+  iconSize = 'md',
   className = ''
 }) {
   const [open, setOpen] = useState(false)
@@ -37,7 +38,7 @@ export default function CategoryPicker ({
       >
         {selected ? (
           <>
-            <RowIcon icon={selected.icon} color={selected.color} />
+            <RowIcon icon={selected.icon} color={selected.color} size={iconSize} />
             <span className="min-w-0 flex-1 truncate text-body">{selected.name}</span>
           </>
         ) : (

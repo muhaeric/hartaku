@@ -102,7 +102,12 @@ export default function ListRow ({
  * the frame for logos that do not reach the edges.
  */
 export function RowIcon ({ icon, color, size = 'md' }) {
-  const box = size === 'lg' ? 'h-12 w-12 rounded-[14px] text-[22px]' : 'h-8 w-8 rounded-[10px] text-[15px]'
+  const box =
+    size === 'lg'
+      ? 'h-12 w-12 rounded-[14px] text-[22px]'
+      : size === 'sm'
+        ? 'h-7 w-7 rounded-[9px] text-[14px]'
+        : 'h-8 w-8 rounded-[10px] text-[15px]'
 
   return (
     <span
