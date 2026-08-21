@@ -6,6 +6,7 @@ import { isFutureDate, todayIso } from '../../lib/dates.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
 import { sortByLabel } from '../../lib/sortOptions.js'
 import Button from '../ui/Button.jsx'
+import DatePicker from '../ui/DatePicker.jsx'
 import Sheet from '../ui/Sheet.jsx'
 
 export function emptyGoldLot () {
@@ -92,13 +93,13 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
             <label className="label" htmlFor="gold-date">
               Tanggal beli
             </label>
-            <input
+            <DatePicker
               id="gold-date"
-              type="date"
               max={todayIso()}
-              className={`field ${errors.date ? 'field-error' : ''}`}
               value={draft.date}
-              onChange={(event) => patch({ date: event.target.value })}
+              invalid={Boolean(errors.date)}
+              label="Pilih tanggal beli"
+              onChange={(date) => patch({ date })}
             />
           </div>
         </div>
