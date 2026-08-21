@@ -3,6 +3,7 @@ import { useData } from '../../context/DataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { CATEGORY_TYPES } from '../../lib/constants.js'
 import { categoryTransactionsPath } from '../../lib/links.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
@@ -30,8 +31,14 @@ export default function CategoryManager () {
 
   // Archived categories keep every transaction filed under them; they are only
   // taken off the lists where something new would be filed.
-  const live = categories.filter((category) => !category.archived)
-  const archived = categories.filter((category) => category.archived)
+  const live = sortByLabel(
+    categories.filter((category) => !category.archived),
+    (category) => category.name
+  )
+  const archived = sortByLabel(
+    categories.filter((category) => category.archived),
+    (category) => category.name
+  )
 
   /** How many transactions reference each category - blocks unsafe deletes. */
   const usage = useMemo(() => {
