@@ -13,7 +13,7 @@ export default function SegmentedControl ({
     <div
       role="tablist"
       aria-label={label}
-      className={`flex rounded-control bg-tint/[0.06] ${comfortable ? 'p-1' : 'p-0.5'} ${className}`}
+      className={`flex rounded-control bg-tint/[0.06] p-0.5 ${className}`}
     >
       {options.map((option) => (
         <button
@@ -22,7 +22,7 @@ export default function SegmentedControl ({
           role="tab"
           aria-selected={value === option.value}
           onClick={() => onChange(option.value)}
-          className={`${comfortable ? 'h-10' : 'h-8'} flex-1 truncate rounded-[11px] px-2 text-caption font-semibold transition ${
+          className={`${comfortable ? 'h-9' : 'h-8'} flex-1 truncate rounded-[11px] px-2 text-caption font-semibold transition ${
             value === option.value
               ? 'bg-surface text-ink shadow-sm'
               : 'text-subtitle'
