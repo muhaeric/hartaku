@@ -109,11 +109,12 @@ export default function TransactionForm ({
       : null
 
   return (
-    <form className="space-y-gap-normal" onSubmit={handleSubmit} noValidate>
+    <form className="space-y-section" onSubmit={handleSubmit} noValidate>
       <SegmentedControl
         label="Jenis transaksi"
         value={draft.type}
         options={TRANSACTION_TYPES}
+        size="md"
         onChange={(type) => patch({ type, category: '' })}
       />
 
@@ -126,7 +127,7 @@ export default function TransactionForm ({
           type="text"
           inputMode="decimal"
           autoComplete="off"
-          className={`field text-[22px] font-bold tracking-tight ${errors.amount ? 'field-error' : ''}`}
+          className={`field h-12 px-4 py-0 text-[22px] font-bold tracking-tight ${errors.amount ? 'field-error' : ''}`}
           value={draft.amount}
           placeholder="0"
           onChange={(event) => patch({ amount: event.target.value })}
@@ -138,8 +139,8 @@ export default function TransactionForm ({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-gap">
-        <div>
+      <div className="grid grid-cols-2 gap-gap-normal">
+        <div className="min-w-0">
           <label className="label" htmlFor="account">
             {transfer ? 'Dari akun' : 'Akun'}
           </label>
@@ -149,12 +150,13 @@ export default function TransactionForm ({
             value={draft.account}
             accounts={accounts}
             invalid={Boolean(errors.account)}
+            className="h-12"
             onChange={(account) => patch({ account })}
           />
         </div>
 
         {transfer ? (
-          <div>
+          <div className="min-w-0">
             <label className="label" htmlFor="to-account">
               Ke akun
             </label>
@@ -164,17 +166,18 @@ export default function TransactionForm ({
               value={draft.toAccount}
               accounts={accounts.filter((account) => account.name !== draft.account)}
               invalid={Boolean(errors.toAccount)}
+              className="h-12"
               onChange={(toAccount) => patch({ toAccount })}
             />
           </div>
         ) : (
-          <div>
+          <div className="min-w-0">
             <label className="label" htmlFor="category">
               Kategori
             </label>
             <select
               id="category"
-              className={`field ${errors.category ? 'field-error' : ''}`}
+              className={`field h-12 py-0 ${errors.category ? 'field-error' : ''}`}
               value={draft.category}
               onChange={(event) => patch({ category: event.target.value })}
             >
@@ -207,7 +210,7 @@ export default function TransactionForm ({
           id="date"
           type="date"
           max={todayIso()}
-          className={`field ${errors.date ? 'field-error' : ''}`}
+          className={`field h-12 py-0 ${errors.date ? 'field-error' : ''}`}
           value={draft.date}
           onChange={(event) => patch({ date: event.target.value })}
         />
@@ -222,7 +225,7 @@ export default function TransactionForm ({
           id="description"
           rows={2}
           maxLength={LIMITS.description}
-          className={`field resize-none ${errors.description ? 'field-error' : ''}`}
+          className={`field min-h-[84px] resize-none px-3 py-2.5 ${errors.description ? 'field-error' : ''}`}
           placeholder={transfer ? 'Contoh: tarik tunai' : 'Contoh: McDonald’s'}
           value={draft.description}
           onChange={(event) => patch({ description: event.target.value })}
@@ -239,10 +242,11 @@ export default function TransactionForm ({
         value={draft.tags || []}
         suggestions={tagSuggestions}
         onChange={(tags) => patch({ tags })}
+        fieldClassName="h-12 py-0"
         hint="Label bebas untuk mengelompokkan transaksi lintas kategori — misalnya proyek, orang, atau perjalanan."
       />
 
-      <div className="flex gap-gap pt-1">
+      <div className="flex gap-gap pt-2 pb-1">
         {onCancel && (
           <Button variant="secondary" className="flex-1 justify-center" onClick={onCancel}>
             Batal

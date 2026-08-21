@@ -24,7 +24,8 @@ export default function TagInput ({
   onChange,
   label = 'Tag',
   hint,
-  autoFocus = false
+  autoFocus = false,
+  fieldClassName = ''
 }) {
   const id = useId()
   const listId = `${id}-list`
@@ -146,7 +147,7 @@ export default function TagInput ({
           aria-activedescendant={show ? `${listId}-${spot}` : undefined}
           maxLength={LIMITS.tagName}
           disabled={full}
-          className="field pr-9"
+          className={`field pr-10 ${fieldClassName}`}
           placeholder={
             full ? `Maksimal ${LIMITS.tagsPerTransaction} tag` : 'Pilih tag atau ketik yang baru'
           }
@@ -177,7 +178,7 @@ export default function TagInput ({
             setOpen((current) => !current)
             input.current?.focus()
           }}
-          className="absolute right-0 top-0 flex h-full w-9 items-center justify-center text-subtitle disabled:opacity-40"
+          className="absolute right-0 top-0 flex h-full w-10 items-center justify-center text-subtitle disabled:opacity-40"
         >
           <ChevronDownIcon className={`h-4 w-4 transition ${show ? 'rotate-180' : ''}`} />
         </button>

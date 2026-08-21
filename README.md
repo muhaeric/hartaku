@@ -235,8 +235,11 @@ bercentang, dan bisa diperbaiki satu per satu sebelum disimpan sekaligus dalam s
 akun, jadi menanyakannya sekali lebih cepat daripada mengulang pilihan di tiap baris — dan
 membuat OCR-nya tidak perlu menebak ini bank apa sama sekali.
 
-**Kategori tetap dipilih manual.** Menebaknya dari nama merchant persis jenis perilaku
-percaya-diri-tapi-salah yang merusak kepercayaan pada angkanya.
+**Kategori disarankan otomatis secara lokal dan tetap bisa dikoreksi.** Prioritas pertama adalah
+merchant yang pernah dicatat pengguna; jika belum ada, nama merchant dicocokkan secara
+konservatif dengan nama/deskripsi kategori (misalnya PLN → Utilities). Prediksi yang lemah tidak
+dipaksakan dan kembali ke kategori default atau pilihan manual. Gambar maupun riwayat transaksi
+tidak dikirim ke layanan AI.
 
 OCR-nya **Tesseract.js, berjalan di perangkat** — tanpa API key, tanpa biaya per-scan, dan gambar
 tidak pernah dikirim ke mana pun. Modelnya (bahasa Indonesia) diunduh saat pertama dipakai,

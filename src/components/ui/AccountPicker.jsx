@@ -24,7 +24,8 @@ export default function AccountPicker ({
   invalid,
   onChange,
   label = 'Akun',
-  placeholder = 'Pilih…'
+  placeholder = 'Pilih…',
+  className = ''
 }) {
   const [open, setOpen] = useState(false)
 
@@ -66,7 +67,7 @@ export default function AccountPicker ({
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className={`field flex items-center gap-2 py-1.5 text-left ${invalid ? 'field-error' : ''}`}
+        className={`field flex items-center gap-2 py-1.5 text-left ${invalid ? 'field-error' : ''} ${className}`}
       >
         {selected ? (
           <>
