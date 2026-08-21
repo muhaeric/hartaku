@@ -90,6 +90,13 @@ export const ChevronRightIcon = (props) => (
   </Icon>
 )
 
+export const CalendarIcon = (props) => (
+  <Icon {...props}>
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M16 3v4M8 3v4M3 10h18" />
+  </Icon>
+)
+
 export const RefreshIcon = (props) => (
   <Icon {...props}>
     <path d="M21 12a9 9 0 1 1-2.64-6.36" />

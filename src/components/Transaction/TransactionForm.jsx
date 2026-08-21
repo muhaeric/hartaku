@@ -7,6 +7,7 @@ import { normalizeTags } from '../../lib/tags.js'
 import AccountPicker from '../ui/AccountPicker.jsx'
 import Button from '../ui/Button.jsx'
 import CategoryPicker from '../ui/CategoryPicker.jsx'
+import DatePicker from '../ui/DatePicker.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
 import TagInput from '../ui/TagInput.jsx'
 
@@ -199,17 +200,17 @@ export default function TransactionForm ({
         </p>
       )}
 
-      <div className="min-w-0">
+      <div>
         <label className="label" htmlFor="date">
           Tanggal
         </label>
-        <input
+        <DatePicker
           id="date"
-          type="date"
           max={todayIso()}
-          className={`field block h-9 min-w-0 max-w-full px-2.5 py-0 ${errors.date ? 'field-error' : ''}`}
           value={draft.date}
-          onChange={(event) => patch({ date: event.target.value })}
+          invalid={Boolean(errors.date)}
+          className="h-9"
+          onChange={(date) => patch({ date })}
         />
         {errors.date && <p className="hint-error">{errors.date}</p>}
       </div>
