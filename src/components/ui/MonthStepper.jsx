@@ -50,7 +50,7 @@ export default function MonthStepper ({ value, options, onChange, className = ''
       <div className="relative min-w-0 flex-1">
         {/* Abbreviated so "September" cannot be clipped between the arrows;
             the open picker still spells every month out in full. */}
-        <span className="block truncate text-center text-body font-medium">
+        <span className="block truncate text-center text-[14px] font-medium leading-5">
           {all ? ALL_LABEL : monthLabelShort(value)}
         </span>
         <label className="sr-only" htmlFor={id}>

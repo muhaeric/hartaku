@@ -127,7 +127,7 @@ export default function TransactionForm ({
           type="text"
           inputMode="decimal"
           autoComplete="off"
-          className={`field h-9 px-2.5 py-0 text-[18px] font-bold tracking-tight ${errors.amount ? 'field-error' : ''}`}
+          className={`field h-9 px-2.5 py-0 text-[16px] font-bold tracking-tight ${errors.amount ? 'field-error' : ''}`}
           value={draft.amount}
           placeholder="0"
           onChange={(event) => patch({ amount: event.target.value })}

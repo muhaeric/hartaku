@@ -82,7 +82,7 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
               id="gold-grams"
               type="text"
               inputMode="decimal"
-              className={`field text-amount font-semibold ${errors.grams ? 'field-error' : ''}`}
+              className={`field font-semibold ${errors.grams ? 'field-error' : ''}`}
               value={draft.grams}
               placeholder="5"
               onChange={(event) => patch({ grams: event.target.value })}
@@ -115,7 +115,7 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
             id="gold-cost"
             type="text"
             inputMode="decimal"
-            className={`field text-amount font-semibold ${errors.cost ? 'field-error' : ''}`}
+            className={`field font-semibold ${errors.cost ? 'field-error' : ''}`}
             value={draft.cost}
             placeholder="0"
             onChange={(event) => patch({ cost: event.target.value })}

@@ -409,7 +409,7 @@ function Select ({ id, value, onChange, options }) {
   return (
     <select
       id={id}
-      className="field h-10 truncate py-0"
+      className="field h-9 truncate py-0"
       value={value}
       onChange={(event) => onChange(event.target.value)}
     >

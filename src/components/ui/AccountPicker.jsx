@@ -73,12 +73,12 @@ export default function AccountPicker ({
         {selected ? (
           <>
             <RowIcon icon={selected.icon} color={selected.color} size={iconSize} />
-            <span className="min-w-0 flex-1 truncate text-body">{selected.name}</span>
+            <span className="min-w-0 flex-1 truncate">{selected.name}</span>
           </>
         ) : (
           /* Matches the height of a row carrying a 32px tile, so choosing an
              account does not make the field - and the row it sits in - jump. */
-          <span className="flex h-8 min-w-0 flex-1 items-center truncate text-body text-subtitle/70">
+          <span className="flex h-8 min-w-0 flex-1 items-center truncate text-subtitle/70">
             {placeholder}
           </span>
         )}
