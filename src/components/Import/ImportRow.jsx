@@ -43,7 +43,11 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
             className="field h-9 py-0 text-body"
             placeholder="Keterangan"
             value={item.description}
-            onChange={(event) => onChange({ description: event.target.value })}
+            onChange={(event) => onChange({
+              description: event.target.value,
+              categorySuggested: false,
+              categorySuggestionSource: ''
+            })}
           />
 
           <div className="grid grid-cols-2 gap-2">
@@ -80,7 +84,12 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
               className="field h-9 py-0 text-body"
               value={item.type}
               // Switching flow can invalidate the chosen category.
-              onChange={(event) => onChange({ type: event.target.value, category: '' })}
+              onChange={(event) => onChange({
+                type: event.target.value,
+                category: '',
+                categorySuggested: false,
+                categorySuggestionSource: ''
+              })}
             >
               {TYPES.map((type) => (
                 <option key={type.value} value={type.value}>
@@ -93,7 +102,11 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
               aria-label="Kategori"
               className={`field h-9 py-0 text-body ${item.category ? '' : 'field-error'}`}
               value={item.category}
-              onChange={(event) => onChange({ category: event.target.value })}
+              onChange={(event) => onChange({
+                category: event.target.value,
+                categorySuggested: false,
+                categorySuggestionSource: ''
+              })}
             >
               <option value="">Kategori…</option>
               {visibleCategories.map((category) => (
@@ -103,6 +116,13 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
               ))}
             </select>
           </div>
+
+          {item.categorySuggested && (
+            <p className="text-caption text-brand">
+              ✨ Kategori dipilih otomatis dari{' '}
+              {item.categorySuggestionSource === 'history' ? 'riwayat transaksi' : 'keterangan'}.
+            </p>
+          )}
         </div>
       </div>
     </Card>

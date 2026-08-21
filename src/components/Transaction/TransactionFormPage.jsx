@@ -147,15 +147,15 @@ export default function TransactionFormPage () {
       {!editing && (
         <Link
           to="/import"
-          className="flex items-center gap-3 rounded-card border border-hairline bg-surface px-page py-2.5 transition hover:bg-tint/[0.04]"
+          className="flex min-h-[72px] items-center gap-3 rounded-card border border-hairline bg-surface px-page py-3 transition hover:bg-tint/[0.04]"
         >
-          <span className="flex h-9 w-9 items-center justify-center rounded-[12px] bg-brand-soft text-brand">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-brand-soft text-brand">
             <ScanIcon className="h-[19px] w-[19px]" />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-body font-medium">Import dari screenshot</span>
-            <span className="block text-caption text-subtitle">
-              Baca nominal dan tanggal dari bukti transfer
+            <span className="block text-caption leading-[18px] text-subtitle">
+              Baca nominal dan tanggal secara otomatis
             </span>
           </span>
           <span aria-hidden="true" className="text-subtitle">

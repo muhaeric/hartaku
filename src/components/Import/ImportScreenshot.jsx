@@ -4,6 +4,7 @@ import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { accountOptionLabel } from '../../lib/accountIcon.js'
+import { suggestCategory } from '../../lib/categoryClassifier.js'
 import { todayIso } from '../../lib/dates.js'
 import { parseAmount } from '../../lib/format.js'
 import { parseTransactions } from '../../lib/receiptParser.js'
@@ -26,7 +27,12 @@ export default function ImportScreenshot () {
   const navigate = useNavigate()
   const toast = useToast()
   const { settings } = useSettings()
-  const { activeCategories: categories, activeAccounts: accounts, addTransactions } = useData()
+  const {
+    activeCategories: categories,
+    activeAccounts: accounts,
+    transactions,
+    addTransactions
+  } = useData()
 
   const [account, setAccount] = useState(settings.defaultAccount || '')
   const [stage, setStage] = useState('setup')
@@ -75,16 +81,33 @@ export default function ImportScreenshot () {
       const parsed = parseTransactions(text, { ocrConfidence: confidence })
       setRawText(text)
       setItems(
-        parsed.map((entry, index) => ({
-          key: `${index}-${entry.amount}`,
-          selected: true,
-          amount: entry.amount ? String(entry.amount) : '',
-          date: entry.date || todayIso(),
-          type: entry.type,
-          category: settings.defaultCategory || '',
-          description: entry.merchant || '',
-          confidence: entry.confidence
-        }))
+        parsed.map((entry, index) => {
+          const suggestion = suggestCategory({
+            description: entry.merchant,
+            type: entry.type,
+            categories,
+            transactions,
+            account
+          })
+          const defaultCategory = categories.find(
+            (category) =>
+              category.name === settings.defaultCategory &&
+              (category.type === entry.type || category.type === 'both')
+          )?.name
+
+          return {
+            key: `${index}-${entry.amount}`,
+            selected: true,
+            amount: entry.amount ? String(entry.amount) : '',
+            date: entry.date || todayIso(),
+            type: entry.type,
+            category: suggestion?.category || defaultCategory || '',
+            categorySuggested: Boolean(suggestion),
+            categorySuggestionSource: suggestion?.source || '',
+            description: entry.merchant || '',
+            confidence: entry.confidence
+          }
+        })
       )
       setStage('review')
     } catch (err) {

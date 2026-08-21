@@ -340,6 +340,10 @@
 
   body {
     @apply bg-canvas text-body text-ink antialiased;
+    /* Match an installed app: taps stay responsive without triggering the
+       browser's double-tap zoom gesture. Pinch scaling is locked by the
+       viewport meta tag while ordinary vertical scrolling remains available. */
+    touch-action: manipulation;
     font-family:
       ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
       sans-serif;
