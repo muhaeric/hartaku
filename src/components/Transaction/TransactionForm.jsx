@@ -109,7 +109,7 @@ export default function TransactionForm ({
       : null
 
   return (
-    <form className="space-y-2.5 [&_.label]:mb-1" onSubmit={handleSubmit} noValidate>
+    <form className="space-y-gap [&_.label]:mb-1" onSubmit={handleSubmit} noValidate>
       <SegmentedControl
         label="Jenis transaksi"
         value={draft.type}
@@ -126,7 +126,7 @@ export default function TransactionForm ({
           type="text"
           inputMode="decimal"
           autoComplete="off"
-          className={`field h-10 py-0 text-[18px] font-bold tracking-tight ${errors.amount ? 'field-error' : ''}`}
+          className={`field h-9 px-2.5 py-0 text-[18px] font-bold tracking-tight ${errors.amount ? 'field-error' : ''}`}
           value={draft.amount}
           placeholder="0"
           onChange={(event) => patch({ amount: event.target.value })}
@@ -149,7 +149,8 @@ export default function TransactionForm ({
             value={draft.account}
             accounts={accounts}
             invalid={Boolean(errors.account)}
-            className="h-10"
+            iconSize="sm"
+            className="h-9 px-2.5"
             onChange={(account) => patch({ account })}
           />
         </div>
@@ -165,7 +166,8 @@ export default function TransactionForm ({
               value={draft.toAccount}
               accounts={accounts.filter((account) => account.name !== draft.account)}
               invalid={Boolean(errors.toAccount)}
-              className="h-10"
+              iconSize="sm"
+              className="h-9 px-2.5"
               onChange={(toAccount) => patch({ toAccount })}
             />
           </div>
@@ -179,7 +181,8 @@ export default function TransactionForm ({
               value={draft.category}
               categories={visibleCategories}
               invalid={Boolean(errors.category)}
-              className="h-10"
+              iconSize="sm"
+              className="h-9 px-2.5"
               onChange={(category) => patch({ category })}
             />
           </div>
@@ -196,7 +199,7 @@ export default function TransactionForm ({
         </p>
       )}
 
-      <div>
+      <div className="min-w-0">
         <label className="label" htmlFor="date">
           Tanggal
         </label>
@@ -204,7 +207,7 @@ export default function TransactionForm ({
           id="date"
           type="date"
           max={todayIso()}
-          className={`field h-10 py-0 ${errors.date ? 'field-error' : ''}`}
+          className={`field block h-9 min-w-0 max-w-full px-2.5 py-0 ${errors.date ? 'field-error' : ''}`}
           value={draft.date}
           onChange={(event) => patch({ date: event.target.value })}
         />
@@ -219,7 +222,7 @@ export default function TransactionForm ({
           id="description"
           rows={2}
           maxLength={LIMITS.description}
-          className={`field min-h-16 resize-none px-3 py-2 ${errors.description ? 'field-error' : ''}`}
+          className={`field h-[60px] resize-none px-2.5 py-2 ${errors.description ? 'field-error' : ''}`}
           placeholder={transfer ? 'Contoh: tarik tunai' : 'Contoh: McDonald’s'}
           value={draft.description}
           onChange={(event) => patch({ description: event.target.value })}
@@ -236,7 +239,7 @@ export default function TransactionForm ({
         value={draft.tags || []}
         suggestions={tagSuggestions}
         onChange={(tags) => patch({ tags })}
-        fieldClassName="h-10 py-0"
+        fieldClassName="h-9 px-2.5 py-0"
         hint="Label bebas untuk mengelompokkan transaksi lintas kategori — misalnya proyek, orang, atau perjalanan."
       />
 

@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
-import { accountOptionLabel } from '../../lib/accountIcon.js'
 import { suggestCategory } from '../../lib/categoryClassifier.js'
 import { todayIso } from '../../lib/dates.js'
 import { parseAmount } from '../../lib/format.js'
 import { parseTransactions } from '../../lib/receiptParser.js'
-import { sortByLabel } from '../../lib/sortOptions.js'
 import { readImageText, releaseOcr } from '../../services/ocr.js'
+import AccountPicker from '../ui/AccountPicker.jsx'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
 import { EmptyState, ErrorState } from '../ui/Feedback.jsx'
@@ -185,19 +184,16 @@ export default function ImportScreenshot () {
             <label className="label" htmlFor="import-account">
               Masuk ke akun
             </label>
-            <select
+            <AccountPicker
               id="import-account"
-              className="field"
+              label="Masuk ke akun"
               value={account}
-              onChange={(event) => setAccount(event.target.value)}
-            >
-              <option value="">Pilih akun…</option>
-              {sortByLabel(accounts, (item) => item.name).map((item) => (
-                <option key={item.id} value={item.name}>
-                  {accountOptionLabel(item)}
-                </option>
-              ))}
-            </select>
+              accounts={accounts}
+              placeholder="Pilih akun…"
+              iconSize="sm"
+              className="h-9 px-2.5"
+              onChange={setAccount}
+            />
             <p className="hint">
               Satu screenshot berasal dari satu akun, jadi cukup dipilih sekali di sini.
             </p>
