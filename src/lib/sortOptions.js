@@ -4,8 +4,8 @@
  *
  * Indonesian collation with `sensitivity: 'base'` so case and accents do not
  * split a list, and `numeric` so "Akun 2" lands before "Akun 10". Sorting is
- * always done on a copy - the stored `sort_order` still decides how the manager
- * screens list and reorder their rows.
+ * always done on a copy, so alphabetical presentation never rewrites the
+ * stored `sort_order` values.
  *
  * The one list this deliberately leaves alone is the month picker: months read
  * chronologically, and "Agu" before "Apr" would be nonsense.

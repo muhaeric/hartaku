@@ -5,6 +5,7 @@ import { useToast } from '../../context/ToastContext.jsx'
 import { ACCOUNT_KINDS } from '../../lib/constants.js'
 import { formatCurrency } from '../../lib/format.js'
 import { accountTransactionsPath } from '../../lib/links.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import { accountBalances } from '../../lib/summary.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
@@ -40,8 +41,14 @@ export default function AccountManager () {
 
   // Archived accounts keep their balance and their history; they are simply not
   // offered anywhere new money can be recorded.
-  const live = balances.filter((entry) => !entry.account.archived)
-  const archived = balances.filter((entry) => entry.account.archived)
+  const live = sortByLabel(
+    balances.filter((entry) => !entry.account.archived),
+    (entry) => entry.account.name
+  )
+  const archived = sortByLabel(
+    balances.filter((entry) => entry.account.archived),
+    (entry) => entry.account.name
+  )
 
   /** In use = either side of a transaction, or the funding side of a gold purchase. */
   const usage = useMemo(() => {

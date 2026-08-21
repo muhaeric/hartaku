@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useData } from '../../context/DataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { LIMITS } from '../../lib/constants.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 import { normalizeTag, tagUsage } from '../../lib/tags.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
@@ -30,7 +31,10 @@ export default function TagManager () {
   const [pendingDelete, setPendingDelete] = useState(null)
   const [busy, setBusy] = useState(false)
 
-  const usage = useMemo(() => tagUsage(transactions), [transactions])
+  const usage = useMemo(
+    () => sortByLabel(tagUsage(transactions), (entry) => entry.tag),
+    [transactions]
+  )
 
   const clean = normalizeTag(draft)
   const unchanged = clean.toLowerCase() === (renaming?.tag || '').toLowerCase()

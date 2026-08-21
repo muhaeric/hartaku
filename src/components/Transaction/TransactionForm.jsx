@@ -109,12 +109,11 @@ export default function TransactionForm ({
       : null
 
   return (
-    <form className="space-y-gap-normal" onSubmit={handleSubmit} noValidate>
+    <form className="space-y-2.5 [&_.label]:mb-1" onSubmit={handleSubmit} noValidate>
       <SegmentedControl
         label="Jenis transaksi"
         value={draft.type}
         options={TRANSACTION_TYPES}
-        size="md"
         onChange={(type) => patch({ type, category: '' })}
       />
 
@@ -127,7 +126,7 @@ export default function TransactionForm ({
           type="text"
           inputMode="decimal"
           autoComplete="off"
-          className={`field h-11 py-0 text-[20px] font-bold tracking-tight ${errors.amount ? 'field-error' : ''}`}
+          className={`field h-10 py-0 text-[18px] font-bold tracking-tight ${errors.amount ? 'field-error' : ''}`}
           value={draft.amount}
           placeholder="0"
           onChange={(event) => patch({ amount: event.target.value })}
@@ -150,7 +149,7 @@ export default function TransactionForm ({
             value={draft.account}
             accounts={accounts}
             invalid={Boolean(errors.account)}
-            className="h-11"
+            className="h-10"
             onChange={(account) => patch({ account })}
           />
         </div>
@@ -166,7 +165,7 @@ export default function TransactionForm ({
               value={draft.toAccount}
               accounts={accounts.filter((account) => account.name !== draft.account)}
               invalid={Boolean(errors.toAccount)}
-              className="h-11"
+              className="h-10"
               onChange={(toAccount) => patch({ toAccount })}
             />
           </div>
@@ -180,7 +179,7 @@ export default function TransactionForm ({
               value={draft.category}
               categories={visibleCategories}
               invalid={Boolean(errors.category)}
-              className="h-11"
+              className="h-10"
               onChange={(category) => patch({ category })}
             />
           </div>
@@ -205,7 +204,7 @@ export default function TransactionForm ({
           id="date"
           type="date"
           max={todayIso()}
-          className={`field h-11 py-0 ${errors.date ? 'field-error' : ''}`}
+          className={`field h-10 py-0 ${errors.date ? 'field-error' : ''}`}
           value={draft.date}
           onChange={(event) => patch({ date: event.target.value })}
         />
@@ -220,7 +219,7 @@ export default function TransactionForm ({
           id="description"
           rows={2}
           maxLength={LIMITS.description}
-          className={`field min-h-[72px] resize-none px-3 py-2 ${errors.description ? 'field-error' : ''}`}
+          className={`field min-h-16 resize-none px-3 py-2 ${errors.description ? 'field-error' : ''}`}
           placeholder={transfer ? 'Contoh: tarik tunai' : 'Contoh: McDonald’s'}
           value={draft.description}
           onChange={(event) => patch({ description: event.target.value })}
@@ -237,7 +236,7 @@ export default function TransactionForm ({
         value={draft.tags || []}
         suggestions={tagSuggestions}
         onChange={(tags) => patch({ tags })}
-        fieldClassName="h-11 py-0"
+        fieldClassName="h-10 py-0"
         hint="Label bebas untuk mengelompokkan transaksi lintas kategori — misalnya proyek, orang, atau perjalanan."
       />
 

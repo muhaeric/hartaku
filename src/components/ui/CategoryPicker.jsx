@@ -51,7 +51,7 @@ export default function CategoryPicker ({
 
       <Sheet open={open} title={label} onClose={() => setOpen(false)}>
         {options.length ? (
-          <div className="-mx-page divide-hairline">
+          <div className="-mx-page max-h-[480px] divide-hairline overflow-y-auto overscroll-contain">
             {options.map((category) => (
               <ListRow
                 key={category.id}
