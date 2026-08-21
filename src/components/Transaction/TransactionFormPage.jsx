@@ -147,9 +147,9 @@ export default function TransactionFormPage () {
       {!editing && (
         <Link
           to="/import"
-          className="flex min-h-[72px] items-center gap-3 rounded-card border border-hairline bg-surface px-page py-3 transition hover:bg-tint/[0.04]"
+          className="flex min-h-16 items-center gap-3 rounded-card border border-hairline bg-surface px-page py-2.5 transition hover:bg-tint/[0.04]"
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-brand-soft text-brand">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-brand-soft text-brand">
             <ScanIcon className="h-[19px] w-[19px]" />
           </span>
           <span className="min-w-0 flex-1">
