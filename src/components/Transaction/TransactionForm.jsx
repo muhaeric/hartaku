@@ -3,10 +3,10 @@ import { useSettings } from '../../context/SettingsContext.jsx'
 import { LIMITS, TRANSACTION_TYPES } from '../../lib/constants.js'
 import { isFutureDate, todayIso } from '../../lib/dates.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
-import { sortByLabel } from '../../lib/sortOptions.js'
 import { normalizeTags } from '../../lib/tags.js'
 import AccountPicker from '../ui/AccountPicker.jsx'
 import Button from '../ui/Button.jsx'
+import CategoryPicker from '../ui/CategoryPicker.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
 import TagInput from '../ui/TagInput.jsx'
 
@@ -175,19 +175,14 @@ export default function TransactionForm ({
             <label className="label" htmlFor="category">
               Kategori
             </label>
-            <select
+            <CategoryPicker
               id="category"
-              className={`field h-11 py-0 ${errors.category ? 'field-error' : ''}`}
               value={draft.category}
-              onChange={(event) => patch({ category: event.target.value })}
-            >
-              <option value="">Pilih…</option>
-              {sortByLabel(visibleCategories, (category) => category.name).map((category) => (
-                <option key={category.id} value={category.name}>
-                  {category.icon} {category.name}
-                </option>
-              ))}
-            </select>
+              categories={visibleCategories}
+              invalid={Boolean(errors.category)}
+              className="h-11"
+              onChange={(category) => patch({ category })}
+            />
           </div>
         )}
       </div>
