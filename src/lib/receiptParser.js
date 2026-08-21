@@ -99,10 +99,14 @@ function statementEntries (lines) {
 
     const amount = amounts[0]
     const label = describeLine(line) || describeLine(lines[index - 1] || '') || ''
+    // List rows commonly put the date underneath the merchant/amount line.
+    // Prefer that date over the previous row's date, but never look past the
+    // next amount line or we could steal the following transaction's date.
+    const rowDate = dateHere || findFollowingDate(lines, index) || currentDate
 
     entries.push({
       amount,
-      date: dateHere || currentDate,
+      date: rowDate,
       time: findTime([line]),
       type: signOf(line),
       merchant: label,
@@ -111,6 +115,18 @@ function statementEntries (lines) {
   })
 
   return entries
+}
+
+function findFollowingDate (lines, amountIndex) {
+  for (let index = amountIndex + 1; index < lines.length; index += 1) {
+    const line = lines[index]
+    if (amountsIn(line).length) return null
+
+    const date = findDate([line])
+    if (date) return date
+  }
+
+  return null
 }
 
 /** Strips the money, the date and the time, leaving whatever named the row. */

@@ -1,8 +1,10 @@
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { TRANSACTION_TYPES } from '../../lib/constants.js'
+import { todayIso } from '../../lib/dates.js'
 import { formatCurrency, parseAmount } from '../../lib/format.js'
 import { sortByLabel } from '../../lib/sortOptions.js'
 import { Card } from '../ui/Card.jsx'
+import DatePicker from '../ui/DatePicker.jsx'
 
 const TYPES = sortByLabel(TRANSACTION_TYPES.filter((type) => type.value !== 'transfer'))
 
@@ -69,12 +71,13 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
               )}
             </div>
 
-            <input
-              type="date"
-              aria-label="Tanggal"
-              className="field h-9 py-0 text-body"
+            <DatePicker
               value={item.date}
-              onChange={(event) => onChange({ date: event.target.value })}
+              max={todayIso()}
+              invalid={!item.date}
+              label="Pilih tanggal transaksi"
+              className="h-9 text-body"
+              onChange={(date) => onChange({ date })}
             />
           </div>
 
