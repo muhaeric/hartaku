@@ -152,8 +152,14 @@ function signOf (line) {
 function toLines (text) {
   return text
     .split(/\r?\n/)
-    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .map((line) => normalizeCurrencyDigits(line).replace(/\s+/g, ' ').trim())
     .filter(Boolean)
+}
+
+function normalizeCurrencyDigits (line) {
+  return line.replace(/rp\.?\s*[\dOoIl.,]+/gi, (amount) =>
+    amount.replace(/[Oo]/g, '0').replace(/[Il]/g, '1')
+  )
 }
 
 export function parseReceipt (text, { ocrConfidence = 0 } = {}) {
@@ -236,6 +242,9 @@ function amountsIn (rawLine) {
     // An unbroken run of 10+ digits with no currency mark is an account or
     // reference number, not a rupiah figure.
     if (!hasCurrency && !grouped && raw.length > 9) continue
+    // OCR often drops the day from "16 Agu 2026", leaving a bare year. A
+    // four-digit year without a currency prefix is never a transaction amount.
+    if (!hasCurrency && !grouped && value >= 1900 && value <= 2100) continue
 
     // A bare number needs to be big enough to plausibly be money.
     if (Number.isFinite(value) && value > 0 && (hasCurrency || value >= 1000)) {

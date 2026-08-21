@@ -35,3 +35,26 @@ test('keeps carrying a date heading down to following statement rows', () => {
 
   assert.deepEqual(result.map(({ date }) => date), ['2026-08-21', '2026-08-21'])
 })
+
+test('repairs letter-shaped digits in rupiah amounts', () => {
+  const result = parseTransactions([
+    'NM SNACK -Rp12.00O',
+    '17 Agu 2026 Belanja',
+    'GoPay -Rp12.500O',
+    '16 Agu 2026 Uang keluar'
+  ].join('\n'))
+
+  assert.deepEqual(result.map(({ amount }) => amount), [12000, 12500])
+})
+
+test('does not turn a year from an incomplete date into a transaction', () => {
+  const result = parseTransactions([
+    "ROTI'O RSUP DR SOERADIJI -Rp15.000",
+    'Agu 2026 Belanja',
+    'MAMA BAKERY -Rp69.000',
+    'Agu 2026 Belanja'
+  ].join('\n'))
+
+  assert.equal(result.length, 2)
+  assert.deepEqual(result.map(({ amount }) => amount), [15000, 69000])
+})
