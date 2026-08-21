@@ -45,12 +45,14 @@ export default function DatePicker ({
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className={`field relative flex items-center justify-center px-10 py-0 text-center ${
+        className={`field relative flex items-center justify-center overflow-hidden px-2.5 py-0 text-center ${
           invalid ? 'field-error' : ''
         } ${className}`}
       >
-        <span className={value ? 'text-ink' : 'text-subtitle/70'}>
-          {formatDate(value) || placeholder}
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden px-7">
+          <span className={`block max-w-full truncate whitespace-nowrap ${value ? 'text-ink' : 'text-subtitle/70'}`}>
+            {formatDate(value) || placeholder}
+          </span>
         </span>
         <CalendarIcon className="absolute right-2.5 h-4 w-4 text-subtitle" />
       </button>

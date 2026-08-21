@@ -42,7 +42,7 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
           <input
             type="text"
             aria-label="Keterangan"
-            className="field h-9 py-0 text-body"
+            className="field h-9 py-0"
             placeholder="Keterangan"
             value={item.description}
             onChange={(event) => onChange({
@@ -58,7 +58,7 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
                 type="text"
                 inputMode="decimal"
                 aria-label="Jumlah"
-                className={`field h-9 py-0 text-body font-semibold ${
+                className={`field h-9 py-0 font-semibold ${
                   validAmount ? '' : 'field-error'
                 }`}
                 value={item.amount}
@@ -76,7 +76,7 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
               max={todayIso()}
               invalid={!item.date}
               label="Pilih tanggal transaksi"
-              className="h-9 text-body"
+              className="h-9"
               onChange={(date) => onChange({ date })}
             />
           </div>
@@ -84,7 +84,7 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
           <div className="grid grid-cols-2 gap-2">
             <select
               aria-label="Jenis"
-              className="field h-9 py-0 text-body"
+              className="field h-9 py-0"
               value={item.type}
               // Switching flow can invalidate the chosen category.
               onChange={(event) => onChange({
@@ -103,7 +103,7 @@ export default function ImportRow ({ item, categories, selected, onToggle, onCha
 
             <select
               aria-label="Kategori"
-              className={`field h-9 py-0 text-body ${item.category ? '' : 'field-error'}`}
+              className={`field h-9 py-0 ${item.category ? '' : 'field-error'}`}
               value={item.category}
               onChange={(event) => onChange({
                 category: event.target.value,

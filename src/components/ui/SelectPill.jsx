@@ -14,7 +14,7 @@ export default function SelectPill ({ value, onChange, options, label, className
         id={`pill-${label}`}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-9 w-full appearance-none truncate rounded-control border border-hairline bg-surface pl-3 pr-7 text-body font-medium text-ink"
+        className="h-9 w-full appearance-none truncate rounded-control border border-hairline bg-surface pl-2.5 pr-7 text-[14px] font-medium leading-5 text-ink"
       >
         {options.map((option) => (
           <option key={option.value} value={option.value}>

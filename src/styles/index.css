@@ -349,15 +349,8 @@
       sans-serif;
   }
 
-  /*
-   * iOS zooms the page when a focused control is under 16px, and does not zoom
-   * back out afterwards.
-   *
-   * This is a base-layer rule, so any text-size utility on a control beats it -
-   * `class="field text-caption"` silently reintroduces the zoom, which is how
-   * four of them had already picked it up. If a control needs to look smaller,
-   * shrink its box, never its font size.
-   */
+  /* Raw controls keep the iOS-safe size. App fields opt into the compact scale
+     below; the locked viewport prevents focus from resizing the whole UI. */
   input,
   select,
   textarea {
@@ -396,7 +389,8 @@
   }
 
   .field {
-    @apply w-full rounded-control border border-hairline bg-surface px-3 py-2 text-ink
+    @apply min-h-9 w-full rounded-control border border-hairline bg-surface px-2.5 py-1.5
+      text-[14px] leading-5 text-ink
       placeholder:text-subtitle/70 focus:border-brand focus:outline-none focus:ring-2
       focus:ring-brand/25 disabled:cursor-not-allowed disabled:opacity-60;
   }
