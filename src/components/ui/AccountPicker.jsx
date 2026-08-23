@@ -25,6 +25,7 @@ export default function AccountPicker ({
   onChange,
   label = 'Akun',
   placeholder = 'Pilih…',
+  emptyLabel = '',
   iconSize = 'md',
   className = ''
 }) {
@@ -75,6 +76,10 @@ export default function AccountPicker ({
             <RowIcon icon={selected.icon} color={selected.color} size={iconSize} />
             <span className="min-w-0 flex-1 truncate">{selected.name}</span>
           </>
+        ) : emptyLabel ? (
+          <span className="flex h-8 min-w-0 flex-1 items-center truncate">
+            {emptyLabel}
+          </span>
         ) : (
           /* Matches the height of a row carrying a 32px tile, so choosing an
              account does not make the field - and the row it sits in - jump. */
@@ -87,8 +92,20 @@ export default function AccountPicker ({
       </button>
 
       <Sheet open={open} title={label} onClose={() => setOpen(false)}>
-        {options.length ? (
+        {options.length || emptyLabel ? (
           <div className="-mx-page max-h-[480px] divide-hairline overflow-y-auto overscroll-contain">
+            {emptyLabel && (
+              <ListRow
+                title={emptyLabel}
+                trailing={
+                  !value ? <CheckIcon className="h-4 w-4 text-brand" /> : undefined
+                }
+                onClick={() => {
+                  onChange('')
+                  setOpen(false)
+                }}
+              />
+            )}
             {options.map((account) => (
               <ListRow
                 key={account.id}

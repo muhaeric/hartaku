@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
+import AccountPicker from '../ui/AccountPicker.jsx'
+import CategoryFilterChips from '../ui/CategoryFilterChips.jsx'
 import MonthStepper from '../ui/MonthStepper.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
-import SelectPill from '../ui/SelectPill.jsx'
-import CategoryFilterChips from '../ui/CategoryFilterChips.jsx'
 import { CloseIcon, SearchIcon } from '../ui/icons.jsx'
-import { sortByLabel, sortOptions } from '../../lib/sortOptions.js'
+import { sortByLabel } from '../../lib/sortOptions.js'
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'Semua' },
@@ -60,22 +60,17 @@ export default function TransactionFilters ({
   }, [categories, filters.categories])
 
   /**
-   * Archived accounts are not offered, but one that is already selected stays in
-   * the list: a native select whose value is missing from its options renders
-   * blank, which would read as "no filter" while the list stayed filtered.
+   * Archived accounts are not offered, but one that is already selected stays
+   * in the sheet. Otherwise the trigger would read as "Semua akun" while the
+   * list remained silently filtered by an account no longer offered.
    */
-  const accountOptions = useMemo(() => {
-    const options = [
-      { value: '', label: 'Semua akun' },
-      ...accounts.map((account) => ({ value: account.name, label: account.name }))
-    ]
-
-    if (filters.account && !options.some((option) => option.value === filters.account)) {
-      options.push({ value: filters.account, label: `${filters.account} (arsip)` })
-    }
-
-    return sortOptions(options)
-  }, [accounts, filters.account])
+  const accountOptions = useMemo(
+    () =>
+      accounts.filter(
+        (account) => !account.archived || account.name === filters.account
+      ),
+    [accounts, filters.account]
+  )
 
   return (
     <div className="space-y-gap">
@@ -113,11 +108,15 @@ export default function TransactionFilters ({
         ) : (
           <MonthStepper value={month} options={monthOptions} onChange={onMonthChange} />
         )}
-        <SelectPill
+        <AccountPicker
+          id="transaction-account-filter"
           label="Filter akun"
           value={filters.account}
+          accounts={accountOptions}
+          emptyLabel="Semua akun"
+          iconSize="sm"
+          className="h-9 px-2.5"
           onChange={(account) => onChange({ account })}
-          options={accountOptions}
         />
       </div>
 

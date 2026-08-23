@@ -423,7 +423,7 @@ export default function TransactionList () {
         month={month}
         monthOptions={monthOptions}
         categories={categories}
-        accounts={activeAccounts}
+        accounts={accounts}
         tags={tagSuggestions}
         searching={Boolean(search)}
         onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))}
