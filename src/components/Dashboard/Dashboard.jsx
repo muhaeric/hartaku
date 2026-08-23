@@ -1,6 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useData } from '../../context/DataContext.jsx'
 import { useGoldPrice } from '../../hooks/useGoldPrice.js'
+import {
+  readDashboardCategories,
+  writeDashboardCategories
+} from '../../lib/dashboardFilters.js'
 import { buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
 import {
   accountBalances,
@@ -29,7 +33,27 @@ export default function Dashboard () {
   const { transactions, categories, accounts, goldLots, loading, error, reload } = useData()
   const { quote } = useGoldPrice()
   const [month, setMonth] = useState(currentMonthKey)
-  const [expenseCategories, setExpenseCategories] = useState([])
+  const [expenseCategories, setExpenseCategories] = useState(readDashboardCategories)
+
+  useEffect(
+    () => writeDashboardCategories(expenseCategories),
+    [expenseCategories]
+  )
+
+  /**
+   * A cached category may be renamed or deleted while the Dashboard is away.
+   * Once data has finished loading, drop names that no longer resolve so the
+   * chart never stays silently filtered by a chip that cannot be displayed.
+   */
+  useEffect(() => {
+    if (loading) return
+
+    const known = new Set(categories.map((category) => category.name))
+    setExpenseCategories((current) => {
+      const kept = current.filter((name) => known.has(name))
+      return kept.length === current.length ? current : kept
+    })
+  }, [categories, loading])
 
   const monthOptions = useMemo(
     () => buildMonthOptions(monthsWithData(transactions)),
