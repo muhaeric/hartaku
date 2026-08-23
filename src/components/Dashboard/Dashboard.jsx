@@ -164,8 +164,8 @@ export default function Dashboard () {
                       selected={expenseCategories}
                       onChange={setExpenseCategories}
                       label="Filter kategori pengeluaran terbesar"
-                      layout="wrap"
-                      className="px-page pt-2.5"
+                      layout="contained-scroll"
+                      className="pt-2.5"
                     />
                     <TopExpenses
                       breakdown={filteredBreakdown}

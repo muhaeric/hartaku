@@ -38,14 +38,19 @@ export default function CategoryFilterChips ({
         : 'border-hairline text-subtitle'
     }`
 
+  const wraps = layout === 'wrap'
+  const scrollsInsideParent = layout === 'contained-scroll'
+
   return (
     <div
       className={`${
-        layout === 'wrap' ? '' : '-mx-page overflow-x-auto px-page'
+        wraps
+          ? ''
+          : `${scrollsInsideParent ? 'px-page' : '-mx-page px-page'} overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`
       } ${className}`}
     >
       <div
-        className={`flex gap-1.5 pb-0.5 ${layout === 'wrap' ? 'flex-wrap' : ''}`}
+        className={`flex gap-1.5 pb-0.5 ${wraps ? 'flex-wrap' : ''}`}
         role="group"
         aria-label={label}
       >
