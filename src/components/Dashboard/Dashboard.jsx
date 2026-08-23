@@ -14,6 +14,7 @@ import {
   tagBreakdown
 } from '../../lib/summary.js'
 import { Card, SectionHeader } from '../ui/Card.jsx'
+import CategoryFilterChips from '../ui/CategoryFilterChips.jsx'
 import Carousel from '../ui/Carousel.jsx'
 import { ErrorState, SkeletonRows, SkeletonSummary } from '../ui/Feedback.jsx'
 import AccountBalances from './AccountBalances.jsx'
@@ -28,6 +29,7 @@ export default function Dashboard () {
   const { transactions, categories, accounts, goldLots, loading, error, reload } = useData()
   const { quote } = useGoldPrice()
   const [month, setMonth] = useState(currentMonthKey)
+  const [expenseCategories, setExpenseCategories] = useState([])
 
   const monthOptions = useMemo(
     () => buildMonthOptions(monthsWithData(transactions)),
@@ -88,6 +90,25 @@ export default function Dashboard () {
     }
   }, [transactions, month])
 
+  const categoryFilterOptions = useMemo(() => {
+    const namesWithSpending = new Set(breakdown.map((row) => row.name))
+
+    return categories.filter(
+      (category) =>
+        (category.type === 'expense' || category.type === 'both') &&
+        (!category.archived ||
+          namesWithSpending.has(category.name) ||
+          expenseCategories.includes(category.name))
+    )
+  }, [categories, breakdown, expenseCategories])
+
+  const filteredBreakdown = useMemo(() => {
+    if (!expenseCategories.length) return breakdown
+
+    const wanted = new Set(expenseCategories)
+    return breakdown.filter((row) => wanted.has(row.name))
+  }, [breakdown, expenseCategories])
+
   if (error) return <ErrorState message={error} onRetry={() => reload()} />
 
   if (loading && !transactions.length && !accounts.length) {
@@ -137,15 +158,31 @@ export default function Dashboard () {
                 key: 'category',
                 title: 'Per kategori',
                 content: (
-                  <TopExpenses
-                    breakdown={breakdown}
-                    categories={categories}
-                    /* The month travels with the link: the page it opens is
-                       about this month's spending, not today's. */
-                    linkFor={(name) =>
-                      `/categories/${encodeURIComponent(name)}?month=${month}`
-                    }
-                  />
+                  <>
+                    <CategoryFilterChips
+                      categories={categoryFilterOptions}
+                      selected={expenseCategories}
+                      onChange={setExpenseCategories}
+                      label="Filter kategori pengeluaran terbesar"
+                      layout="wrap"
+                      className="px-page pt-2.5"
+                    />
+                    <TopExpenses
+                      breakdown={filteredBreakdown}
+                      categories={categories}
+                      totalLabel={expenseCategories.length ? 'Total pilihan' : 'Total'}
+                      emptyMessage={
+                        expenseCategories.length
+                          ? 'Belum ada pengeluaran untuk kategori pilihan di bulan ini.'
+                          : undefined
+                      }
+                      /* The month travels with the link: the page it opens is
+                         about this month's spending, not today's. */
+                      linkFor={(name) =>
+                        `/categories/${encodeURIComponent(name)}?month=${month}`
+                      }
+                    />
+                  </>
                 )
               },
               {

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import MonthStepper from '../ui/MonthStepper.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
 import SelectPill from '../ui/SelectPill.jsx'
+import CategoryFilterChips from '../ui/CategoryFilterChips.jsx'
 import { CloseIcon, SearchIcon } from '../ui/icons.jsx'
 import { sortByLabel, sortOptions } from '../../lib/sortOptions.js'
 
@@ -31,13 +32,6 @@ export default function TransactionFilters ({
   onChange,
   onMonthChange
 }) {
-  const toggleCategory = (name) => {
-    const selected = new Set(filters.categories)
-    if (selected.has(name)) selected.delete(name)
-    else selected.add(name)
-    onChange({ categories: [...selected] })
-  }
-
   const toggleTag = (name) => {
     const selected = new Set(filters.tags)
     if (selected.has(name)) selected.delete(name)
@@ -136,34 +130,11 @@ export default function TransactionFilters ({
 
       {/* Transfers carry no category, so the chips would filter them all out. */}
       {chips.length > 0 && filters.type !== 'transfer' && (
-        <div className="-mx-page overflow-x-auto px-page">
-          <div className="flex gap-1.5 pb-0.5" role="group" aria-label="Filter kategori">
-            {chips.map((category) => {
-              const active = filters.categories.includes(category.name)
-              return (
-                <button
-                  key={category.id}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => toggleCategory(category.name)}
-                  className={`flex h-7 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-caption transition ${
-                    active
-                      ? 'border-brand bg-brand-soft font-semibold text-brand-onsoft'
-                      : 'border-hairline text-subtitle'
-                  }`}
-                >
-                  <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: category.color }}
-                    aria-hidden="true"
-                  />
-                  {category.name}
-                  {category.archived && <span className="font-normal"> (arsip)</span>}
-                </button>
-              )
-            })}
-          </div>
-        </div>
+        <CategoryFilterChips
+          categories={chips}
+          selected={filters.categories}
+          onChange={(categories) => onChange({ categories })}
+        />
       )}
 
       {/*

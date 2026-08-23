@@ -29,7 +29,14 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
  * `linkFor` turns a row into a link when the caller has somewhere for it to go;
  * without it the row stays a button that only highlights its slice.
  */
-export default function TopExpenses ({ breakdown, categories, unit = 'kategori', linkFor }) {
+export default function TopExpenses ({
+  breakdown,
+  categories,
+  unit = 'kategori',
+  linkFor,
+  totalLabel = 'Total',
+  emptyMessage = 'Belum ada pengeluaran di bulan ini.'
+}) {
   const { settings } = useSettings()
   const [active, setActive] = useState(null)
 
@@ -67,7 +74,7 @@ export default function TopExpenses ({ breakdown, categories, unit = 'kategori',
   if (!slices.length) {
     return (
       <p className="px-page py-4 text-caption text-subtitle">
-        Belum ada pengeluaran di bulan ini.
+        {emptyMessage}
       </p>
     )
   }
@@ -127,7 +134,7 @@ export default function TopExpenses ({ breakdown, categories, unit = 'kategori',
 
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
           <span className="w-full truncate text-[11px] leading-4 text-subtitle">
-            {focused ? focused.name : 'Total'}
+            {focused ? focused.name : totalLabel}
           </span>
           <span className="text-card-title font-semibold">
             {money(focused ? focused.total : total, true)}
