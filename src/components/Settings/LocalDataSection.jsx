@@ -168,7 +168,7 @@ export default function LocalDataSection () {
         title="Hapus data lokal?"
         message={
           isLocal
-            ? 'Semua transaksi, akun, dan kategori di device ini akan hilang permanen. Cadangkan dulu kalau belum.'
+            ? 'Semua transaksi, akun, kategori, dan anggaran di device ini akan hilang permanen. Cadangkan dulu kalau belum.'
             : 'Salinan lama di device ini akan hilang permanen. Data di spreadsheet tidak tersentuh.'
         }
         confirmLabel="Hapus"

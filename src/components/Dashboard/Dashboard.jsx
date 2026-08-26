@@ -28,9 +28,10 @@ import NetWorthTrend from './NetWorthTrend.jsx'
 import SummaryCards from './SummaryCards.jsx'
 import TagSpending from './TagSpending.jsx'
 import TopExpenses from './TopExpenses.jsx'
+import BudgetSummary from './BudgetSummary.jsx'
 
 export default function Dashboard () {
-  const { transactions, categories, accounts, goldLots, loading, error, reload } = useData()
+  const { transactions, categories, accounts, goldLots, budgets, loading, error, reload } = useData()
   const { quote } = useGoldPrice()
   const [month, setMonth] = useState(currentMonthKey)
   const [expenseCategories, setExpenseCategories] = useState(readDashboardCategories)
@@ -56,8 +57,8 @@ export default function Dashboard () {
   }, [categories, loading])
 
   const monthOptions = useMemo(
-    () => buildMonthOptions(monthsWithData(transactions)),
-    [transactions]
+    () => buildMonthOptions([...monthsWithData(transactions), ...budgets.map((budget) => budget.month)]),
+    [transactions, budgets]
   )
 
   const balances = useMemo(
@@ -164,6 +165,8 @@ export default function Dashboard () {
         />
         <SummaryCards summary={summary} />
       </div>
+
+      <BudgetSummary budgets={budgets} transactions={transactions} month={month} />
 
       {/*
         One question - where the month went - asked three ways, so they belong

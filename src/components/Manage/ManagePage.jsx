@@ -3,6 +3,7 @@ import { useData } from '../../context/DataContext.jsx'
 import AccountManager from '../Account/AccountManager.jsx'
 import CategoryManager from '../Category/CategoryManager.jsx'
 import GoldManager from '../Gold/GoldManager.jsx'
+import BudgetManager from '../Budget/BudgetManager.jsx'
 import TagManager from '../Tag/TagManager.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
 import { ErrorState, SkeletonRows } from '../ui/Feedback.jsx'
@@ -10,6 +11,7 @@ import { ErrorState, SkeletonRows } from '../ui/Feedback.jsx'
 const TABS = [
   { value: 'accounts', label: 'Akun' },
   { value: 'gold', label: 'Emas' },
+  { value: 'budgets', label: 'Budget' },
   { value: 'categories', label: 'Kategori' },
   { value: 'tags', label: 'Tag' }
 ]
@@ -17,6 +19,7 @@ const TABS = [
 const PANELS = {
   accounts: AccountManager,
   gold: GoldManager,
+  budgets: BudgetManager,
   categories: CategoryManager,
   tags: TagManager
 }

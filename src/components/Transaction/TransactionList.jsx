@@ -59,13 +59,20 @@ export default function TransactionList () {
   const accountParam = params.get('account') || ''
   const tagParam = params.get('tag') || ''
   const categoryParam = params.get('category') || ''
+  const monthParam = /^\d{4}-\d{2}$/.test(params.get('month') || '')
+    ? params.get('month')
+    : ''
+  const typeParam = ['expense', 'income', 'transfer'].includes(params.get('type'))
+    ? params.get('type')
+    : 'all'
 
-  const [month, setMonth] = useState(currentMonthKey)
+  const [month, setMonth] = useState(() => monthParam || currentMonthKey())
   // The account filter survives leaving the page: it is what the entry form
   // preselects, so silently forgetting it here would make that preselection
   // look random.
   const [filters, setFilters] = useState(() => ({
     ...INITIAL_FILTERS,
+    type: typeParam,
     /*
      * The account filter is sticky across visits, but arriving on a category or
      * a tag is an explicit "show me this" - letting a remembered account narrow

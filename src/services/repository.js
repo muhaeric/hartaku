@@ -42,7 +42,13 @@ const FUNCTIONS = [
   'createGoldLot',
   'updateGoldLot',
   'deleteGoldLot',
-  'renameGoldAccountReferences'
+  'renameGoldAccountReferences',
+  'listBudgets',
+  'createBudget',
+  'createBudgets',
+  'updateBudget',
+  'deleteBudget',
+  'renameBudgetCategoryReferences'
 ]
 
 for (const name of FUNCTIONS) {
@@ -93,5 +99,12 @@ export const createGoldLot = forward('createGoldLot')
 export const updateGoldLot = forward('updateGoldLot')
 export const deleteGoldLot = forward('deleteGoldLot')
 export const renameGoldAccountReferences = forward('renameGoldAccountReferences')
+
+export const listBudgets = forward('listBudgets')
+export const createBudget = forward('createBudget')
+export const createBudgets = forward('createBudgets')
+export const updateBudget = forward('updateBudget')
+export const deleteBudget = forward('deleteBudget')
+export const renameBudgetCategoryReferences = forward('renameBudgetCategoryReferences')
 
 export { HEADERS } from './sheetsRepository.js'

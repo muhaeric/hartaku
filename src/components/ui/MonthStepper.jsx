@@ -18,9 +18,9 @@ const ALL_LABEL = 'Semua periode'
  * arrows go quiet: there is no month either side of every month, and stepping
  * from it would have to invent a starting point.
  */
-export default function MonthStepper ({ value, options, onChange, className = '' }) {
+export default function MonthStepper ({ value, options, onChange, className = '', allowAll = true }) {
   const id = useId()
-  const all = value === ALL_MONTHS
+  const all = allowAll && value === ALL_MONTHS
 
   // The current month is always offered, even if it fell outside the window the
   // caller built - otherwise stepping into it would blank the native select.
@@ -62,7 +62,7 @@ export default function MonthStepper ({ value, options, onChange, className = ''
           onChange={(event) => onChange(event.target.value)}
           className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         >
-          <option value={ALL_MONTHS}>{ALL_LABEL}</option>
+          {allowAll && <option value={ALL_MONTHS}>{ALL_LABEL}</option>}
           {months.map((monthKey) => (
             <option key={monthKey} value={monthKey}>
               {monthLabel(monthKey)}

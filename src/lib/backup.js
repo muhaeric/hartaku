@@ -14,7 +14,7 @@
  */
 
 const FORMAT = 'hartaku.backup'
-const VERSION = 1
+const VERSION = 2
 
 export function buildBackup (snapshot) {
   return {
@@ -24,7 +24,8 @@ export function buildBackup (snapshot) {
     transactions: snapshot.transactions || [],
     categories: snapshot.categories || [],
     accounts: snapshot.accounts || [],
-    goldLots: snapshot.goldLots || []
+    goldLots: snapshot.goldLots || [],
+    budgets: snapshot.budgets || []
   }
 }
 
@@ -57,7 +58,7 @@ export function downloadBackup (snapshot) {
 export class BackupError extends Error {}
 
 /**
- * Reads a backup file back into the four lists.
+ * Reads a backup file back into the workbook lists.
  *
  * Validated rather than trusted: this file has been outside the app, possibly
  * through a text editor, and restoring is destructive. Anything that is not a
@@ -82,7 +83,7 @@ export async function readBackup (file) {
     )
   }
 
-  const lists = ['transactions', 'categories', 'accounts', 'goldLots']
+  const lists = ['transactions', 'categories', 'accounts', 'goldLots', 'budgets']
   for (const name of lists) {
     if (parsed[name] !== undefined && !Array.isArray(parsed[name])) {
       throw new BackupError(`Bagian "${name}" di file itu rusak.`)
@@ -94,6 +95,7 @@ export async function readBackup (file) {
     categories: parsed.categories || [],
     accounts: parsed.accounts || [],
     goldLots: parsed.goldLots || [],
+    budgets: parsed.budgets || [],
     exportedAt: parsed.exportedAt || null
   }
 }
@@ -103,7 +105,8 @@ export function summarizeBackup (snapshot) {
     `${snapshot.transactions.length} transaksi`,
     `${snapshot.accounts.length} akun`,
     `${snapshot.categories.length} kategori`,
-    snapshot.goldLots.length ? `${snapshot.goldLots.length} catatan emas` : null
+    snapshot.goldLots.length ? `${snapshot.goldLots.length} catatan emas` : null,
+    (snapshot.budgets || []).length ? `${snapshot.budgets.length} anggaran` : null
   ]
     .filter(Boolean)
     .join(' · ')

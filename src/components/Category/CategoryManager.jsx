@@ -18,6 +18,7 @@ export default function CategoryManager () {
   const {
     categories,
     transactions,
+    budgets,
     addCategory,
     editCategory,
     archiveCategory,
@@ -48,6 +49,14 @@ export default function CategoryManager () {
     }
     return counts
   }, [transactions])
+
+  const budgetUsage = useMemo(() => {
+    const counts = new Map()
+    for (const budget of budgets) {
+      counts.set(budget.category, (counts.get(budget.category) || 0) + 1)
+    }
+    return counts
+  }, [budgets])
 
   const takenNames = useMemo(
     () =>
@@ -99,6 +108,7 @@ export default function CategoryManager () {
 
   const renderRow = (category) => {
     const inUse = usage.get(category.name) || 0
+    const inBudgets = budgetUsage.get(category.name) || 0
 
     return (
       <li key={category.id}>
@@ -134,7 +144,7 @@ export default function CategoryManager () {
                   label: 'Hapus',
                   icon: <TrashIcon className="h-4 w-4" />,
                   destructive: true,
-                  onSelect: () => setPendingDelete({ ...category, inUse })
+                  onSelect: () => setPendingDelete({ ...category, inUse, inBudgets })
                 }
               ]}
             />
@@ -229,7 +239,7 @@ export default function CategoryManager () {
       />
 
       <ConfirmDialog
-        open={Boolean(pendingDelete) && !pendingDelete?.inUse}
+        open={Boolean(pendingDelete) && !pendingDelete?.inUse && !pendingDelete?.inBudgets}
         title="Hapus kategori?"
         message={`Kategori "${pendingDelete?.name}" akan dihapus. Tindakan ini tidak bisa dibatalkan.`}
         onConfirm={handleDelete}
@@ -237,9 +247,12 @@ export default function CategoryManager () {
       />
 
       <ConfirmDialog
-        open={Boolean(pendingDelete?.inUse)}
+        open={Boolean(pendingDelete?.inUse || pendingDelete?.inBudgets)}
         title="Kategori masih dipakai"
-        message={`"${pendingDelete?.name}" dipakai oleh ${pendingDelete?.inUse} transaksi, jadi tidak bisa dihapus. Kalau cuma ingin menyembunyikannya dari pencatatan, pakai Arsipkan — transaksinya tetap utuh. Kalau cuma mau ganti nama, pakai Ubah — transaksi lamanya ikut diperbarui otomatis.`}
+        message={`"${pendingDelete?.name}" masih dipakai oleh ${[
+          pendingDelete?.inUse ? `${pendingDelete.inUse} transaksi` : null,
+          pendingDelete?.inBudgets ? `${pendingDelete.inBudgets} anggaran` : null
+        ].filter(Boolean).join(' dan ')}, jadi tidak bisa dihapus. Pakai Arsipkan untuk menyembunyikannya, atau Ubah agar referensi lama ikut diperbarui otomatis.`}
         confirmLabel="Mengerti"
         cancelLabel="Tutup"
         destructive={false}

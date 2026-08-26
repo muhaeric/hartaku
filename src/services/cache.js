@@ -26,6 +26,7 @@ export function readCache () {
       categories: cached.categories || [],
       accounts: cached.accounts || [],
       goldLots: cached.goldLots || [],
+      budgets: cached.budgets || [],
       savedAt: cached.savedAt || null
     }
   } catch {
@@ -43,6 +44,7 @@ export function writeCache (state) {
       categories: state.categories,
       accounts: state.accounts,
       goldLots: state.goldLots,
+      budgets: state.budgets,
       savedAt: new Date().toISOString()
     })
 

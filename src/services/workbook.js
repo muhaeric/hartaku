@@ -1,5 +1,6 @@
 import {
   ACCOUNT_HEADERS,
+  BUDGET_HEADERS,
   CATEGORY_HEADERS,
   DEFAULT_ACCOUNTS,
   DEFAULT_CATEGORIES,
@@ -122,7 +123,7 @@ export async function ensureWorkbook ({ spreadsheetId, allowCreate = false } = {
   if (!meta) {
     meta = await createSpreadsheet({
       title: SPREADSHEET_NAME,
-      sheets: [SHEET.transactions, SHEET.categories, SHEET.accounts, SHEET.gold]
+      sheets: [SHEET.transactions, SHEET.categories, SHEET.accounts, SHEET.gold, SHEET.budgets]
     })
   }
 
@@ -186,7 +187,8 @@ async function ensureHeaders (workbook) {
     { sheet: SHEET.transactions, headers: TRANSACTION_HEADERS },
     { sheet: SHEET.categories, headers: CATEGORY_HEADERS },
     { sheet: SHEET.accounts, headers: ACCOUNT_HEADERS },
-    { sheet: SHEET.gold, headers: GOLD_HEADERS }
+    { sheet: SHEET.gold, headers: GOLD_HEADERS },
+    { sheet: SHEET.budgets, headers: BUDGET_HEADERS }
   ]
 
   for (const { sheet, headers } of specs) {

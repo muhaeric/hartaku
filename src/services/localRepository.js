@@ -403,3 +403,88 @@ export async function renameGoldAccountReferences (workbook, from, to) {
     return { doc: count ? { ...doc, goldLots } : null, result: count }
   })
 }
+
+/* ---------------------------------------------------------------- budgets */
+
+export async function listBudgets () {
+  const doc = await readDoc()
+  return (doc?.budgets || []).filter(
+    (budget) => budget.id && /^\d{4}-\d{2}$/.test(budget.month) && budget.category
+  )
+}
+
+export async function createBudget (workbook, input) {
+  const stamp = now()
+  const budget = {
+    ...input,
+    id: newId(),
+    amount: Number(input.amount) || 0,
+    createdAt: input.createdAt || stamp,
+    updatedAt: stamp
+  }
+
+  return mutate((doc) => ({
+    doc: { ...doc, budgets: [...doc.budgets, budget] },
+    result: budget
+  }))
+}
+
+export async function createBudgets (workbook, inputs) {
+  if (!inputs.length) return []
+
+  const stamp = now()
+  const budgets = inputs.map((input) => ({
+    ...input,
+    id: newId(),
+    amount: Number(input.amount) || 0,
+    createdAt: input.createdAt || stamp,
+    updatedAt: stamp
+  }))
+
+  return mutate((doc) => ({
+    doc: { ...doc, budgets: [...doc.budgets, ...budgets] },
+    result: budgets
+  }))
+}
+
+export async function updateBudget (workbook, input) {
+  const budget = { ...input, amount: Number(input.amount) || 0, updatedAt: now() }
+
+  return mutate((doc) => {
+    if (!doc.budgets.some((item) => item.id === input.id)) {
+      throw new Error('Anggaran tidak ditemukan - mungkin sudah dihapus.')
+    }
+
+    return {
+      doc: {
+        ...doc,
+        budgets: doc.budgets.map((item) => (item.id === input.id ? budget : item))
+      },
+      result: budget
+    }
+  })
+}
+
+export async function deleteBudget (workbook, id) {
+  return mutate((doc) => {
+    const budgets = doc.budgets.filter((item) => item.id !== id)
+    const removed = doc.budgets.length - budgets.length
+
+    return { doc: removed ? { ...doc, budgets } : null, result: removed }
+  })
+}
+
+export async function renameBudgetCategoryReferences (workbook, from, to) {
+  if (!from || from === to) return 0
+
+  return mutate((doc) => {
+    let count = 0
+    const budgets = doc.budgets.map((budget) => {
+      if (budget.category !== from) return budget
+      count += 1
+      return { ...budget, category: to, updatedAt: now() }
+    })
+
+    return { doc: count ? { ...doc, budgets } : null, result: count }
+  })
+}
