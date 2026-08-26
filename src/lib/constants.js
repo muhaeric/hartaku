@@ -4,7 +4,8 @@ export const SHEET = {
   transactions: 'Transactions',
   categories: 'Categories',
   accounts: 'Accounts',
-  gold: 'Gold'
+  gold: 'Gold',
+  budgets: 'Budgets'
 }
 
 /**
@@ -61,6 +62,16 @@ export const ACCOUNT_HEADERS = [
   'description',
   'sort_order',
   'archived'
+]
+
+/** One spending limit for one category in one calendar month. */
+export const BUDGET_HEADERS = [
+  'id',
+  'month',
+  'category',
+  'amount',
+  'created_at',
+  'updated_at'
 ]
 
 export const TYPE = {

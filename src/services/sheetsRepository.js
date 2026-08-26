@@ -1,5 +1,6 @@
 import {
   ACCOUNT_HEADERS,
+  BUDGET_HEADERS,
   CATEGORY_HEADERS,
   GOLD_HEADERS,
   SHEET,
@@ -26,10 +27,12 @@ const TX_RANGE = `${SHEET.transactions}!A2:K`
 const CAT_RANGE = `${SHEET.categories}!A2:H`
 const ACC_RANGE = `${SHEET.accounts}!A2:I`
 const GOLD_RANGE = `${SHEET.gold}!A2:I`
+const BUDGET_RANGE = `${SHEET.budgets}!A2:F`
 const TX_LAST_COLUMN = 'K'
 const CAT_LAST_COLUMN = 'H'
 const ACC_LAST_COLUMN = 'I'
 const GOLD_LAST_COLUMN = 'I'
+const BUDGET_LAST_COLUMN = 'F'
 
 const TRANSACTION_TYPE_VALUES = ['expense', 'income', 'transfer']
 
@@ -168,6 +171,29 @@ function goldLotToRow (lot) {
     lot.description || '',
     lot.createdAt,
     lot.updatedAt
+  ]
+}
+
+function rowToBudget (row, index) {
+  return {
+    id: row[0] || '',
+    month: String(row[1] ?? '').slice(0, 7),
+    category: row[2] ?? '',
+    amount: Number(row[3]) || 0,
+    createdAt: row[4] ?? '',
+    updatedAt: row[5] ?? '',
+    rowNumber: index + 2
+  }
+}
+
+function budgetToRow (budget) {
+  return [
+    budget.id,
+    budget.month,
+    budget.category,
+    Number(budget.amount) || 0,
+    budget.createdAt,
+    budget.updatedAt
   ]
 }
 
@@ -605,6 +631,87 @@ export async function renameGoldAccountReferences (workbook, from, to) {
   return data.length
 }
 
+/* ---------------------------------------------------------------- budgets */
+
+export async function listBudgets (workbook) {
+  const rows = await getValues(workbook.spreadsheetId, BUDGET_RANGE)
+  return rows
+    .map(rowToBudget)
+    .filter((budget) => budget.id && /^\d{4}-\d{2}$/.test(budget.month) && budget.category)
+}
+
+export async function createBudget (workbook, input) {
+  const stamp = new Date().toISOString()
+  const budget = {
+    ...input,
+    id: newId(),
+    amount: Number(input.amount) || 0,
+    createdAt: input.createdAt || stamp,
+    updatedAt: stamp
+  }
+
+  await appendValues(workbook.spreadsheetId, `${SHEET.budgets}!A1`, [budgetToRow(budget)])
+  return budget
+}
+
+export async function createBudgets (workbook, inputs) {
+  if (!inputs.length) return []
+
+  const stamp = new Date().toISOString()
+  const budgets = inputs.map((input) => ({
+    ...input,
+    id: newId(),
+    amount: Number(input.amount) || 0,
+    createdAt: input.createdAt || stamp,
+    updatedAt: stamp
+  }))
+
+  await appendValues(
+    workbook.spreadsheetId,
+    `${SHEET.budgets}!A1`,
+    budgets.map(budgetToRow)
+  )
+  return budgets
+}
+
+export async function updateBudget (workbook, input) {
+  const rowNumber = await resolveRowNumber(workbook, BUDGET_RANGE, input.id, input.rowNumber)
+  if (!rowNumber) throw new Error('Anggaran tidak ditemukan - mungkin sudah dihapus.')
+
+  const budget = {
+    ...input,
+    rowNumber,
+    amount: Number(input.amount) || 0,
+    updatedAt: new Date().toISOString()
+  }
+  await updateValues(
+    workbook.spreadsheetId,
+    `${SHEET.budgets}!A${rowNumber}:${BUDGET_LAST_COLUMN}${rowNumber}`,
+    [budgetToRow(budget)]
+  )
+  return budget
+}
+
+export async function deleteBudget (workbook, id) {
+  const rowNumber = await resolveRowNumber(workbook, BUDGET_RANGE, id)
+  if (!rowNumber) return 0
+
+  await deleteRows(workbook.spreadsheetId, workbook.sheetIds[SHEET.budgets], [rowNumber])
+  return 1
+}
+
+export async function renameBudgetCategoryReferences (workbook, from, to) {
+  if (!from || from === to) return 0
+
+  const rows = await getValues(workbook.spreadsheetId, BUDGET_RANGE)
+  const data = rows.flatMap((row, index) =>
+    row[2] === from ? [{ range: `${SHEET.budgets}!C${index + 2}`, values: [[to]] }] : []
+  )
+
+  await batchUpdateValues(workbook.spreadsheetId, data)
+  return data.length
+}
+
 /**
  * Re-reads the id column right before a write so a stale row number from an
  * earlier fetch can never clobber or delete somebody else's row.
@@ -622,5 +729,6 @@ export const HEADERS = {
   TRANSACTION_HEADERS,
   CATEGORY_HEADERS,
   ACCOUNT_HEADERS,
-  GOLD_HEADERS
+  GOLD_HEADERS,
+  BUDGET_HEADERS
 }

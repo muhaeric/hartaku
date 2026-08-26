@@ -3,6 +3,7 @@ import { useStorage } from '../../context/StorageContext.jsx'
 import { summarizeBackup } from '../../lib/backup.js'
 import {
   createAccounts,
+  createBudgets,
   createCategories,
   createGoldLot,
   createTransactions,
@@ -26,9 +27,9 @@ import { ErrorState, LoadingBlock } from '../ui/Feedback.jsx'
  * data afterwards is offered in Pengaturan, deliberately as a separate decision
  * made after the user has seen the spreadsheet with their own eyes.
  *
- * Order matters: accounts and categories first, because transactions point at
- * them by name, and a transaction landing before its account would leave a row
- * referring to something the pickers cannot show.
+ * Order matters: accounts and categories first, because transactions and
+ * budgets point at them by name. A dependent row landing first would refer to
+ * something the pickers cannot show.
  */
 export default function LocalMigration () {
   const { chooseGoogle, startMigration } = useStorage()
@@ -110,6 +111,11 @@ export default function LocalMigration () {
       if (snapshot.transactions.length) {
         setStep(`Menyalin ${snapshot.transactions.length} transaksi…`)
         await createTransactions(workbook, snapshot.transactions.map(withoutId))
+      }
+
+      if (snapshot.budgets.length) {
+        setStep(`Menyalin ${snapshot.budgets.length} anggaran…`)
+        await createBudgets(workbook, snapshot.budgets.map(withoutId))
       }
 
       // Gold has no batch create - a book carries a handful of lots, not

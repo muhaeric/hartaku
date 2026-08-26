@@ -150,6 +150,16 @@ transfer. Satu transfer = satu baris, bukan dua baris double-entry.
 `price_per_gram` disimpan supaya spreadsheet enak dibaca, tapi aplikasi selalu menghitung
 ulang dari `cost / grams` — sheet ini bisa diedit tangan.
 
+**Sheet `Budgets`** — satu batas pengeluaran per kategori per bulan
+
+| id | month | category | amount | created_at | updated_at |
+|----|-------|----------|--------|------------|------------|
+| uuid | `YYYY-MM` | nama kategori | angka | ISO | ISO |
+
+Realisasi tidak disimpan: aplikasi menjumlahkan transaksi `expense` pada bulan dan kategori
+yang sama. Pemasukan dan transfer tidak mengurangi anggaran. Pengeluaran pada kategori yang
+belum punya batas tetap dilaporkan sebagai pengeluaran belum dianggarkan.
+
 Saldo akun dihitung di aplikasi, tidak disimpan: `opening_balance` + pemasukan − pengeluaran
 − transfer keluar + transfer masuk − pembelian emas yang didanai akun itu. Boleh minus
 (utang, atau akun yang kelebihan pakai).
@@ -493,6 +503,7 @@ Mengacu ke spesifikasi MVP:
 | — | Transaksi transfer antar akun | ✅ tambahan di luar spec |
 | — | Aset / kewajiban / total kekayaan | ✅ tambahan di luar spec |
 | — | Investasi emas + harga pasar + untung/rugi | ✅ tambahan di luar spec (jual emas belum) |
+| — | Anggaran bulanan per kategori + realisasi | ✅ termasuk salin dari bulan lalu |
 | — | Import transaksi dari screenshot (OCR) | ✅ termasuk mutasi berisi banyak transaksi |
 | — | Import dari Money Manager (.xlsx) | ✅ akun, kategori, transaksi, transfer, deteksi duplikat |
 | — | Cache lokal agar buka aplikasi instan | ✅ |
@@ -517,7 +528,7 @@ akun yang benar — nama merchant-nya bisa dipindah ke kolom Keterangan.
   sendiri (~40 baris) demi bundle yang lebih kecil.
 - **Field `merchant` diganti dropdown `account`**, plus jenis transaksi ketiga: transfer antar
   akun. Nama merchant kini ditulis di kolom Keterangan.
-- **Akun dan kategori berbagi satu slot navigasi** (menu "Kelola", dua tab). Enam item tidak
+- **Akun, kategori, emas, tag, dan anggaran berbagi satu slot navigasi** (menu "Kelola"). Enam item tidak
   muat di tab bar HP tanpa memotong setiap labelnya.
 - **Token disimpan di cookie httpOnly** seperti di security checklist spec, dengan tambahan PKCE
   dan pengecekan `Origin`.

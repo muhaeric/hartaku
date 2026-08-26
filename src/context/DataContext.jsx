@@ -10,27 +10,33 @@ import {
 import {
   createAccount,
   createAccounts,
+  createBudget,
+  createBudgets,
   createCategories,
   createCategory,
   createGoldLot,
   createTransaction,
   createTransactions,
   deleteAccount,
+  deleteBudget,
   deleteCategory,
   deleteGoldLot,
   deleteTag,
   deleteTransactions,
   listAccounts,
+  listBudgets,
   listCategories,
   listGoldLots,
   listTransactions,
   moveTransactions,
   recategorizeTransactions,
   renameGoldAccountReferences,
+  renameBudgetCategoryReferences,
   renameReferences,
   renameTag,
   tagTransactions,
   updateAccount,
+  updateBudget,
   updateCategory,
   updateGoldLot,
   updateTransaction
@@ -50,6 +56,7 @@ const EMPTY = {
   categories: [],
   accounts: [],
   goldLots: [],
+  budgets: [],
   loading: true,
   error: null,
   errorCode: null,
@@ -68,7 +75,8 @@ function initialState () {
     transactions: cached.transactions,
     categories: cached.categories,
     accounts: cached.accounts,
-    goldLots: cached.goldLots
+    goldLots: cached.goldLots,
+    budgets: cached.budgets
   }
 }
 
@@ -93,11 +101,12 @@ export function DataProvider ({ children }) {
       const workbook = local.current
         ? await ensureLocalWorkbook()
         : await ensureWorkbook({ spreadsheetId, allowCreate })
-      const [transactions, categories, accounts, goldLots] = await Promise.all([
+      const [transactions, categories, accounts, goldLots, budgets] = await Promise.all([
         listTransactions(workbook),
         listCategories(workbook),
         listAccounts(workbook),
-        listGoldLots(workbook)
+        listGoldLots(workbook),
+        listBudgets(workbook)
       ])
       setState({
         workbook,
@@ -105,6 +114,7 @@ export function DataProvider ({ children }) {
         categories,
         accounts,
         goldLots,
+        budgets,
         loading: false,
         error: null,
         errorCode: null,
@@ -139,7 +149,8 @@ export function DataProvider ({ children }) {
     state.transactions,
     state.categories,
     state.accounts,
-    state.goldLots
+    state.goldLots,
+    state.budgets
   ])
 
   // Local mode has no session to wait for; the device is the credential.
@@ -302,7 +313,10 @@ export function DataProvider ({ children }) {
       const saved = await updateCategory(workbook, input)
 
       const renamedFrom = previous && previous.name !== saved.name ? previous.name : null
-      if (renamedFrom) await renameReferences(workbook, 'category', renamedFrom, saved.name)
+      if (renamedFrom) {
+        await renameReferences(workbook, 'category', renamedFrom, saved.name)
+        await renameBudgetCategoryReferences(workbook, renamedFrom, saved.name)
+      }
 
       setState((current) => ({
         ...current,
@@ -311,7 +325,12 @@ export function DataProvider ({ children }) {
           ? current.transactions.map((item) =>
               item.category === renamedFrom ? { ...item, category: saved.name } : item
             )
-          : current.transactions
+          : current.transactions,
+        budgets: renamedFrom
+          ? current.budgets.map((item) =>
+              item.category === renamedFrom ? { ...item, category: saved.name } : item
+            )
+          : current.budgets
       }))
       return saved
     }),
@@ -476,6 +495,47 @@ export function DataProvider ({ children }) {
     [withWorkbook]
   )
 
+  const addBudget = useCallback(
+    withWorkbook(async (workbook, input) => {
+      const created = await createBudget(workbook, input)
+      setState((current) => ({ ...current, budgets: [...current.budgets, created] }))
+      return created
+    }),
+    [withWorkbook]
+  )
+
+  const addBudgetsBatch = useCallback(
+    withWorkbook(async (workbook, inputs) => {
+      const created = await createBudgets(workbook, inputs)
+      setState((current) => ({ ...current, budgets: [...current.budgets, ...created] }))
+      return created
+    }),
+    [withWorkbook]
+  )
+
+  const editBudget = useCallback(
+    withWorkbook(async (workbook, input) => {
+      const saved = await updateBudget(workbook, input)
+      setState((current) => ({
+        ...current,
+        budgets: current.budgets.map((item) => (item.id === saved.id ? saved : item))
+      }))
+      return saved
+    }),
+    [withWorkbook]
+  )
+
+  const removeBudget = useCallback(
+    withWorkbook(async (workbook, id) => {
+      await deleteBudget(workbook, id)
+      setState((current) => ({
+        ...current,
+        budgets: current.budgets.filter((item) => item.id !== id)
+      }))
+    }),
+    [withWorkbook]
+  )
+
   const useSpreadsheet = useCallback(
     async (spreadsheetId) => {
       // The cache belongs to the old workbook; keeping it would show the wrong
@@ -546,6 +606,10 @@ export function DataProvider ({ children }) {
       addGoldLot,
       editGoldLot,
       removeGoldLot,
+      addBudget,
+      addBudgets: addBudgetsBatch,
+      editBudget,
+      removeBudget,
       useSpreadsheet,
       createFreshWorkbook
     }),
@@ -576,6 +640,10 @@ export function DataProvider ({ children }) {
       addGoldLot,
       editGoldLot,
       removeGoldLot,
+      addBudget,
+      addBudgetsBatch,
+      editBudget,
+      removeBudget,
       useSpreadsheet,
       createFreshWorkbook
     ]

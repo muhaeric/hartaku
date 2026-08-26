@@ -1,6 +1,6 @@
 /**
  * The device-local database: one JSON document in IndexedDB holding every
- * transaction, category, account and gold lot.
+ * transaction, category, account, gold lot and monthly budget.
  *
  * One document rather than a store per record type, because the app already
  * reads everything into memory on open and writes back through the same context
@@ -24,11 +24,12 @@ const STORE = 'workbook'
 const KEY = 'default'
 
 export const EMPTY_DOC = {
-  version: 1,
+  version: 2,
   transactions: [],
   categories: [],
   accounts: [],
-  goldLots: []
+  goldLots: [],
+  budgets: []
 }
 
 export class LocalStoreError extends Error {

@@ -89,7 +89,8 @@ export async function restoreLocalSnapshot (snapshot) {
     transactions: snapshot.transactions || [],
     categories: snapshot.categories || [],
     accounts: snapshot.accounts || [],
-    goldLots: snapshot.goldLots || []
+    goldLots: snapshot.goldLots || [],
+    budgets: snapshot.budgets || []
   })
 }
 
@@ -103,6 +104,7 @@ export async function localSnapshot () {
     categories: doc.categories || [],
     accounts: doc.accounts || [],
     goldLots: doc.goldLots || [],
+    budgets: doc.budgets || [],
     updatedAt: doc.updatedAt || null
   }
 }
@@ -119,6 +121,7 @@ export function isEmptySnapshot (snapshot) {
   return (
     !snapshot.transactions.length &&
     !snapshot.goldLots.length &&
+    !snapshot.budgets.length &&
     !snapshot.categories.length &&
     !snapshot.accounts.length
   )
