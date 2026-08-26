@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { ACCOUNT_KINDS, CATEGORY_TYPES, PAGE_SIZE } from '../../lib/constants.js'
-import { ALL_MONTHS, buildMonthOptions, currentMonthKey } from '../../lib/dates.js'
+import { ALL_MONTHS, buildMonthOptions, currentMonthKey, monthLabel } from '../../lib/dates.js'
 import { readLastAccount, writeLastAccount } from '../../lib/lastAccount.js'
 import { sortByLabel } from '../../lib/sortOptions.js'
 import { collectTags, hasAllTags, normalizeTags } from '../../lib/tags.js'
@@ -164,6 +164,26 @@ export default function TransactionList () {
 
   // Grouping happens after slicing so a day is never split from its header.
   const days = useMemo(() => groupByDay(rows, filters.account), [rows, filters.account])
+
+  /**
+   * A day header only needs the date number while one month is selected. Across
+   * all periods that same compact label becomes ambiguous, so days gain one
+   * higher level: month -> day -> transaction. Consecutive days are already in
+   * newest-first order, which keeps this a cheap single pass.
+   */
+  const monthSections = useMemo(() => {
+    const sections = []
+
+    for (const day of days) {
+      const key = day.date.slice(0, 7)
+      const current = sections[sections.length - 1]
+
+      if (current?.key === key) current.days.push(day)
+      else sections.push({ key, days: [day] })
+    }
+
+    return sections
+  }, [days])
 
   const loadMore = useCallback(() => setLimit((current) => current + PAGE_SIZE), [])
 
@@ -488,24 +508,34 @@ export default function TransactionList () {
       ) : (
         <>
           <Card flush as="div" className="overflow-hidden">
-            {days.map((day) => (
-              <section key={day.date}>
-                <DayGroupHeader day={day} />
-                <ul className="divide-hairline">
-                  {day.items.map((transaction) => (
-                    <li key={transaction.id}>
-                      <TransactionRow
-                        transaction={transaction}
-                        account={filters.account}
-                        selecting={selecting}
-                        selected={selected.includes(transaction.id)}
-                        onSelect={() => toggleSelected(transaction.id)}
-                        onOpen={() => navigate(`/transactions/${transaction.id}/edit`)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </section>
+            {monthSections.map((section) => (
+              <div key={section.key}>
+                {allTime && (
+                  <h2 className="border-b border-hairline bg-brand-soft px-page py-2 text-body font-semibold capitalize text-brand-onsoft">
+                    {monthLabel(section.key)}
+                  </h2>
+                )}
+
+                {section.days.map((day) => (
+                  <section key={day.date}>
+                    <DayGroupHeader day={day} />
+                    <ul className="divide-hairline">
+                      {day.items.map((transaction) => (
+                        <li key={transaction.id}>
+                          <TransactionRow
+                            transaction={transaction}
+                            account={filters.account}
+                            selecting={selecting}
+                            selected={selected.includes(transaction.id)}
+                            onSelect={() => toggleSelected(transaction.id)}
+                            onOpen={() => navigate(`/transactions/${transaction.id}/edit`)}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
             ))}
           </Card>
 
