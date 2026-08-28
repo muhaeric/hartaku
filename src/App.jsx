@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AuthCallback from './components/Auth/AuthCallback.jsx'
 import LoginScreen from './components/Auth/LoginScreen.jsx'
+import AdminPage from './components/Admin/AdminPage.jsx'
 import LocalMigration from './components/Setup/LocalMigration.jsx'
 import CategoryDetail from './components/Category/CategoryDetail.jsx'
 import Dashboard from './components/Dashboard/Dashboard.jsx'
@@ -14,6 +15,7 @@ import SettingsPage from './components/Settings/SettingsPage.jsx'
 import TransactionFormPage from './components/Transaction/TransactionFormPage.jsx'
 import TransactionList from './components/Transaction/TransactionList.jsx'
 import { LoadingBlock } from './components/ui/Feedback.jsx'
+import Button from './components/ui/Button.jsx'
 import { AuthProvider, useAuth } from './context/AuthContext.jsx'
 import { DataProvider } from './context/DataContext.jsx'
 import { SettingsProvider } from './context/SettingsContext.jsx'
@@ -28,6 +30,7 @@ export default function App () {
           <AuthProvider>
             <Routes>
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/admin" element={<AdminRoute />} />
               {/* Layout harness; excluded from production builds. */}
               {import.meta.env.DEV && <Route path="/__preview" element={<DevPreview />} />}
               <Route path="/*" element={<AuthenticatedApp />} />
@@ -37,6 +40,45 @@ export default function App () {
       </ToastProvider>
     </SettingsProvider>
   )
+}
+
+function AdminRoute () {
+  const { status, isAdmin, signIn, signOut } = useAuth()
+
+  if (status === 'loading') {
+    return <main className="flex min-h-dvh items-center justify-center"><LoadingBlock label="Memeriksa akses admin…" /></main>
+  }
+
+  if (status === 'anonymous') {
+    return (
+      <main className="flex min-h-dvh items-center justify-center px-page">
+        <div className="card w-full max-w-sm text-center">
+          <span className="text-4xl" aria-hidden="true">🔐</span>
+          <h1 className="mt-3 text-page-title font-bold">Admin Hartaku</h1>
+          <p className="mt-2 text-body text-subtitle">Masuk dengan akun Google yang terdaftar sebagai admin.</p>
+          <Button className="mt-5 w-full justify-center" onClick={() => signIn({ returnTo: '/admin' })}>Masuk dengan Google</Button>
+        </div>
+      </main>
+    )
+  }
+
+  if (!isAdmin) {
+    return (
+      <main className="flex min-h-dvh items-center justify-center px-page">
+        <div className="card w-full max-w-sm text-center">
+          <span className="text-4xl" aria-hidden="true">⛔</span>
+          <h1 className="mt-3 text-page-title font-bold">Akses ditolak</h1>
+          <p className="mt-2 text-body text-subtitle">Akun ini bukan admin Hartaku.</p>
+          <div className="mt-5 flex justify-center gap-2">
+            <Button variant="secondary" onClick={() => window.location.assign('/')}>Kembali</Button>
+            <Button onClick={signOut}>Ganti akun</Button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  return <AdminPage />
 }
 
 /**

@@ -28,3 +28,8 @@ export const authApi = {
   session: () => post('/api/auth/session'),
   logout: () => post('/api/auth/logout')
 }
+
+export const adminApi = {
+  users: ({ search = '', page = 1, limit = 25 } = {}) =>
+    post('/api/admin/users', { search, page, limit })
+}

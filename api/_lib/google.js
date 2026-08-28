@@ -119,6 +119,7 @@ export function toUser (claims) {
   return {
     sub: claims.sub,
     email: claims.email,
+    emailVerified: claims.email_verified !== false,
     name: claims.name || claims.email,
     picture: claims.picture || null
   }

@@ -11,6 +11,7 @@ const EXPIRY_MARGIN_MS = 60_000
 export function AuthProvider ({ children }) {
   const [status, setStatus] = useState('loading')
   const [user, setUser] = useState(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [error, setError] = useState(null)
 
   // The Google access token stays in memory only - never localStorage.
@@ -20,6 +21,7 @@ export function AuthProvider ({ children }) {
   const applySession = useCallback((session) => {
     token.current = { value: session.accessToken, expiresAt: session.expiresAt }
     setUser(session.user)
+    setIsAdmin(Boolean(session.isAdmin))
     setStatus('authenticated')
     setError(null)
   }, [])
@@ -27,6 +29,7 @@ export function AuthProvider ({ children }) {
   const clearSession = useCallback(() => {
     token.current = { value: null, expiresAt: 0 }
     setUser(null)
+    setIsAdmin(false)
     setStatus('anonymous')
   }, [])
 
@@ -79,9 +82,17 @@ export function AuthProvider ({ children }) {
     })
   }, [refreshSession])
 
-  const signIn = useCallback(async () => {
+  const signIn = useCallback(async ({ returnTo } = {}) => {
     setError(null)
     try {
+      if (returnTo) {
+        try {
+          sessionStorage.setItem('hartaku.auth.returnTo', returnTo)
+        } catch {
+          // Storage can be blocked by strict browser privacy settings. Login
+          // still works; only the post-login return route is lost.
+        }
+      }
       const { url } = await authApi.start()
       window.location.assign(url)
     } catch (err) {
@@ -111,6 +122,7 @@ export function AuthProvider ({ children }) {
     () => ({
       status,
       user,
+      isAdmin,
       error,
       setError,
       signIn,
@@ -118,7 +130,7 @@ export function AuthProvider ({ children }) {
       signOut,
       getAccessToken
     }),
-    [status, user, error, signIn, completeSignIn, signOut, getAccessToken]
+    [status, user, isAdmin, error, signIn, completeSignIn, signOut, getAccessToken]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -16,14 +16,15 @@
       <header>
         <a class="brand" href="/"><span>💸</span> Hartaku</a>
         <h1>Kebijakan Privasi</h1>
-        <p class="updated">Terakhir diperbarui: 4 Agustus 2026</p>
+        <p class="updated">Terakhir diperbarui: 28 Agustus 2026</p>
       </header>
 
       <div class="note">
         <p>
-          <strong>Ringkasnya:</strong> Hartaku tidak punya database. Seluruh catatan
-          keuanganmu disimpan di Google Spreadsheet di dalam Google Drive milikmu sendiri.
-          Kami tidak menyimpan, membaca, maupun membagikan isinya.
+          <strong>Ringkasnya:</strong> Seluruh catatan keuanganmu disimpan di Google
+          Spreadsheet di dalam Google Drive milikmu sendiri. Hartaku hanya menyimpan profil
+          dasar Google dan waktu aktivitas untuk mengelola pengguna layanan; kami tidak
+          menyimpan, membaca, maupun membagikan isi catatan keuanganmu.
         </p>
       </div>
 
@@ -38,8 +39,9 @@
       <ul>
         <li>
           <strong>Identitas dasar Google:</strong> nama, alamat email, dan foto profil.
-          Dipakai hanya untuk menampilkan siapa yang sedang masuk dan untuk menghubungkan
-          sesi ke akun Google-mu.
+          Dipakai untuk menampilkan siapa yang sedang masuk, menghubungkan sesi ke akun
+          Google-mu, serta menghitung dan mengelola pengguna layanan. Identitas ini disimpan
+          di database Hartaku bersama waktu pertama masuk dan terakhir aktif.
         </li>
         <li>
           <strong>Catatan keuangan</strong> — transaksi, akun, kategori, dan catatan
@@ -98,6 +100,10 @@
           (alamat IP, waktu, user agent) untuk operasional dan keamanan.
         </li>
         <li>
+          <strong>Neon</strong> — penyedia database PostgreSQL yang menyimpan profil dasar
+          Google dan waktu aktivitas pengguna. Database ini tidak berisi catatan keuangan.
+        </li>
+        <li>
           <strong>logam-mulia-api</strong> — sumber harga emas harian. Dipanggil dari server
           kami, bukan dari browser-mu, dan permintaan itu <strong>tidak menyertakan data
           apa pun tentang kamu</strong> — hanya meminta harga hari ini.
@@ -106,7 +112,7 @@
 
       <h2>7. Yang tidak kami lakukan</h2>
       <ul>
-        <li>Tidak ada analytics, pixel pelacak, atau cookie iklan.</li>
+        <li>Tidak ada pixel pelacak, profiling perilaku, atau cookie iklan.</li>
         <li>Tidak ada pelacakan lintas situs.</li>
         <li>Tidak menjual, menyewakan, atau membagikan datamu ke siapa pun.</li>
         <li>Tidak membaca isi spreadsheet-mu dari sisi server.</li>
@@ -115,9 +121,10 @@
       <h2>8. Retensi</h2>
       <p>
         Cookie sesi berlaku 7 hari dan diperpanjang setiap kali kamu membuka aplikasi. Jika
-        aplikasi tidak dibuka selama 7 hari, sesi berakhir dan kamu perlu masuk lagi. Karena
-        kami tidak menyimpan catatan keuanganmu, tidak ada data keuangan yang perlu kami
-        hapus — kendalinya sepenuhnya ada padamu.
+        aplikasi tidak dibuka selama 7 hari, sesi berakhir dan kamu perlu masuk lagi. Profil
+        dasar dan riwayat aktivitas akun disimpan selama akunmu masih tercatat sebagai
+        pengguna Hartaku. Catatan keuangan tidak disimpan oleh Hartaku — kendalinya
+        sepenuhnya ada padamu.
       </p>
 
       <h2>9. Mengontrol dan menghapus datamu</h2>
@@ -131,6 +138,10 @@
           <strong>Hapus datamu:</strong> hapus spreadsheet bernama
           <em>Hartaku - Expense Tracker</em> dari Google Drive-mu. Datanya hilang seketika,
           karena hanya ada di sana.
+        </li>
+        <li>
+          <strong>Hapus profil Hartaku:</strong> kirim permintaan ke alamat kontak di bawah
+          untuk menghapus profil dasar dan riwayat aktivitasmu dari database pengguna.
         </li>
         <li>
           <strong>Bersihkan perangkat:</strong> tombol Keluar di aplikasi menghapus cookie
