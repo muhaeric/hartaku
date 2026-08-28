@@ -13,7 +13,7 @@ export const LANDING = {
     'Pencatat keuangan pribadi yang menyimpan datamu di Google Spreadsheet milikmu sendiri.',
 
   intro:
-    'Hartaku dipakai untuk mencatat pemasukan, pengeluaran, transfer antar akun, dan investasi emas dalam satu tempat, lalu meringkasnya jadi total aset dan kewajiban. Aplikasi ini tidak punya database sendiri: setiap catatan ditulis langsung ke sebuah Google Spreadsheet di dalam Google Drive kamu. Datanya tetap bisa kamu buka, ubah, ekspor, atau hapus kapan saja tanpa lewat aplikasi ini.',
+    'Hartaku dipakai untuk mencatat pemasukan, pengeluaran, transfer antar akun, dan investasi emas dalam satu tempat, lalu meringkasnya jadi total aset dan kewajiban. Setiap catatan keuangan ditulis langsung ke sebuah Google Spreadsheet di dalam Google Drive kamu, bukan ke database Hartaku. Datanya tetap bisa kamu buka, ubah, ekspor, atau hapus kapan saja tanpa lewat aplikasi ini.',
 
   features: [
     {
@@ -48,7 +48,7 @@ export const LANDING = {
   access: [
     {
       what: 'Nama, alamat email, dan foto profil Google',
-      why: 'Menampilkan siapa yang sedang masuk dan menghubungkan sesi ke akun Google kamu.'
+      why: 'Menampilkan siapa yang sedang masuk, menghubungkan sesi ke akun Google kamu, dan mengelola jumlah pengguna layanan.'
     },
     {
       what: 'Izin Google Drive terbatas (drive.file)',
@@ -57,7 +57,7 @@ export const LANDING = {
   ],
 
   privacyNote:
-    'Hartaku tidak menyimpan catatan keuanganmu di server mana pun, tidak memakai analytics, dan tidak melakukan pelacakan. Akses aplikasi bisa kamu cabut kapan saja lewat pengaturan izin akun Google.',
+    'Hartaku tidak menyimpan catatan keuanganmu di server mana pun. Profil dasar Google dan waktu aktivitas disimpan untuk mengelola pengguna layanan; tidak ada iklan atau pelacakan lintas situs. Akses aplikasi bisa kamu cabut kapan saja lewat pengaturan izin akun Google.',
 
   links: [
     { href: '/privacy', label: 'Kebijakan Privasi' },

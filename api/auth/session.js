@@ -1,5 +1,6 @@
 import { DRIVE_SCOPE_MESSAGE, hasDriveScope, refreshAccessToken } from '../_lib/google.js'
 import { requireEnv, requireMethod, requireSameOrigin } from '../_lib/http.js'
+import { isAdminUser } from '../_lib/admin.js'
 import {
   SESSION_COOKIE,
   SESSION_MAX_AGE,
@@ -9,6 +10,7 @@ import {
   setCookie,
   unseal
 } from '../_lib/session.js'
+import { recordUserSafely } from '../_lib/users.js'
 
 /**
  * Returns the current user plus a fresh, short-lived Google access token.
@@ -48,10 +50,12 @@ export default async function handler (req, res) {
   }
 
   // Sliding expiry: every visit pushes the 7-day logout window forward.
+  await recordUserSafely(session.user, 'session')
   setCookie(req, res, SESSION_COOKIE, seal(session), SESSION_MAX_AGE)
 
   res.status(200).json({
     user: session.user,
+    isAdmin: isAdminUser(session.user),
     accessToken: tokens.access_token,
     expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000
   })

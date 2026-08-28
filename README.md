@@ -1,11 +1,13 @@
 # Hartaku
 
-Expense tracker ringan, mobile-first. Datanya disimpan di **Google Spreadsheet milik penggunanya
-sendiri** — aplikasi ini tidak punya database.
+Expense tracker ringan, mobile-first. Catatan keuangan disimpan di **Google Spreadsheet milik
+penggunanya sendiri**. Database PostgreSQL hanya menyimpan profil dasar dan aktivitas user.
 
 - **Frontend:** Vite + React 18 + Tailwind CSS (tanpa state library, tanpa axios, tanpa icon package)
-- **Backend:** 4 serverless function di `api/` — hanya untuk OAuth. Semua akses Sheets terjadi
-  langsung dari browser memakai access token berumur pendek.
+- **Backend:** serverless function di `api/` untuk OAuth, harga emas, dan admin user. Semua akses
+  Sheets tetap terjadi langsung dari browser memakai access token berumur pendek.
+- **User registry:** PostgreSQL serverless (Neon) untuk profil Google, waktu aktivitas, dan
+  metrik user base; tidak berisi catatan keuangan.
 - **Bundle:** ~99 kB gzip, tanpa pustaka chart maupun pembaca spreadsheet — keduanya ditulis
   sendiri dari primitif browser.
 
@@ -47,7 +49,13 @@ Salin `.env.example` menjadi `.env`, lalu isi:
 GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=xxx
 SESSION_SECRET=<hasil perintah di bawah>
+ADMIN_EMAILS=email-admin@gmail.com
+DATABASE_URL=postgresql://...
 ```
+
+`DATABASE_URL` dapat berasal dari database Neon gratis. Tanpa dua variabel terakhir, login
+tetap berfungsi untuk pengembangan fitur keuangan, tetapi pencatatan user dan `/admin` tidak
+tersedia.
 
 Generate `SESSION_SECRET`:
 
@@ -78,8 +86,14 @@ vercel
 ```
 
 Lalu di dashboard Vercel → **Settings → Environment Variables**, isi `GOOGLE_CLIENT_ID`,
-`GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`. Terakhir, tambahkan URL produksi ke **Authorized
+`GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `ADMIN_EMAILS`, dan `DATABASE_URL`. Untuk database,
+pasang integrasi **Neon** dari Vercel Marketplace dan hubungkan ke project; connection string
+akan tersedia sebagai `DATABASE_URL`. Isi `ADMIN_EMAILS` dengan email Google admin (pisahkan
+dengan koma jika lebih dari satu). Terakhir, tambahkan URL produksi ke **Authorized
 JavaScript origins** dan `<url>/auth/callback` ke **Authorized redirect URIs** di Google Cloud.
+
+Sesudah deploy, buka `/admin` dan masuk memakai salah satu akun pada `ADMIN_EMAILS`. Tabel
+`app_users` dan `app_user_daily_activity` dibuat otomatis saat login pertama.
 
 > ⚠️ Repo ini publik. Jangan pernah commit `.env` atau menempelkan Client Secret di kode.
 

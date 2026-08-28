@@ -8,6 +8,7 @@ import {
   toUser
 } from '../_lib/google.js'
 import { requireEnv, requireMethod, requireSameOrigin, redirectUri } from '../_lib/http.js'
+import { isAdminUser } from '../_lib/admin.js'
 import {
   OAUTH_COOKIE,
   SESSION_COOKIE,
@@ -18,6 +19,7 @@ import {
   setCookie,
   unseal
 } from '../_lib/session.js'
+import { recordUserSafely } from '../_lib/users.js'
 
 /** Finishes the OAuth flow: swaps the authorization code for tokens. */
 export default async function handler (req, res) {
@@ -65,6 +67,7 @@ export default async function handler (req, res) {
   }
 
   const user = toUser(decodeIdToken(tokens.id_token))
+  await recordUserSafely(user, 'sign_in')
   setCookie(
     req,
     res,
@@ -75,6 +78,7 @@ export default async function handler (req, res) {
 
   res.status(200).json({
     user,
+    isAdmin: isAdminUser(user),
     accessToken: tokens.access_token,
     expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000
   })

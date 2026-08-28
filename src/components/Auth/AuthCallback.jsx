@@ -35,7 +35,16 @@ export default function AuthCallback () {
     }
 
     completeSignIn(code, state)
-      .then(() => navigate('/', { replace: true }))
+      .then(() => {
+        let requested = null
+        try {
+          requested = sessionStorage.getItem('hartaku.auth.returnTo')
+          sessionStorage.removeItem('hartaku.auth.returnTo')
+        } catch {
+          // See AuthContext: storage is only a navigation convenience.
+        }
+        navigate(requested === '/admin' ? '/admin' : '/', { replace: true })
+      })
       .catch((err) => setError(err.message))
   }, [params, completeSignIn, navigate])
 
