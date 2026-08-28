@@ -157,6 +157,26 @@ function personalInsight ({ monthItems, previousItems, rate, previousRate, consi
   return null
 }
 
+function spendingSummary (items) {
+  if (!items.length) return null
+
+  const top = items.slice(0, 3)
+  const topShare = top.reduce((sum, item) => sum + item.percentage, 0)
+  const names = top.map((item) => item.name)
+  const lead = names.length === 1
+    ? `${names[0]} menjadi tujuan utama pengeluaranmu bulan ini.`
+    : `Pengeluaranmu paling banyak mengarah ke ${names.slice(0, -1).join(', ')} dan ${names[names.length - 1]}.`
+
+  const detail = top.length === 1
+    ? `Kategori ini mencakup ${Math.round(top[0].percentage)}% dari pengeluaran yang tercatat.`
+    : `${top.length === 2 ? 'Dua' : 'Tiga'} kategori teratas mencakup ${Math.round(topShare)}% dari pengeluaran yang tercatat.`
+
+  if (items.length <= 3) return `${lead} ${detail}`
+
+  const remaining = Math.max(0, Math.round(100 - topShare))
+  return `${lead} ${detail} Sisanya, sekitar ${remaining}%, tersebar di ${items.length - 3} kategori lain.`
+}
+
 export function buildFinancialSnapshot ({
   transactions = [],
   categories = [],
@@ -190,14 +210,14 @@ export function buildFinancialSnapshot ({
     : null
 
   const categoryByName = new Map(categories.map((category) => [category.name, category]))
-  const expenses = categoryBreakdown(monthItems, 'expense')
+  const expenses = categoryBreakdown(monthItems, 'expense').filter((item) => item.total > 0)
   const expenseTotal = expenses.reduce((sum, item) => sum + item.total, 0)
   const spending = expenseTotal
     ? expenses.map((item) => ({
       name: item.name,
       icon: categoryByName.get(item.name)?.icon || '•',
       color: categoryByName.get(item.name)?.color || '#8490a8',
-      percentage: round((item.total / expenseTotal) * 100)
+      percentage: (item.total / expenseTotal) * 100
     }))
     : []
 
@@ -236,6 +256,7 @@ export function buildFinancialSnapshot ({
       ? (consistency >= 75 ? 'Kamu semakin konsisten mengelola keuangan.' : 'Setiap catatan membantu kamu memahami keuanganmu.')
       : null,
     spending,
+    spendingSummary: spendingSummary(spending),
     savingTrend: rates,
     progressChange,
     assets,

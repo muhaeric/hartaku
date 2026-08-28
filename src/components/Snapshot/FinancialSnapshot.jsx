@@ -62,7 +62,7 @@ export function FinancialSnapshotView ({ snapshot, month }) {
           title="Ke Mana Uangku Pergi?"
           description="Proporsi pengeluaran berdasarkan transaksi yang kamu catat."
         >
-          <BreakdownDonut items={snapshot.spending} centerLabel="Pengeluaran" />
+          <BreakdownDonut items={snapshot.spending} centerLabel="Pengeluaran" summary={snapshot.spendingSummary} />
         </SnapshotSection>
       )}
 
@@ -194,28 +194,62 @@ function SnapshotSection ({ eyebrow, title, description, children }) {
   )
 }
 
-function BreakdownDonut ({ items, centerLabel }) {
+function BreakdownDonut ({ items, centerLabel, summary }) {
+  const [expanded, setExpanded] = useState(false)
+  const visible = expanded ? items : items.slice(0, 3)
+  const remaining = Math.max(0, items.length - 3)
+
   return (
-    <div className="sm:grid sm:grid-cols-[180px_1fr] sm:items-center sm:gap-6">
-      <div className="relative mx-auto h-44 w-44">
+    <div>
+      <div className="grid grid-cols-[116px_1fr] items-center gap-4 sm:grid-cols-[132px_1fr]">
+      <div className="relative mx-auto h-28 w-28 sm:h-32 sm:w-32">
         <div className="absolute inset-0 rounded-full" style={{ background: ringGradient(items) }} aria-hidden="true" />
-        <div className="absolute inset-[22px] flex flex-col items-center justify-center rounded-full bg-surface text-center">
-          <span className="text-[11px] text-subtitle">{centerLabel}</span>
-          <span className="mt-0.5 text-body font-bold">100%</span>
+        <div className="absolute inset-[16px] flex flex-col items-center justify-center rounded-full bg-surface text-center sm:inset-[18px]">
+          <span className="text-[9px] text-subtitle">{centerLabel}</span>
+          <span className="text-caption font-bold">100%</span>
         </div>
       </div>
-      <ul className="mt-5 space-y-2.5 sm:mt-0">
-        {items.map((item, index) => (
-          <li key={item.name} className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-canvas text-[15px]" aria-hidden="true">{item.icon}</span>
-            <span className="min-w-0 flex-1 truncate text-body font-medium">{item.name}</span>
-            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color || SOFT_COLORS[index % SOFT_COLORS.length] }} aria-hidden="true" />
-            <span className="w-10 text-right text-body font-bold tabular-nums">{item.percentage}%</span>
-          </li>
-        ))}
-      </ul>
+        <div className="min-w-0">
+          <ul className="space-y-1">
+            {visible.map((item, index) => (
+              <li key={item.name} className="flex min-h-8 items-center gap-2">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] bg-canvas text-[13px]" aria-hidden="true">{item.icon}</span>
+                <span className="min-w-0 flex-1 truncate text-caption font-medium">{item.name}</span>
+                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: item.color || SOFT_COLORS[index % SOFT_COLORS.length] }} aria-hidden="true" />
+                <span className="w-9 text-right text-caption font-bold tabular-nums">{formatShare(item.percentage)}</span>
+              </li>
+            ))}
+          </ul>
+
+          {remaining > 0 && (
+            <button
+              type="button"
+              aria-expanded={expanded}
+              onClick={() => setExpanded((value) => !value)}
+              className="mt-1.5 text-[11px] font-bold text-brand hover:text-brand-hover"
+            >
+              {expanded ? 'Tampilkan lebih sedikit' : `Lihat ${remaining} kategori lainnya`}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {summary && (
+        <div className="mt-4 border-t border-hairline pt-3">
+          <div className="flex items-start gap-2.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[9px] bg-brand-soft text-[13px] text-brand-onsoft" aria-hidden="true">✦</span>
+            <p className="text-caption leading-5 text-subtitle">{summary}</p>
+          </div>
+        </div>
+      )}
     </div>
   )
+}
+
+function formatShare (value) {
+  if (!(value > 0)) return '—'
+  if (value < 1) return '<1%'
+  return `${Math.round(value)}%`
 }
 
 function SavingJourney ({ trend, change }) {

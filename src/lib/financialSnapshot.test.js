@@ -26,6 +26,7 @@ test('snapshot derives visible percentages from actual rows', () => {
 
   assert.equal(result.indicators.saving, 60)
   assert.deepEqual(result.spending, [{ name: 'Makan', icon: '🍔', color: '#f00', percentage: 100 }])
+  assert.equal(result.spendingSummary, 'Makan menjadi tujuan utama pengeluaranmu bulan ini. Kategori ini mencakup 100% dari pengeluaran yang tercatat.')
   assert.equal(result.progressChange, 10)
   assert.equal(result.assets.reduce((sum, item) => sum + item.percentage, 0), 100)
   assert.equal(result.share.assetTypes, 2)
@@ -38,6 +39,7 @@ test('snapshot hides unsupported sections instead of inventing values', () => {
   assert.equal(result.hasAnyData, false)
   assert.equal(result.score, null)
   assert.deepEqual(result.spending, [])
+  assert.equal(result.spendingSummary, null)
   assert.deepEqual(result.assets, [])
   assert.equal(result.insight, null)
 })
