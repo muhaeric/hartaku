@@ -636,12 +636,20 @@ async function renderShareImage (month, variant) {
     context.fillStyle = 'rgba(255,255,255,.07)'
     roundedRect(context, x, top, 380, 240, 32)
     context.fill()
+
+    // Canvas does not inherit the page's emoji fallback stack. Draw the icon
+    // explicitly with a colour-emoji font so the exported PNG matches the
+    // Story preview instead of silently dropping every badge.
+    context.fillStyle = '#ffffff'
+    context.font = '44px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif'
+    context.fillText(String(item.icon), x + 34, top + 62)
+
     context.fillStyle = '#ffffff'
     context.font = '700 58px system-ui, sans-serif'
-    context.fillText(String(item.value), x + 34, top + 100)
+    context.fillText(String(item.value), x + 34, top + 137)
     context.fillStyle = 'rgba(255,255,255,.56)'
     context.font = '500 27px system-ui, sans-serif'
-    context.fillText(item.label, x + 34, top + 158)
+    context.fillText(item.label, x + 34, top + 190)
   })
 
   context.fillStyle = '#ffffff'
