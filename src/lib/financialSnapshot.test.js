@@ -9,8 +9,12 @@ const transactions = [
   { id: '4', date: '2026-07-03', type: 'expense', amount: 500, category: 'Makan', account: 'Bank' }
 ]
 
-test('savingRate is relative and never exposes an amount', () => {
+test('savingRate keeps a deficit visible as a negative percentage', () => {
   assert.equal(savingRate(transactions.slice(0, 2)), 60)
+  assert.equal(savingRate([
+    { type: 'income', amount: 100 },
+    { type: 'expense', amount: 125 }
+  ]), -25)
   assert.equal(savingRate([{ type: 'expense', amount: 10 }]), null)
 })
 
@@ -28,6 +32,13 @@ test('snapshot derives visible percentages from actual rows', () => {
   assert.deepEqual(result.spending, [{ name: 'Makan', icon: '🍔', color: '#f00', percentage: 100 }])
   assert.equal(result.spendingSummary, 'Di kategori Makan, catatannya mencakup “Makan siang”. Transaksi terbesar bulan ini tercatat sebagai “Makan siang” di kategori Makan.')
   assert.equal(result.progressChange, 10)
+  assert.deepEqual(result.savingTrend.at(-1), {
+    month: '2026-08',
+    value: 60,
+    income: 1000,
+    expense: 400,
+    balance: 600
+  })
   assert.equal(result.assets.reduce((sum, item) => sum + item.percentage, 0), 100)
   assert.equal(result.share.assetTypes, 2)
   assert.equal(result.share.largestAsset.label, 'Kas & Bank')

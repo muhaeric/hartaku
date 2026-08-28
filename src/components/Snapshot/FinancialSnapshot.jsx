@@ -1,9 +1,11 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
+import { useSettings } from '../../context/SettingsContext.jsx'
 import { useGoldPrice } from '../../hooks/useGoldPrice.js'
 import { currentMonthKey, monthLabel, monthLabelShort } from '../../lib/dates.js'
 import { buildFinancialSnapshot } from '../../lib/financialSnapshot.js'
+import { formatCurrency } from '../../lib/format.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
 
@@ -70,7 +72,7 @@ export function FinancialSnapshotView ({ snapshot, month }) {
         <SnapshotSection
           eyebrow="Perjalanan"
           title="Perjalanan Menabungku"
-          description="Persentase pemasukan yang tersisa setelah pengeluaran setiap bulan."
+          description="Sisa pemasukan setelah dikurangi pengeluaran. Bisa minus jika pengeluaran lebih besar."
         >
           <SavingJourney trend={snapshot.savingTrend} change={snapshot.progressChange} />
         </SnapshotSection>
@@ -253,40 +255,78 @@ function formatShare (value) {
 }
 
 function SavingJourney ({ trend, change }) {
+  const { settings } = useSettings()
+  const [selectedMonth, setSelectedMonth] = useState(null)
   const valid = trend.filter((item) => item.value !== null)
   const firstRate = valid.length ? Math.round(valid[0].value) : null
   const latestRate = valid.length ? Math.round(valid[valid.length - 1].value) : null
+  const selected = trend.find((item) => item.month === selectedMonth)
+  const values = valid.map((item) => item.value)
+  const minRate = Math.min(0, ...values)
+  const maxRate = Math.max(0, ...values)
+  const range = Math.max(1, maxRate - minRate)
+  const zeroPosition = ((0 - minRate) / range) * 100
+  const money = (value) => formatCurrency(value, settings.currency)
 
   return (
     <div>
-      <div className="flex h-44 items-end gap-2" role="img" aria-label={`Tren tingkat menabung: ${trend.map((item) => `${monthLabelShort(item.month)} ${percent(item.value === null ? null : Math.round(item.value))}`).join(', ')}`}>
+      <p className="mb-3 text-[11px] text-subtitle">Ketuk bulan untuk melihat nominal pemasukan, pengeluaran, dan sisanya.</p>
+      <div className="flex h-44 items-end gap-2" aria-label={`Tren tingkat menabung: ${trend.map((item) => `${monthLabelShort(item.month)} ${percent(item.value === null ? null : Math.round(item.value))}`).join(', ')}`}>
         {trend.map((item, index) => {
           const current = index === trend.length - 1
           const value = item.value === null ? null : Math.round(item.value)
+          const pointPosition = value === null ? zeroPosition : ((value - minRate) / range) * 100
+          const barBottom = Math.min(pointPosition, zeroPosition)
+          const barHeight = Math.abs(pointPosition - zeroPosition)
+          const active = selectedMonth === item.month
           return (
-            <div key={item.month} className="flex h-full min-w-0 flex-1 flex-col justify-end text-center">
+            <button
+              type="button"
+              key={item.month}
+              className={`flex h-full min-w-0 flex-1 flex-col justify-end rounded-[10px] text-center outline-none transition focus-visible:ring-2 focus-visible:ring-brand/40 ${active ? 'bg-brand/5' : ''}`}
+              aria-pressed={active}
+              aria-label={`${monthLabel(item.month)}: ${percent(value)}. Ketuk untuk melihat nominal.`}
+              onClick={() => setSelectedMonth(item.month)}
+            >
               <span className={`mb-1 text-[10px] font-bold tabular-nums ${current ? 'text-brand' : 'text-subtitle'}`}>{percent(value)}</span>
-              <div className="relative mx-auto flex h-28 w-full max-w-10 items-end overflow-hidden rounded-t-[10px] bg-brand/8">
+              <div className="relative mx-auto h-28 w-full max-w-10 overflow-hidden rounded-[10px] bg-brand/8">
+                <span className="absolute inset-x-0 h-px bg-subtitle/35" style={{ bottom: `${zeroPosition}%` }} aria-hidden="true" />
                 {value !== null && (
                   <span
-                    className={`block w-full rounded-t-[10px] ${current ? 'bg-brand' : 'bg-brand/35'}`}
-                    style={{ height: `${Math.max(5, value)}%` }}
+                    className={`absolute inset-x-0 block min-h-1 rounded-[8px] ${value < 0 ? 'bg-expense' : current ? 'bg-brand' : 'bg-brand/35'}`}
+                    style={{ bottom: `${barBottom}%`, height: `${barHeight}%` }}
                   />
                 )}
               </div>
               <span className={`mt-1.5 truncate text-[10px] ${current ? 'font-bold text-ink' : 'text-subtitle'}`}>{monthLabelShort(item.month).split(' ')[0]}</span>
-            </div>
+            </button>
           )
         })}
       </div>
 
+      {selected && (
+        <div className="mt-3 rounded-control border border-hairline bg-canvas/55 p-3" aria-live="polite">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-caption font-bold text-ink">{capitalize(monthLabel(selected.month))}</p>
+            <span className={`text-caption font-bold tabular-nums ${selected.balance < 0 ? 'text-expense' : 'text-income'}`}>
+              {percent(selected.value === null ? null : Math.round(selected.value))}
+            </span>
+          </div>
+          <dl className="mt-2 grid grid-cols-3 gap-2 text-[10px]">
+            <div><dt className="text-subtitle">Pemasukan</dt><dd className="mt-0.5 truncate font-semibold text-ink">{money(selected.income)}</dd></div>
+            <div><dt className="text-subtitle">Pengeluaran</dt><dd className="mt-0.5 truncate font-semibold text-ink">{money(selected.expense)}</dd></div>
+            <div><dt className="text-subtitle">{selected.balance < 0 ? 'Defisit' : 'Sisa'}</dt><dd className={`mt-0.5 truncate font-semibold ${selected.balance < 0 ? 'text-expense' : 'text-income'}`}>{money(Math.abs(selected.balance))}</dd></div>
+          </dl>
+        </div>
+      )}
+
       {change !== null && (
         <div className={`mt-4 flex items-center gap-2 rounded-control px-3 py-2.5 ${change >= 0 ? 'bg-income/10 text-income' : 'bg-brand-soft text-brand-onsoft'}`}>
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface" aria-hidden="true">{change >= 0 ? '↗' : '→'}</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface" aria-hidden="true">{change >= 0 ? '↗' : '↘'}</span>
           <p className="text-caption font-semibold">
             {change === 0
-              ? `Tetap stabil pada ${latestRate}% dibanding awal periode`
-              : `${change > 0 ? 'Naik' : 'Turun'} ${Math.abs(change)} poin persentase (${firstRate}% → ${latestRate}%)`}
+              ? `Dari awal periode: ${firstRate}% → ${latestRate}% (tidak berubah)`
+              : `Dari awal periode: ${firstRate}% → ${latestRate}% (${change > 0 ? '+' : '−'}${Math.abs(change)}%)`}
           </p>
         </div>
       )}

@@ -7,7 +7,10 @@ const round = (value) => Math.round(value)
 export function savingRate (transactions) {
   const { income, expense } = summarize(transactions)
   if (income <= 0) return null
-  return clamp(((income - expense) / income) * 100)
+  // A negative rate is meaningful: it shows that spending exceeded income.
+  // Keep the upper bound because ordinary expenses cannot leave more than all
+  // recorded income, but do not hide a deficit behind a misleading 0%.
+  return Math.min(100, ((income - expense) / income) * 100)
 }
 
 function budgetControl (transactions, budgets, month) {
@@ -244,7 +247,16 @@ export function buildFinancialSnapshot ({
   const monthGroups = monthKeys.map((key) => filterByMonth(transactions, key))
   const monthItems = monthGroups[5]
   const previousItems = monthGroups[4]
-  const rates = monthGroups.map((items, index) => ({ month: monthKeys[index], value: savingRate(items) }))
+  const rates = monthGroups.map((items, index) => {
+    const { income, expense } = summarize(items)
+    return {
+      month: monthKeys[index],
+      value: savingRate(items),
+      income,
+      expense,
+      balance: income - expense
+    }
+  })
   const rate = rates[5].value
   const previousRate = rates[4].value
   const control = spendingControl(monthItems, budgets, month, monthGroups.slice(1, 5))
