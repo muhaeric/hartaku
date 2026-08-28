@@ -6,8 +6,9 @@ penggunanya sendiri**. Database PostgreSQL hanya menyimpan profil dasar dan akti
 - **Frontend:** Vite + React 18 + Tailwind CSS (tanpa state library, tanpa axios, tanpa icon package)
 - **Backend:** serverless function di `api/` untuk OAuth, harga emas, dan admin user. Semua akses
   Sheets tetap terjadi langsung dari browser memakai access token berumur pendek.
-- **User registry:** PostgreSQL serverless (Neon) untuk profil Google, waktu aktivitas, dan
-  metrik user base; tidak berisi catatan keuangan.
+- **User registry:** PostgreSQL serverless (Neon) untuk profil Google, waktu aktivitas,
+  waktu terakhir menambah transaksi, dan metrik user base; tidak berisi nominal maupun isi
+  catatan keuangan.
 - **Bundle:** ~99 kB gzip, tanpa pustaka chart maupun pembaca spreadsheet — keduanya ditulis
   sendiri dari primitif browser.
 
