@@ -157,24 +157,72 @@ function personalInsight ({ monthItems, previousItems, rate, previousRate, consi
   return null
 }
 
-function spendingSummary (items) {
+function joinNatural (values) {
+  if (values.length <= 1) return values[0] || ''
+  if (values.length === 2) return `${values[0]} dan ${values[1]}`
+  return `${values.slice(0, -1).join(', ')}, dan ${values[values.length - 1]}`
+}
+
+function transactionDescription (transaction) {
+  return String(transaction.description || '').trim()
+}
+
+function spendingSummary (items, transactions) {
   if (!items.length) return null
 
+  const expenses = transactions.filter((item) => item.type === 'expense' && item.amount > 0)
   const top = items.slice(0, 3)
   const topShare = top.reduce((sum, item) => sum + item.percentage, 0)
-  const names = top.map((item) => item.name)
-  const lead = names.length === 1
-    ? `${names[0]} menjadi tujuan utama pengeluaranmu bulan ini.`
-    : `Pengeluaranmu paling banyak mengarah ke ${names.slice(0, -1).join(', ')} dan ${names[names.length - 1]}.`
+  const ranked = top.map((item) => `${item.name} (${item.percentage < 1 ? '<1' : Math.round(item.percentage)}%)`)
+  const lead = top.length === 1
+    ? `${ranked[0]} menjadi tujuan utama pengeluaranmu bulan ini.`
+    : `Pengeluaranmu paling banyak mengarah ke ${joinNatural(ranked)}; ${top.length === 2 ? 'keduanya' : 'ketiganya'} mencakup ${Math.round(topShare)}%.`
 
-  const detail = top.length === 1
-    ? `Kategori ini mencakup ${Math.round(top[0].percentage)}% dari pengeluaran yang tercatat.`
-    : `${top.length === 2 ? 'Dua' : 'Tiga'} kategori teratas mencakup ${Math.round(topShare)}% dari pengeluaran yang tercatat.`
+  const topCategory = top[0].name
+  const topTransactions = expenses.filter(
+    (item) => (item.category || 'Tanpa kategori') === topCategory
+  )
+  const descriptions = new Map()
 
-  if (items.length <= 3) return `${lead} ${detail}`
+  for (const transaction of topTransactions) {
+    const description = transactionDescription(transaction)
+    if (!description) continue
+    const key = description.toLocaleLowerCase('id-ID')
+    const current = descriptions.get(key)
+    if (current) {
+      current.count += 1
+      current.total += transaction.amount
+    } else {
+      descriptions.set(key, { description, count: 1, total: transaction.amount })
+    }
+  }
 
-  const remaining = Math.max(0, Math.round(100 - topShare))
-  return `${lead} ${detail} Sisanya, sekitar ${remaining}%, tersebar di ${items.length - 3} kategori lain.`
+  const rankedDescriptions = [...descriptions.values()].sort(
+    (a, b) => b.count - a.count || b.total - a.total || a.description.localeCompare(b.description)
+  )
+  const frequent = rankedDescriptions[0]
+
+  let pattern
+  if (frequent?.count >= 2) {
+    pattern = `Di kategori ${topCategory}, “${frequent.description}” paling sering muncul dengan ${frequent.count} transaksi.`
+  } else if (topTransactions.length > 0 && rankedDescriptions.length > 0) {
+    const examples = rankedDescriptions.slice(0, 2).map((item) => `“${item.description}”`)
+    pattern = `Kategori ${topCategory} terdiri dari ${topTransactions.length} transaksi, termasuk ${joinNatural(examples)}.`
+  } else if (topTransactions.length > 0) {
+    pattern = `Kategori ${topCategory} terdiri dari ${topTransactions.length} transaksi yang tercatat.`
+  }
+
+  const largest = [...expenses].sort((a, b) => b.amount - a.amount)[0]
+  let largestSentence
+  if (largest) {
+    const description = transactionDescription(largest)
+    const category = largest.category || 'Tanpa kategori'
+    largestSentence = description
+      ? `Transaksi terbesar bulan ini tercatat sebagai “${description}” di kategori ${category}.`
+      : `Transaksi terbesar bulan ini berada di kategori ${category}.`
+  }
+
+  return [lead, pattern, largestSentence].filter(Boolean).slice(0, 3).join(' ')
 }
 
 export function buildFinancialSnapshot ({
@@ -256,7 +304,7 @@ export function buildFinancialSnapshot ({
       ? (consistency >= 75 ? 'Kamu semakin konsisten mengelola keuangan.' : 'Setiap catatan membantu kamu memahami keuanganmu.')
       : null,
     spending,
-    spendingSummary: spendingSummary(spending),
+    spendingSummary: spendingSummary(spending, monthItems),
     savingTrend: rates,
     progressChange,
     assets,

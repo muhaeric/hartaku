@@ -4,7 +4,7 @@ import { buildFinancialSnapshot, savingRate } from './financialSnapshot.js'
 
 const transactions = [
   { id: '1', date: '2026-08-01', type: 'income', amount: 1000, category: 'Gaji', account: 'Bank' },
-  { id: '2', date: '2026-08-02', type: 'expense', amount: 400, category: 'Makan', account: 'Bank' },
+  { id: '2', date: '2026-08-02', type: 'expense', amount: 400, category: 'Makan', account: 'Bank', description: 'Makan siang' },
   { id: '3', date: '2026-07-02', type: 'income', amount: 1000, category: 'Gaji', account: 'Bank' },
   { id: '4', date: '2026-07-03', type: 'expense', amount: 500, category: 'Makan', account: 'Bank' }
 ]
@@ -26,7 +26,7 @@ test('snapshot derives visible percentages from actual rows', () => {
 
   assert.equal(result.indicators.saving, 60)
   assert.deepEqual(result.spending, [{ name: 'Makan', icon: '🍔', color: '#f00', percentage: 100 }])
-  assert.equal(result.spendingSummary, 'Makan menjadi tujuan utama pengeluaranmu bulan ini. Kategori ini mencakup 100% dari pengeluaran yang tercatat.')
+  assert.equal(result.spendingSummary, 'Makan (100%) menjadi tujuan utama pengeluaranmu bulan ini. Kategori Makan terdiri dari 1 transaksi, termasuk “Makan siang”. Transaksi terbesar bulan ini tercatat sebagai “Makan siang” di kategori Makan.')
   assert.equal(result.progressChange, 10)
   assert.equal(result.assets.reduce((sum, item) => sum + item.percentage, 0), 100)
   assert.equal(result.share.assetTypes, 2)
