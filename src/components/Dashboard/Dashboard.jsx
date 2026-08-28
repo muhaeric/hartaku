@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useData } from '../../context/DataContext.jsx'
 import { useGoldPrice } from '../../hooks/useGoldPrice.js'
 import {
@@ -36,6 +36,8 @@ export default function Dashboard () {
   const { quote } = useGoldPrice()
   const [month, setMonth] = useState(currentMonthKey)
   const [expenseCategories, setExpenseCategories] = useState(readDashboardCategories)
+  const [breakdownReset, setBreakdownReset] = useState(0)
+  const collapseBreakdowns = useCallback(() => setBreakdownReset((value) => value + 1), [])
 
   useEffect(
     () => writeDashboardCategories(expenseCategories),
@@ -183,6 +185,7 @@ export default function Dashboard () {
         <Card flush as="div">
           <Carousel
             label="Pengeluaran terbesar, per kategori, tag dan akun"
+            onSlideChange={collapseBreakdowns}
             slides={[
               {
                 key: 'category',
@@ -206,6 +209,8 @@ export default function Dashboard () {
                           ? 'Belum ada pengeluaran untuk kategori pilihan di bulan ini.'
                           : undefined
                       }
+                      limit={5}
+                      resetSignal={breakdownReset}
                       /* The month travels with the link: the page it opens is
                          about this month's spending, not today's. */
                       linkFor={(name) =>
@@ -218,13 +223,13 @@ export default function Dashboard () {
               {
                 key: 'tag',
                 title: 'Per tag',
-                content: <TagSpending breakdown={tags} />
+                content: <TagSpending breakdown={tags} limit={5} resetSignal={breakdownReset} />
               },
               {
                 key: 'account',
                 title: 'Per akun',
                 content: (
-                  <TopExpenses breakdown={byAccount} categories={accounts} unit="akun" />
+                  <TopExpenses breakdown={byAccount} categories={accounts} unit="akun" limit={5} resetSignal={breakdownReset} />
                 )
               }
             ]}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { isImageIcon } from '../../lib/accountIcon.js'
@@ -19,12 +19,11 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS
 /**
  * Where the month's money went, as part-to-whole.
  *
- * Every row that spent money gets its own slice and its own line. The tail used
- * to be folded into one "Lainnya" remainder, which kept the ring tidy at the
- * cost of the answer: the question people bring here is which category the
- * money went to, and a category answering that with "Lainnya" is not an answer.
- * Past the palette's eight hues the colours repeat, so the dot is a locator for
- * the ring rather than a key - every slice is named on its own row beside it.
+ * Every row that spent money gets its own slice. The five largest lines are
+ * visible first and the rest remain available behind an explicit expansion;
+ * none are folded into a vague "Lainnya" remainder. Past the palette's eight
+ * hues the colours repeat, so the dot is a locator for the ring rather than a
+ * key - every slice is still named when its row is visible.
  *
  * `linkFor` turns a row into a link when the caller has somewhere for it to go;
  * without it the row stays a button that only highlights its slice.
@@ -35,10 +34,18 @@ export default function TopExpenses ({
   unit = 'kategori',
   linkFor,
   totalLabel = 'Total',
-  emptyMessage = 'Belum ada pengeluaran di bulan ini.'
+  emptyMessage = 'Belum ada pengeluaran di bulan ini.',
+  limit = 5,
+  resetSignal = 0
 }) {
   const { settings } = useSettings()
   const [active, setActive] = useState(null)
+  const [expanded, setExpanded] = useState(false)
+
+  useEffect(() => {
+    setExpanded(false)
+    setActive(null)
+  }, [resetSignal])
 
   const money = (value, compact = false) => formatCurrency(value, settings.currency, { compact })
 
@@ -97,6 +104,8 @@ export default function TopExpenses ({
   })
 
   const focused = active === null ? null : slices[active]
+  const shown = expanded ? slices : slices.slice(0, limit)
+  const hidden = Math.max(0, slices.length - limit)
 
   return (
     <div className="px-page py-3">
@@ -148,7 +157,7 @@ export default function TopExpenses ({
       </div>
 
       <ul className="mt-3 space-y-0.5">
-        {slices.map((slice, index) => {
+        {shown.map((slice, index) => {
           const to = linkFor?.(slice.name) || null
 
           const highlight = {
@@ -201,6 +210,20 @@ export default function TopExpenses ({
           )
         })}
       </ul>
+
+      {hidden > 0 && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={() => {
+            setExpanded((value) => !value)
+            setActive(null)
+          }}
+          className="mt-2 w-full rounded-[10px] py-1.5 text-center text-caption font-semibold text-brand transition hover:bg-brand-soft"
+        >
+          {expanded ? 'Tampilkan lebih sedikit' : `Lihat ${hidden} ${unit} lainnya`}
+        </button>
+      )}
     </div>
   )
 }

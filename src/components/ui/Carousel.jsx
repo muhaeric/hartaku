@@ -14,8 +14,9 @@ import { useCallback, useRef, useState } from 'react'
  * Each slide keeps its own heading: dots say how many there are and which one
  * this is, never what it contains.
  */
-export default function Carousel ({ slides, label }) {
+export default function Carousel ({ slides, label, onSlideChange }) {
   const track = useRef(null)
+  const activeRef = useRef(0)
   const [active, setActive] = useState(0)
 
   const onScroll = useCallback(() => {
@@ -23,8 +24,13 @@ export default function Carousel ({ slides, label }) {
     if (!node) return
 
     const width = node.clientWidth || 1
-    setActive(Math.max(0, Math.min(slides.length - 1, Math.round(node.scrollLeft / width))))
-  }, [slides.length])
+    const next = Math.max(0, Math.min(slides.length - 1, Math.round(node.scrollLeft / width)))
+    if (next === activeRef.current) return
+
+    activeRef.current = next
+    setActive(next)
+    onSlideChange?.(next)
+  }, [slides.length, onSlideChange])
 
   const go = (index) => {
     const node = track.current

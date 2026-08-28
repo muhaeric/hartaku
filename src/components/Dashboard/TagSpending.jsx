@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { formatCurrency } from '../../lib/format.js'
@@ -14,13 +15,16 @@ import { formatCurrency } from '../../lib/format.js'
  * which is what this is - and the footnote states the overlap outright rather
  * than leaving it to be discovered by someone adding the column up.
  */
-export default function TagSpending ({ breakdown, limit = 6 }) {
+export default function TagSpending ({ breakdown, limit = 5, resetSignal = 0 }) {
   const { settings } = useSettings()
+  const [expanded, setExpanded] = useState(false)
   const money = (value) => formatCurrency(value, settings.currency)
 
+  useEffect(() => setExpanded(false), [resetSignal])
+
   const { rows, tagged, untagged } = breakdown
-  const shown = rows.slice(0, limit)
-  const hidden = rows.length - shown.length
+  const shown = expanded ? rows : rows.slice(0, limit)
+  const hidden = Math.max(0, rows.length - limit)
 
   if (!rows.length) {
     return (
@@ -60,8 +64,19 @@ export default function TagSpending ({ breakdown, limit = 6 }) {
         ))}
       </ul>
 
+      {hidden > 0 && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((value) => !value)}
+          className="mt-2 w-full rounded-[10px] py-1.5 text-center text-caption font-semibold text-brand transition hover:bg-brand-soft"
+        >
+          {expanded ? 'Tampilkan lebih sedikit' : `Lihat ${hidden} tag lainnya`}
+        </button>
+      )}
+
       <p className="hint">
-        {hidden > 0 && `${hidden} tag lain tidak ditampilkan. `}
+        {!expanded && hidden > 0 && `${hidden} tag lain belum ditampilkan. `}
         {money(tagged)} pengeluaran bertag
         {untagged > 0 && `, ${money(untagged)} tanpa tag`}. Satu transaksi bisa punya beberapa
         tag, jadi angka di atas bisa berjumlah lebih besar daripada totalnya.
