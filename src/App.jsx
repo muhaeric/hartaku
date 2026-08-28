@@ -12,6 +12,8 @@ import ImportScreenshot from './components/Import/ImportScreenshot.jsx'
 import AppLayout from './components/Layout/AppLayout.jsx'
 import ManagePage from './components/Manage/ManagePage.jsx'
 import SettingsPage from './components/Settings/SettingsPage.jsx'
+import FinancialSnapshot from './components/Snapshot/FinancialSnapshot.jsx'
+import SnapshotPreview from './components/Snapshot/SnapshotPreview.jsx'
 import TransactionFormPage from './components/Transaction/TransactionFormPage.jsx'
 import TransactionList from './components/Transaction/TransactionList.jsx'
 import { LoadingBlock } from './components/ui/Feedback.jsx'
@@ -33,12 +35,21 @@ export default function App () {
               <Route path="/admin" element={<AdminRoute />} />
               {/* Layout harness; excluded from production builds. */}
               {import.meta.env.DEV && <Route path="/__preview" element={<DevPreview />} />}
+              {import.meta.env.DEV && <Route path="/__snapshot-preview" element={<PreviewLayout />} />}
               <Route path="/*" element={<AuthenticatedApp />} />
             </Routes>
           </AuthProvider>
         </StorageProvider>
       </ToastProvider>
     </SettingsProvider>
+  )
+}
+
+function PreviewLayout () {
+  return (
+    <main className="mx-auto w-full max-w-2xl px-page py-4">
+      <SnapshotPreview />
+    </main>
   )
 }
 
@@ -121,6 +132,7 @@ function AuthenticatedApp () {
           <Route path="categories" element={<Navigate to="/manage?tab=categories" replace />} />
           <Route path="categories/:name" element={<CategoryDetail />} />
           <Route path="settings" element={<SettingsPage />} />
+          <Route path="snapshot" element={<FinancialSnapshot />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

@@ -29,6 +29,7 @@ import SummaryCards from './SummaryCards.jsx'
 import TagSpending from './TagSpending.jsx'
 import TopExpenses from './TopExpenses.jsx'
 import BudgetSummary from './BudgetSummary.jsx'
+import SnapshotTeaser from '../Snapshot/SnapshotTeaser.jsx'
 
 export default function Dashboard () {
   const { transactions, categories, accounts, goldLots, budgets, loading, error, reload } = useData()
@@ -147,6 +148,8 @@ export default function Dashboard () {
 
   return (
     <>
+      <SnapshotTeaser />
+
       <NetWorthCard worth={worth}>
         <NetWorthTrend
           accounts={accounts}

@@ -15,6 +15,7 @@ export const PAGE_TITLES = {
   '/import': 'Import',
   '/import/money-manager': 'Import Money Manager',
   '/manage': 'Akun & Kategori',
+  '/snapshot': 'Ringkasan',
   '/settings': 'Pengaturan'
 }
 
