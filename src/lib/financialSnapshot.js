@@ -143,7 +143,7 @@ function consecutiveActiveDays (transactions) {
 
 function personalInsight ({ monthItems, previousItems, rate, previousRate, consistency }) {
   if (rate !== null && previousRate !== null && rate >= previousRate + 3) {
-    return `Tingkat menabungmu meningkat ${round(rate - previousRate)} poin dibanding bulan lalu.`
+    return `Tingkat menabungmu meningkat ${round(rate - previousRate)} poin persentase dibanding bulan lalu.`
   }
   if (monthItems.length > previousItems.length && previousItems.length > 0) {
     return `Kamu lebih konsisten mencatat transaksi dibanding bulan lalu.`

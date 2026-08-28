@@ -70,7 +70,7 @@ export function FinancialSnapshotView ({ snapshot, month }) {
         <SnapshotSection
           eyebrow="Perjalanan"
           title="Perjalanan Menabungku"
-          description="Tingkat menabung dari pemasukan yang tercatat."
+          description="Persentase pemasukan yang tersisa setelah pengeluaran setiap bulan."
         >
           <SavingJourney trend={snapshot.savingTrend} change={snapshot.progressChange} />
         </SnapshotSection>
@@ -253,6 +253,10 @@ function formatShare (value) {
 }
 
 function SavingJourney ({ trend, change }) {
+  const valid = trend.filter((item) => item.value !== null)
+  const firstRate = valid.length ? Math.round(valid[0].value) : null
+  const latestRate = valid.length ? Math.round(valid[valid.length - 1].value) : null
+
   return (
     <div>
       <div className="flex h-44 items-end gap-2" role="img" aria-label={`Tren tingkat menabung: ${trend.map((item) => `${monthLabelShort(item.month)} ${percent(item.value === null ? null : Math.round(item.value))}`).join(', ')}`}>
@@ -280,7 +284,9 @@ function SavingJourney ({ trend, change }) {
         <div className={`mt-4 flex items-center gap-2 rounded-control px-3 py-2.5 ${change >= 0 ? 'bg-income/10 text-income' : 'bg-brand-soft text-brand-onsoft'}`}>
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-surface" aria-hidden="true">{change >= 0 ? '↗' : '→'}</span>
           <p className="text-caption font-semibold">
-            {change >= 0 ? '+' : ''}{change} poin dibanding awal periode
+            {change === 0
+              ? `Tetap stabil pada ${latestRate}% dibanding awal periode`
+              : `${change > 0 ? 'Naik' : 'Turun'} ${Math.abs(change)} poin persentase (${firstRate}% → ${latestRate}%)`}
           </p>
         </div>
       )}
@@ -536,6 +542,11 @@ function shareVariants (snapshot) {
   const share = snapshot.share
   const progressValue = snapshot.progressChange !== null ? Math.abs(snapshot.progressChange) : share.score
   const growthAvailable = share.assetGrowth !== null
+  const validSavingRates = snapshot.savingTrend.filter((item) => item.value !== null)
+  const firstSavingRate = validSavingRates.length ? Math.round(validSavingRates[0].value) : null
+  const latestSavingRate = validSavingRates.length
+    ? Math.round(validSavingRates[validSavingRates.length - 1].value)
+    : null
 
   return [
     {
@@ -565,9 +576,9 @@ function shareVariants (snapshot) {
       accent: '#ffd0a8',
       eyebrow: 'FINANCIAL LEVEL UP',
       heroValue: share.score ?? progressValue ?? '—',
-      heroSuffix: share.score !== null ? '/ 100' : 'poin',
+      heroSuffix: share.score !== null ? '/ 100' : 'poin persentase',
       heroLabel: snapshot.progressChange !== null
-        ? `${snapshot.progressChange >= 0 ? '+' : ''}${snapshot.progressChange} poin tingkat menabung dalam 6 bulan`
+        ? `Tingkat menabung ${firstSavingRate}% → ${latestSavingRate}% dalam 6 bulan`
         : 'Kebiasaan finansialku terus naik level',
       metrics: [
         share.consistency !== null && { icon: '✦', value: `${share.consistency}%`, label: 'Nilai konsistensi' },

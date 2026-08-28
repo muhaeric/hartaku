@@ -31,7 +31,7 @@ test('snapshot derives visible percentages from actual rows', () => {
   assert.equal(result.assets.reduce((sum, item) => sum + item.percentage, 0), 100)
   assert.equal(result.share.assetTypes, 2)
   assert.equal(result.share.largestAsset.label, 'Kas & Bank')
-  assert.equal(result.insight, 'Tingkat menabungmu meningkat 10 poin dibanding bulan lalu.')
+  assert.equal(result.insight, 'Tingkat menabungmu meningkat 10 poin persentase dibanding bulan lalu.')
 })
 
 test('snapshot hides unsupported sections instead of inventing values', () => {
