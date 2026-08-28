@@ -201,15 +201,15 @@ function BreakdownDonut ({ items, centerLabel, summary }) {
 
   return (
     <div>
-      <div className="grid grid-cols-[116px_1fr] items-center gap-4 sm:grid-cols-[132px_1fr]">
-      <div className="relative mx-auto h-28 w-28 sm:h-32 sm:w-32">
-        <div className="absolute inset-0 rounded-full" style={{ background: ringGradient(items) }} aria-hidden="true" />
-        <div className="absolute inset-[16px] flex flex-col items-center justify-center rounded-full bg-surface text-center sm:inset-[18px]">
-          <span className="text-[9px] text-subtitle">{centerLabel}</span>
-          <span className="text-caption font-bold">100%</span>
+      <div>
+        <div className="relative mx-auto h-32 w-32">
+          <div className="absolute inset-0 rounded-full" style={{ background: ringGradient(items) }} aria-hidden="true" />
+          <div className="absolute inset-[18px] flex flex-col items-center justify-center rounded-full bg-surface text-center">
+            <span className="text-[9px] text-subtitle">{centerLabel}</span>
+            <span className="text-caption font-bold">100%</span>
+          </div>
         </div>
-      </div>
-        <div className="min-w-0">
+        <div className="mt-3 min-w-0">
           <ul className="space-y-1">
             {visible.map((item, index) => (
               <li key={item.name} className="flex min-h-8 items-center gap-2">
