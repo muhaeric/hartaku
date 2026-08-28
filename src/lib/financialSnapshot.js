@@ -167,24 +167,13 @@ function transactionDescription (transaction) {
   return String(transaction.description || '').trim()
 }
 
-function spendingSummary (items, transactions) {
-  if (!items.length) return null
-
-  const expenses = transactions.filter((item) => item.type === 'expense' && item.amount > 0)
-  const top = items.slice(0, 3)
-  const topShare = top.reduce((sum, item) => sum + item.percentage, 0)
-  const ranked = top.map((item) => `${item.name} (${item.percentage < 1 ? '<1' : Math.round(item.percentage)}%)`)
-  const lead = top.length === 1
-    ? `${ranked[0]} menjadi tujuan utama pengeluaranmu bulan ini.`
-    : `Pengeluaranmu paling banyak mengarah ke ${joinNatural(ranked)}; ${top.length === 2 ? 'keduanya' : 'ketiganya'} mencakup ${Math.round(topShare)}%.`
-
-  const topCategory = top[0].name
-  const topTransactions = expenses.filter(
-    (item) => (item.category || 'Tanpa kategori') === topCategory
+function categoryTransactionClause (category, expenses) {
+  const categoryTransactions = expenses.filter(
+    (item) => (item.category || 'Tanpa kategori') === category
   )
   const descriptions = new Map()
 
-  for (const transaction of topTransactions) {
+  for (const transaction of categoryTransactions) {
     const description = transactionDescription(transaction)
     if (!description) continue
     const key = description.toLocaleLowerCase('id-ID')
@@ -202,14 +191,31 @@ function spendingSummary (items, transactions) {
   )
   const frequent = rankedDescriptions[0]
 
-  let pattern
   if (frequent?.count >= 2) {
-    pattern = `Di kategori ${topCategory}, “${frequent.description}” paling sering muncul dengan ${frequent.count} transaksi.`
-  } else if (topTransactions.length > 0 && rankedDescriptions.length > 0) {
+    return `kategori ${category}, “${frequent.description}” paling sering muncul dengan ${frequent.count} transaksi`
+  }
+  if (categoryTransactions.length > 0 && rankedDescriptions.length > 0) {
     const examples = rankedDescriptions.slice(0, 2).map((item) => `“${item.description}”`)
-    pattern = `Kategori ${topCategory} terdiri dari ${topTransactions.length} transaksi, termasuk ${joinNatural(examples)}.`
-  } else if (topTransactions.length > 0) {
-    pattern = `Kategori ${topCategory} terdiri dari ${topTransactions.length} transaksi yang tercatat.`
+    return `kategori ${category}, catatannya mencakup ${joinNatural(examples)}`
+  }
+  return `kategori ${category}, terdapat ${categoryTransactions.length} transaksi yang tercatat`
+}
+
+function spendingSummary (items, transactions) {
+  if (!items.length) return null
+
+  const expenses = transactions.filter((item) => item.type === 'expense' && item.amount > 0)
+  const clauses = items
+    .slice(0, 3)
+    .map((item) => categoryTransactionClause(item.name, expenses))
+
+  const details = [`Di ${clauses[0]}.`]
+  if (clauses.length > 1) {
+    details.push(
+      clauses.length > 2
+        ? `Di ${clauses[1]}; sementara di ${clauses[2]}.`
+        : `Di ${clauses[1]}.`
+    )
   }
 
   const largest = [...expenses].sort((a, b) => b.amount - a.amount)[0]
@@ -222,7 +228,7 @@ function spendingSummary (items, transactions) {
       : `Transaksi terbesar bulan ini berada di kategori ${category}.`
   }
 
-  return [lead, pattern, largestSentence].filter(Boolean).slice(0, 3).join(' ')
+  return [...details, largestSentence].filter(Boolean).slice(0, 3).join(' ')
 }
 
 export function buildFinancialSnapshot ({
