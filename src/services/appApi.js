@@ -1,9 +1,10 @@
 /** Calls to this app's own serverless endpoints under /api. */
 
-async function post (path, body) {
+async function post (path, body, { keepalive = false } = {}) {
   const response = await fetch(path, {
     method: 'POST',
     credentials: 'same-origin',
+    keepalive,
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body ?? {})
   })
@@ -32,4 +33,9 @@ export const authApi = {
 export const adminApi = {
   users: ({ search = '', page = 1, limit = 25 } = {}) =>
     post('/api/admin/users', { search, page, limit })
+}
+
+export const activityApi = {
+  /** Records only that a transaction write succeeded, never its contents. */
+  transactionAdded: () => post('/api/activity/transaction', {}, { keepalive: true })
 }

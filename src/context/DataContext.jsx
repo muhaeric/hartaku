@@ -44,6 +44,7 @@ import {
 import { ensureWorkbook, rememberSpreadsheetId } from '../services/workbook.js'
 import { ensureLocalWorkbook } from '../services/storage.js'
 import { clearCache, readCache, writeCache } from '../services/cache.js'
+import { activityApi } from '../services/appApi.js'
 import WorkbookSetup from '../components/Setup/WorkbookSetup.jsx'
 import { useAuth } from './AuthContext.jsx'
 import { useStorage } from './StorageContext.jsx'
@@ -172,6 +173,7 @@ export function DataProvider ({ children }) {
     withWorkbook(async (workbook, input) => {
       const created = await createTransaction(workbook, input)
       setState((current) => ({ ...current, transactions: [created, ...current.transactions] }))
+      if (!local.current) activityApi.transactionAdded().catch(() => {})
       return created
     }),
     [withWorkbook]
@@ -181,6 +183,7 @@ export function DataProvider ({ children }) {
     withWorkbook(async (workbook, inputs) => {
       const created = await createTransactions(workbook, inputs)
       setState((current) => ({ ...current, transactions: [...created, ...current.transactions] }))
+      if (created.length && !local.current) activityApi.transactionAdded().catch(() => {})
       return created
     }),
     [withWorkbook]

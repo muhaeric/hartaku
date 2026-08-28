@@ -27,9 +27,15 @@ async function ensureSchema () {
         picture_url TEXT,
         first_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        last_transaction_at TIMESTAMPTZ,
         sign_in_count INTEGER NOT NULL DEFAULT 0,
         session_count INTEGER NOT NULL DEFAULT 0
       )
+    `)
+    // CREATE TABLE IF NOT EXISTS does not evolve an existing registry.
+    await sql.query(`
+      ALTER TABLE app_users
+      ADD COLUMN IF NOT EXISTS last_transaction_at TIMESTAMPTZ
     `)
     await sql.query(`
       CREATE TABLE IF NOT EXISTS app_user_daily_activity (
@@ -117,6 +123,19 @@ export async function recordUserSafely (user, event) {
   }
 }
 
+/** Stores only the time of a successful write, never the transaction itself. */
+export async function recordTransactionActivity (user) {
+  if (!user?.sub || !user?.email) return
+
+  // Upsert first so this works for sessions created before the registry existed.
+  await recordUser(user, 'activity')
+  const sql = database()
+  await sql.query(
+    `UPDATE app_users SET last_transaction_at = NOW() WHERE google_sub = $1`,
+    [user.sub]
+  )
+}
+
 export async function getUserDashboard ({ search = '', page = 1, limit = 25 } = {}) {
   await ensureSchema()
   const sql = database()
@@ -153,7 +172,7 @@ export async function getUserDashboard ({ search = '', page = 1, limit = 25 } = 
       `
         SELECT
           google_sub, email, name, picture_url,
-          first_seen_at, last_seen_at, sign_in_count, session_count
+          first_seen_at, last_seen_at, last_transaction_at, sign_in_count, session_count
         FROM app_users
         WHERE $1 = '' OR email ILIKE $2 OR COALESCE(name, '') ILIKE $2
         ORDER BY last_seen_at DESC
@@ -174,6 +193,7 @@ export async function getUserDashboard ({ search = '', page = 1, limit = 25 } = 
       picture: user.picture_url,
       firstSeenAt: user.first_seen_at,
       lastSeenAt: user.last_seen_at,
+      lastTransactionAt: user.last_transaction_at,
       signInCount: user.sign_in_count,
       sessionCount: user.session_count
     })),

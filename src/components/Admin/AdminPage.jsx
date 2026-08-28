@@ -186,17 +186,18 @@ export default function AdminPage () {
             </div>
 
             <div className={`card-flush mt-3 overflow-hidden ${loading ? 'opacity-60' : ''}`}>
-              <div className="hidden grid-cols-[minmax(220px,1.5fr)_minmax(150px,1fr)_minmax(150px,1fr)_90px] gap-4 border-b border-hairline bg-tint/[0.03] px-page py-2 text-[11px] font-semibold text-subtitle md:grid">
-                <span>User</span><span>Pertama masuk</span><span>Terakhir aktif</span><span className="text-right">Login</span>
+              <div className="hidden grid-cols-[minmax(210px,1.4fr)_minmax(135px,1fr)_minmax(135px,1fr)_minmax(135px,1fr)_70px] gap-4 border-b border-hairline bg-tint/[0.03] px-page py-2 text-[11px] font-semibold text-subtitle md:grid">
+                <span>User</span><span>Pertama masuk</span><span>Terakhir aktif</span><span>Tambah transaksi</span><span className="text-right">Login</span>
               </div>
               {data?.users?.length ? (
                 <div className="divide-hairline">
                   {data.users.map((entry) => (
-                    <article key={entry.id} className="grid gap-3 px-page py-3 md:grid-cols-[minmax(220px,1.5fr)_minmax(150px,1fr)_minmax(150px,1fr)_90px] md:items-center md:gap-4">
+                    <article key={entry.id} className="grid gap-3 px-page py-3 md:grid-cols-[minmax(210px,1.4fr)_minmax(135px,1fr)_minmax(135px,1fr)_minmax(135px,1fr)_70px] md:items-center md:gap-4">
                       <UserIdentity user={entry} />
                       <dl className="grid grid-cols-2 gap-3 text-caption md:contents">
                         <div><dt className="text-[10px] text-subtitle md:hidden">Pertama masuk</dt><dd>{dateTime(entry.firstSeenAt)}</dd></div>
                         <div><dt className="text-[10px] text-subtitle md:hidden">Terakhir aktif</dt><dd>{dateTime(entry.lastSeenAt)}</dd></div>
+                        <div className="col-span-2 md:col-span-1"><dt className="text-[10px] text-subtitle md:hidden">Terakhir tambah transaksi</dt><dd>{dateTime(entry.lastTransactionAt)}</dd></div>
                       </dl>
                       <div className="text-caption md:text-right">
                         <span className="text-subtitle md:hidden">Login: </span>

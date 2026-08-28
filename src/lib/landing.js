@@ -57,7 +57,7 @@ export const LANDING = {
   ],
 
   privacyNote:
-    'Hartaku tidak menyimpan catatan keuanganmu di server mana pun. Profil dasar Google dan waktu aktivitas disimpan untuk mengelola pengguna layanan; tidak ada iklan atau pelacakan lintas situs. Akses aplikasi bisa kamu cabut kapan saja lewat pengaturan izin akun Google.',
+    'Hartaku tidak menyimpan isi catatan keuanganmu di server mana pun. Profil dasar Google, waktu aktivitas, dan waktu terakhir menambahkan transaksi disimpan untuk mengelola pengguna layanan; tidak ada iklan atau pelacakan lintas situs. Akses aplikasi bisa kamu cabut kapan saja lewat pengaturan izin akun Google.',
 
   links: [
     { href: '/privacy', label: 'Kebijakan Privasi' },
