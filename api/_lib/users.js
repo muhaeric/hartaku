@@ -227,3 +227,28 @@ export async function getUserDashboard ({ search = '', page = 1, limit = 25 } = 
     }
   }
 }
+
+export async function getUserById (googleSub) {
+  const id = String(googleSub || '').trim()
+  if (!id) return null
+
+  await ensureSchema()
+  const rows = await database().query(
+    `
+      SELECT google_sub, email, name, picture_url
+      FROM app_users
+      WHERE google_sub = $1
+      LIMIT 1
+    `,
+    [id]
+  )
+  const user = rows[0]
+  if (!user) return null
+
+  return {
+    sub: user.google_sub,
+    email: user.email,
+    name: user.name,
+    picture: user.picture_url
+  }
+}

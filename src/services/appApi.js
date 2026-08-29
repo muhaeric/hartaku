@@ -32,7 +32,8 @@ export const authApi = {
 
 export const adminApi = {
   users: ({ search = '', page = 1, limit = 25 } = {}) =>
-    post('/api/admin/users', { search, page, limit })
+    post('/api/admin/users', { search, page, limit }),
+  sendWelcome: (userId) => post('/api/admin/send-welcome', { userId })
 }
 
 export const activityApi = {
