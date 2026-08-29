@@ -267,6 +267,7 @@ function InstallAppSection () {
   const [showHelp, setShowHelp] = useState(false)
   const [installing, setInstalling] = useState(false)
   const installed = status === 'installed'
+  const checking = status === 'checking'
 
   const handleInstall = async () => {
     if (status !== 'available') {
@@ -296,17 +297,23 @@ function InstallAppSection () {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-body font-medium">
-            {installed ? 'Hartaku sudah terpasang' : 'Buka Hartaku seperti aplikasi biasa'}
+            {checking
+              ? 'Memeriksa status instalasi…'
+              : installed
+                ? 'Hartaku sudah terpasang'
+                : 'Buka Hartaku seperti aplikasi biasa'}
           </p>
           <p className="text-caption text-subtitle">
-            {installed
+            {checking
+              ? 'Status aplikasi sedang diperiksa pada perangkat ini.'
+              : installed
               ? 'Aplikasi sudah bisa dibuka dari layar utama perangkat ini.'
               : 'Tambahkan ikon ke layar utama agar lebih cepat dibuka dan tampil tanpa bilah browser.'}
           </p>
         </div>
       </div>
 
-      {!installed && (
+      {!installed && !checking && (
         <Button
           className="w-full justify-center sm:w-auto"
           onClick={handleInstall}

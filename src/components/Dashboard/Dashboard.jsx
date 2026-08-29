@@ -29,6 +29,7 @@ import SummaryCards from './SummaryCards.jsx'
 import TagSpending from './TagSpending.jsx'
 import TopExpenses from './TopExpenses.jsx'
 import BudgetSummary from './BudgetSummary.jsx'
+import InstallAppBanner from './InstallAppBanner.jsx'
 import SnapshotTeaser from '../Snapshot/SnapshotTeaser.jsx'
 
 export default function Dashboard () {
@@ -150,6 +151,8 @@ export default function Dashboard () {
 
   return (
     <>
+      <InstallAppBanner />
+
       <SnapshotTeaser />
 
       <NetWorthCard worth={worth}>

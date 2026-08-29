@@ -3,6 +3,7 @@
   "short_name": "Hartaku",
   "description": "Catat pemasukan, pengeluaran, dan investasi. Datanya tersimpan di Google Spreadsheet milikmu sendiri.",
   "lang": "id",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,6 +11,13 @@
   "background_color": "#f6f7fb",
   "theme_color": "#4361ee",
   "categories": ["finance", "productivity"],
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "/manifest.webmanifest",
+      "id": "https://www.hartaku.web.id/"
+    }
+  ],
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
