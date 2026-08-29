@@ -36,7 +36,8 @@ test('welcome email escapes profile text before rendering HTML', () => {
   assert.match(email.html, /&lt;script&gt;/)
   assert.doesNotMatch(email.html, /<script>/)
   assert.match(email.text, /https:\/\/hartaku\.example/)
-  assert.match(email.html, />Hubungi tim kami<\/a>/)
+  assert.match(email.html, />Kritik dan saran<\/a>/)
+  assert.match(email.text, /Kritik dan saran:/)
   assert.ok(email.text.includes(TEAM_CONTACT_URL))
 })
 
