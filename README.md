@@ -53,12 +53,14 @@ SESSION_SECRET=<hasil perintah di bawah>
 ADMIN_EMAILS=email-admin@gmail.com
 DATABASE_URL=postgresql://...
 RESEND_API_KEY=re_xxx
-EMAIL_FROM=Hartaku <halo@domain-yang-sudah-diverifikasi.com>
+RESEND_EMAIL_DOMAIN=domain-yang-sudah-diverifikasi.com
+# Opsional: EMAIL_FROM=Hartaku <halo@domain-yang-sudah-diverifikasi.com>
 ```
 
-`DATABASE_URL` dapat berasal dari database Neon gratis. `RESEND_API_KEY` dan `EMAIL_FROM`
-dipakai untuk email selamat datang serta pemberitahuan user baru ke seluruh alamat pada
-`ADMIN_EMAILS`; domain pengirim harus sudah diverifikasi di Resend. Tanpa konfigurasi registry
+`DATABASE_URL` dapat berasal dari database Neon gratis. `RESEND_API_KEY` dan
+`RESEND_EMAIL_DOMAIN` dipakai untuk email selamat datang serta pemberitahuan user baru ke
+seluruh alamat pada `ADMIN_EMAILS`; domain pengirim harus sudah diverifikasi di Resend.
+`EMAIL_FROM` boleh diisi untuk mengganti nama/alamat pengirim default. Tanpa konfigurasi registry
 atau email, login tetap berfungsi untuk pengembangan fitur keuangan, tetapi pencatatan user,
 `/admin`, atau email terkait tidak tersedia.
 
@@ -92,7 +94,7 @@ vercel
 
 Lalu di dashboard Vercel → **Settings → Environment Variables**, isi `GOOGLE_CLIENT_ID`,
 `GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `ADMIN_EMAILS`, `DATABASE_URL`, `RESEND_API_KEY`, dan
-`EMAIL_FROM`. Untuk database,
+`RESEND_EMAIL_DOMAIN`. Untuk database,
 pasang integrasi **Neon** dari Vercel Marketplace dan hubungkan ke project; connection string
 akan tersedia sebagai `DATABASE_URL`. Isi `ADMIN_EMAILS` dengan email Google admin (pisahkan
 dengan koma jika lebih dari satu). Terakhir, tambahkan URL produksi ke **Authorized
