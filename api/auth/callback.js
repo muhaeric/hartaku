@@ -9,6 +9,7 @@ import {
 } from '../_lib/google.js'
 import { requireEnv, requireMethod, requireSameOrigin, redirectUri } from '../_lib/http.js'
 import { isAdminUser } from '../_lib/admin.js'
+import { sendNewUserEmailsSafely } from '../_lib/email.js'
 import {
   OAUTH_COOKIE,
   SESSION_COOKIE,
@@ -67,7 +68,11 @@ export default async function handler (req, res) {
   }
 
   const user = toUser(decodeIdToken(tokens.id_token))
-  await recordUserSafely(user, 'sign_in')
+  const registry = await recordUserSafely(user, 'sign_in')
+  if (registry.isNew) {
+    const appUrl = new URL(redirectUri(req)).origin
+    await sendNewUserEmailsSafely(user, { appUrl })
+  }
   setCookie(
     req,
     res,
