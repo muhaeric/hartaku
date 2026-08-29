@@ -44,7 +44,7 @@ function actionLinks (appUrl) {
   return `
     <p style="margin:24px 0 0">
       ${appButton}
-      <a href="${escapeHtml(TEAM_CONTACT_URL)}" style="display:inline-block;margin:0 0 8px;padding:11px 17px;border:1px solid #d1d5db;border-radius:12px;background:#fff;color:#374151;text-decoration:none;font-weight:600">Hubungi tim kami</a>
+      <a href="${escapeHtml(TEAM_CONTACT_URL)}" style="display:inline-block;margin:0 0 8px;padding:11px 17px;border:1px solid #d1d5db;border-radius:12px;background:#fff;color:#374151;text-decoration:none;font-weight:600">Kritik dan saran</a>
     </p>
   `
 }
@@ -61,7 +61,7 @@ export function welcomeEmail (user, appUrl) {
       'Catatan keuanganmu tetap tersimpan di Google Spreadsheet milikmu sendiri.',
       '',
       appUrl ? `Buka Hartaku: ${appUrl}` : '',
-      `Hubungi tim kami: ${TEAM_CONTACT_URL}`,
+      `Kritik dan saran: ${TEAM_CONTACT_URL}`,
       '',
       'Salam,',
       'Hartaku'
