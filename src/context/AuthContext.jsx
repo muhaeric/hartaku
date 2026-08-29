@@ -43,9 +43,18 @@ export function AuthProvider ({ children }) {
         return session.accessToken
       })
       .catch((err) => {
-        clearSession()
-        // "No session yet" is the normal first-visit case and stays silent;
-        // a rejected permission needs to be explained on the login screen.
+        const rejected = err.status === 401 || err.status === 403
+
+        if (rejected) {
+          clearSession()
+        } else {
+          // A temporary refresh failure is not a logout. Keep an already-open
+          // app usable with its current token/cache, and show a recovery state
+          // instead of the login screen when restoring a freshly opened PWA.
+          setStatus((current) => (current === 'authenticated' ? current : 'recovering'))
+        }
+
+        // "No session yet" is the normal first-visit case and stays silent.
         if (err.code && err.code !== 'no_session') setError(err.message)
         throw err
       })
@@ -77,9 +86,26 @@ export function AuthProvider ({ children }) {
   useMemo(() => setAccessTokenProvider(getAccessToken), [getAccessToken])
 
   useEffect(() => {
-    refreshSession().catch(() => {
-      // No session yet - the login screen handles it.
-    })
+    const restore = () => {
+      refreshSession().catch(() => {
+        // A rejected session goes to login; a temporary failure remains on the
+        // recovery screen and can be retried without starting OAuth again.
+      })
+    }
+    const restoreWhenVisible = () => {
+      if (document.visibilityState === 'visible') restore()
+    }
+
+    restore()
+    window.addEventListener('online', restore)
+    window.addEventListener('pageshow', restore)
+    document.addEventListener('visibilitychange', restoreWhenVisible)
+
+    return () => {
+      window.removeEventListener('online', restore)
+      window.removeEventListener('pageshow', restore)
+      document.removeEventListener('visibilitychange', restoreWhenVisible)
+    }
   }, [refreshSession])
 
   const signIn = useCallback(async ({ returnTo } = {}) => {
@@ -128,9 +154,10 @@ export function AuthProvider ({ children }) {
       signIn,
       completeSignIn,
       signOut,
+      retrySession: refreshSession,
       getAccessToken
     }),
-    [status, user, isAdmin, error, signIn, completeSignIn, signOut, getAccessToken]
+    [status, user, isAdmin, error, signIn, completeSignIn, signOut, refreshSession, getAccessToken]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

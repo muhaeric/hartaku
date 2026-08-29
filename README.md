@@ -122,7 +122,7 @@ Browser                     api/ (serverless)                Google
   |                              |  <---- refresh + access ---- |
   |                              |  refresh token disimpan      |
   |                              |  terenkripsi (AES-256-GCM)   |
-  |                              |  di cookie httpOnly 7 hari   |
+  |                              |  di cookie httpOnly 30 hari  |
   |<-- { user, accessToken } ----|                              |
   |                                                             |
   |  panggil Sheets API langsung dengan access token ---------> |
@@ -132,8 +132,12 @@ Browser                     api/ (serverless)                Google
   `SameSite=Strict`, `Secure` (di produksi), terenkripsi dengan `SESSION_SECRET`.
 - **Access token hanya di memori React**, tidak pernah masuk `localStorage`. Diperbarui otomatis
   saat mau kedaluwarsa atau saat Google membalas `401`.
-- Masa berlaku sesi 7 hari dan **geser** setiap aplikasi dibuka; kalau tidak dibuka 7 hari,
-  sesinya mati (`invalid_grant` → cookie dihapus, balik ke layar login).
+- Masa berlaku cookie sesi 30 hari dan **geser** setiap aplikasi dibuka; kalau tidak dibuka 30
+  hari, browser menghapus cookie. Gangguan refresh sementara tidak menghapus sesi; hanya
+  `invalid_grant` dari Google yang mengembalikan pengguna ke layar login.
+- Untuk OAuth app bertipe External, ubah publishing status Google OAuth dari **Testing** ke
+  **In production**. Dalam mode Testing, refresh token untuk scope Drive tetap kedaluwarsa setelah
+  7 hari, terlepas dari masa berlaku cookie aplikasi.
 - CSRF: semua endpoint hanya menerima `POST` dan menolak `Origin` lintas situs.
 - Scope OAuth cuma `drive.file` — aplikasi **hanya bisa melihat file yang dibuatnya sendiri**,
   bukan seluruh isi Google Drive.

@@ -31,14 +31,20 @@ export default async function handler (req, res) {
   try {
     tokens = await refreshAccessToken(session.refreshToken)
   } catch (err) {
-    // invalid_grant means the user revoked access or the token expired for good.
-    clearCookie(req, res, SESSION_COOKIE)
-    return res.status(401).json({
-      error: err.code || 'refresh_failed',
-      message:
-        err.code === 'invalid_grant'
-          ? 'Sesi kamu sudah tidak berlaku. Silakan login lagi.'
-          : err.message
+    // Only invalid_grant proves that this particular refresh token is dead.
+    // Network failures, rate limits, and temporary Google outages must not
+    // destroy an otherwise valid session (especially when an iOS PWA resumes).
+    if (err.code === 'invalid_grant') {
+      clearCookie(req, res, SESSION_COOKIE)
+      return res.status(401).json({
+        error: err.code,
+        message: 'Sesi kamu sudah tidak berlaku. Silakan login lagi.'
+      })
+    }
+
+    return res.status(503).json({
+      error: 'refresh_unavailable',
+      message: 'Sesi belum bisa dipulihkan karena layanan Google sedang bermasalah. Coba lagi sebentar.'
     })
   }
 

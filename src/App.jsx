@@ -54,11 +54,13 @@ function PreviewLayout () {
 }
 
 function AdminRoute () {
-  const { status, isAdmin, signIn, signOut } = useAuth()
+  const { status, isAdmin, signIn, signOut, error, retrySession } = useAuth()
 
   if (status === 'loading') {
     return <main className="flex min-h-dvh items-center justify-center"><LoadingBlock label="Memeriksa akses admin…" /></main>
   }
+
+  if (status === 'recovering') return <SessionRecovery error={error} retry={retrySession} />
 
   if (status === 'anonymous') {
     return (
@@ -98,7 +100,7 @@ function AdminRoute () {
  * away and never waits on an auth call it does not need.
  */
 function AuthenticatedApp () {
-  const { status } = useAuth()
+  const { status, error, retrySession } = useAuth()
   const { isLocal, migrating, startMigration } = useStorage()
 
   // Consent was declined or the tab came back without a session: drop the
@@ -113,6 +115,10 @@ function AuthenticatedApp () {
         <LoadingBlock label="Menyiapkan aplikasi…" />
       </div>
     )
+  }
+
+  if (status === 'recovering' && (!isLocal || migrating)) {
+    return <SessionRecovery error={error} retry={retrySession} />
   }
 
   if (!isLocal && status === 'anonymous') return <LoginScreen />
@@ -137,5 +143,22 @@ function AuthenticatedApp () {
         </Route>
       </Routes>
     </DataProvider>
+  )
+}
+
+function SessionRecovery ({ error, retry }) {
+  return (
+    <main className="flex min-h-dvh items-center justify-center px-page">
+      <div className="card w-full max-w-sm text-center">
+        <span className="text-4xl" aria-hidden="true">📶</span>
+        <h1 className="mt-3 text-page-title font-bold">Menyambungkan kembali sesi</h1>
+        <p className="mt-2 text-body text-subtitle">
+          {error || 'Sesi kamu masih tersimpan, tetapi belum bisa diperiksa saat ini.'}
+        </p>
+        <Button className="mt-5 w-full justify-center" onClick={() => retry().catch(() => {})}>
+          Coba lagi
+        </Button>
+      </div>
+    </main>
   )
 }
