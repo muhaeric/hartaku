@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
 import { adminApi } from '../../services/appApi.js'
 import Button from '../ui/Button.jsx'
 import { Card } from '../ui/Card.jsx'
@@ -96,12 +97,14 @@ function UserIdentity ({ user }) {
 
 export default function AdminPage () {
   const { user, signOut } = useAuth()
+  const toast = useToast()
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [sendingWelcomeTo, setSendingWelcomeTo] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -123,6 +126,18 @@ export default function AdminPage () {
     event.preventDefault()
     setPage(1)
     setSearch(query.trim())
+  }
+
+  const sendWelcome = async (entry) => {
+    setSendingWelcomeTo(entry.id)
+    try {
+      const result = await adminApi.sendWelcome(entry.id)
+      toast.success(result.message || `Email sambutan dikirim ke ${entry.email}.`)
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setSendingWelcomeTo(null)
+    }
   }
 
   return (
@@ -186,13 +201,13 @@ export default function AdminPage () {
             </div>
 
             <div className={`card-flush mt-3 overflow-hidden ${loading ? 'opacity-60' : ''}`}>
-              <div className="hidden grid-cols-[minmax(210px,1.4fr)_minmax(135px,1fr)_minmax(135px,1fr)_minmax(135px,1fr)_70px] gap-4 border-b border-hairline bg-tint/[0.03] px-page py-2 text-[11px] font-semibold text-subtitle md:grid">
-                <span>User</span><span>Pertama masuk</span><span>Terakhir aktif</span><span>Tambah transaksi</span><span className="text-right">Login</span>
+              <div className="hidden grid-cols-[minmax(210px,1.4fr)_minmax(125px,1fr)_minmax(125px,1fr)_minmax(125px,1fr)_60px_145px] gap-4 border-b border-hairline bg-tint/[0.03] px-page py-2 text-[11px] font-semibold text-subtitle md:grid">
+                <span>User</span><span>Pertama masuk</span><span>Terakhir aktif</span><span>Tambah transaksi</span><span className="text-right">Login</span><span className="text-right">Aksi</span>
               </div>
               {data?.users?.length ? (
                 <div className="divide-hairline">
                   {data.users.map((entry) => (
-                    <article key={entry.id} className="grid gap-3 px-page py-3 md:grid-cols-[minmax(210px,1.4fr)_minmax(135px,1fr)_minmax(135px,1fr)_minmax(135px,1fr)_70px] md:items-center md:gap-4">
+                    <article key={entry.id} className="grid gap-3 px-page py-3 md:grid-cols-[minmax(210px,1.4fr)_minmax(125px,1fr)_minmax(125px,1fr)_minmax(125px,1fr)_60px_145px] md:items-center md:gap-4">
                       <UserIdentity user={entry} />
                       <dl className="grid grid-cols-2 gap-3 text-caption md:contents">
                         <div><dt className="text-[10px] text-subtitle md:hidden">Pertama masuk</dt><dd>{dateTime(entry.firstSeenAt)}</dd></div>
@@ -203,6 +218,16 @@ export default function AdminPage () {
                         <span className="text-subtitle md:hidden">Login: </span>
                         <span className="amount font-semibold">{entry.signInCount}</span>
                       </div>
+                      <Button
+                        className="justify-center md:justify-self-end"
+                        size="xs"
+                        variant="secondary"
+                        loading={sendingWelcomeTo === entry.id}
+                        disabled={Boolean(sendingWelcomeTo)}
+                        onClick={() => sendWelcome(entry)}
+                      >
+                        Kirim welcoming
+                      </Button>
                     </article>
                   ))}
                 </div>

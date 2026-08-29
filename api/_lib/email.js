@@ -129,6 +129,28 @@ async function sendEmail (message, idempotencyKey, from) {
     const detail = await response.text()
     throw new Error(`Resend ${response.status}: ${detail.slice(0, 500)}`)
   }
+
+  return response.json().catch(() => ({}))
+}
+
+export async function sendWelcomeEmail (user, { appUrl, idempotencyKey } = {}) {
+  const from = emailSenderAddress()
+  if (!process.env.RESEND_API_KEY || !from) {
+    const error = new Error('Resend belum dikonfigurasi. Periksa API key dan domain/alamat pengirim.')
+    error.code = 'email_not_configured'
+    throw error
+  }
+  if (!user?.sub || !user?.email) {
+    const error = new Error('Data user untuk email sambutan tidak lengkap.')
+    error.code = 'invalid_email_recipient'
+    throw error
+  }
+
+  return sendEmail(
+    welcomeEmail(user, appUrl),
+    idempotencyKey || `welcome-user-${user.sub}`,
+    from
+  )
 }
 
 /**
