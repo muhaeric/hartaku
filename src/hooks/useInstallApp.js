@@ -1,6 +1,9 @@
 import { useCallback, useSyncExternalStore } from 'react'
 
 let installPrompt = null
+let relatedAppInstalled = false
+let relatedAppsChecking =
+  typeof navigator !== 'undefined' && typeof navigator.getInstalledRelatedApps === 'function'
 const listeners = new Set()
 
 function isStandalone () {
@@ -28,11 +31,30 @@ function emitChange () {
   listeners.forEach((listener) => listener())
 }
 
-function snapshot () {
-  if (isStandalone()) return 'installed'
-  if (installPrompt) return 'available'
-  if (isIos()) return isSafari() ? 'ios-safari' : 'ios-other'
+export function resolveInstallStatus ({
+  standalone = false,
+  relatedInstalled = false,
+  checking = false,
+  promptAvailable = false,
+  ios = false,
+  safari = false
+} = {}) {
+  if (standalone || relatedInstalled) return 'installed'
+  if (checking) return 'checking'
+  if (promptAvailable) return 'available'
+  if (ios) return safari ? 'ios-safari' : 'ios-other'
   return 'manual'
+}
+
+function snapshot () {
+  return resolveInstallStatus({
+    standalone: isStandalone(),
+    relatedInstalled: relatedAppInstalled,
+    checking: relatedAppsChecking,
+    promptAvailable: Boolean(installPrompt),
+    ios: isIos(),
+    safari: isSafari()
+  })
 }
 
 function subscribe (listener) {
@@ -41,6 +63,18 @@ function subscribe (listener) {
 }
 
 if (typeof window !== 'undefined') {
+  if (relatedAppsChecking) {
+    navigator.getInstalledRelatedApps()
+      .then((apps) => {
+        relatedAppInstalled = apps.some((app) => app.platform === 'webapp')
+      })
+      .catch(() => {})
+      .finally(() => {
+        relatedAppsChecking = false
+        emitChange()
+      })
+  }
+
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault()
     installPrompt = event
@@ -49,6 +83,8 @@ if (typeof window !== 'undefined') {
 
   window.addEventListener('appinstalled', () => {
     installPrompt = null
+    relatedAppInstalled = true
+    relatedAppsChecking = false
     emitChange()
   })
 
@@ -66,7 +102,13 @@ export function useInstallApp () {
     emitChange()
 
     const result = await prompt.prompt()
-    return result || prompt.userChoice || { outcome: 'dismissed' }
+    const choice = result || await prompt.userChoice || { outcome: 'dismissed' }
+    if (choice.outcome === 'accepted') {
+      relatedAppInstalled = true
+      relatedAppsChecking = false
+      emitChange()
+    }
+    return choice
   }, [])
 
   return { status, requestInstall }
