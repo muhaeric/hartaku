@@ -5,14 +5,18 @@ import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useStorage } from '../../context/StorageContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+import { useInstallApp } from '../../hooks/useInstallApp.js'
 import { CURRENCIES, DATE_FORMATS, THEMES, isGlassTheme } from '../../lib/constants.js'
 import { extractSpreadsheetId } from '../../lib/spreadsheetId.js'
 import { sortOptions } from '../../lib/sortOptions.js'
 import { fileToThemePhoto } from '../../lib/themePhoto.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
-import { ExternalIcon, ScanIcon } from '../ui/icons.jsx'
+import { ExternalIcon, InstallIcon, MessageIcon, ScanIcon } from '../ui/icons.jsx'
 import LocalDataSection from './LocalDataSection.jsx'
+
+const FEEDBACK_URL =
+  'https://wa.me/6283141469381?text=Hai%20tim%20hartaku%20saya%20ingin%20menyampaikan%20request%20%2F%20feedback'
 
 export default function SettingsPage () {
   const toast = useToast()
@@ -193,7 +197,18 @@ export default function SettingsPage () {
         </Link>
       </Section>
 
+      <InstallAppSection />
+
       <Section title="Tentang">
+        <a
+          href={FEEDBACK_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-control bg-brand px-4 text-body font-semibold text-brand-fg transition hover:bg-brand-hover active:bg-brand-active sm:w-auto"
+        >
+          <MessageIcon className="h-5 w-5" />
+          Sampaikan saran
+        </a>
         <div className="flex flex-wrap gap-x-4 gap-y-1">
           <a className="text-body font-medium text-brand" href="/privacy">
             Kebijakan Privasi
@@ -243,6 +258,86 @@ export default function SettingsPage () {
         </div>
       </Section>
     </>
+  )
+}
+
+function InstallAppSection () {
+  const toast = useToast()
+  const { status, requestInstall } = useInstallApp()
+  const [showHelp, setShowHelp] = useState(false)
+  const [installing, setInstalling] = useState(false)
+  const installed = status === 'installed'
+
+  const handleInstall = async () => {
+    if (status !== 'available') {
+      setShowHelp(true)
+      return
+    }
+
+    setInstalling(true)
+    try {
+      const choice = await requestInstall()
+      if (choice.outcome === 'accepted') {
+        toast.success('Hartaku sedang ditambahkan ke perangkat.')
+      }
+    } catch {
+      setShowHelp(true)
+      toast.error('Dialog instalasi tidak bisa dibuka. Ikuti petunjuk manual di bawah.')
+    } finally {
+      setInstalling(false)
+    }
+  }
+
+  return (
+    <Section title="Aplikasi di perangkat">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-brand-soft text-brand">
+          <InstallIcon className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-body font-medium">
+            {installed ? 'Hartaku sudah terpasang' : 'Buka Hartaku seperti aplikasi biasa'}
+          </p>
+          <p className="text-caption text-subtitle">
+            {installed
+              ? 'Aplikasi sudah bisa dibuka dari layar utama perangkat ini.'
+              : 'Tambahkan ikon ke layar utama agar lebih cepat dibuka dan tampil tanpa bilah browser.'}
+          </p>
+        </div>
+      </div>
+
+      {!installed && (
+        <Button
+          className="w-full justify-center sm:w-auto"
+          onClick={handleInstall}
+          loading={installing}
+        >
+          <InstallIcon className="h-5 w-5" />
+          Tambah ke layar utama
+        </Button>
+      )}
+
+      {showHelp && status === 'ios-safari' && (
+        <p className="hint rounded-control bg-tint/[0.05] p-3">
+          Di Safari, ketuk tombol <strong>Bagikan</strong>, geser pilihan ke bawah, lalu pilih{' '}
+          <strong>Tambahkan ke Layar Utama</strong>.
+        </p>
+      )}
+
+      {showHelp && status === 'ios-other' && (
+        <p className="hint rounded-control bg-tint/[0.05] p-3">
+          Buka halaman ini di <strong>Safari</strong>, ketuk <strong>Bagikan</strong>, lalu pilih{' '}
+          <strong>Tambahkan ke Layar Utama</strong>.
+        </p>
+      )}
+
+      {showHelp && status === 'manual' && (
+        <p className="hint rounded-control bg-tint/[0.05] p-3">
+          Buka menu browser (⋮ atau …), lalu pilih <strong>Instal aplikasi</strong> atau{' '}
+          <strong>Tambahkan ke layar utama</strong>. Pilihan ini hanya tersedia melalui HTTPS.
+        </p>
+      )}
+    </Section>
   )
 }
 

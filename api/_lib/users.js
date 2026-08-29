@@ -69,25 +69,20 @@ async function ensureSchema () {
  * use the safe wrapper below.
  */
 export async function recordUser (user, event = 'session') {
-  if (!user?.sub || !user?.email) return
+  if (!user?.sub || !user?.email) return { isNew: false }
 
   await ensureSchema()
   const sql = database()
   const signInIncrement = event === 'sign_in' ? 1 : 0
   const sessionIncrement = event === 'session' ? 1 : 0
 
-  await sql.query(
+  const inserted = await sql.query(
     `
       INSERT INTO app_users (
         google_sub, email, name, picture_url, sign_in_count, session_count
       ) VALUES ($1, $2, $3, $4, $5, $6)
-      ON CONFLICT (google_sub) DO UPDATE SET
-        email = EXCLUDED.email,
-        name = EXCLUDED.name,
-        picture_url = EXCLUDED.picture_url,
-        last_seen_at = NOW(),
-        sign_in_count = app_users.sign_in_count + EXCLUDED.sign_in_count,
-        session_count = app_users.session_count + EXCLUDED.session_count
+      ON CONFLICT (google_sub) DO NOTHING
+      RETURNING google_sub
     `,
     [
       user.sub,
@@ -99,6 +94,30 @@ export async function recordUser (user, event = 'session') {
     ]
   )
 
+  const isNew = inserted.length > 0
+  if (!isNew) {
+    await sql.query(
+      `
+      UPDATE app_users SET
+        email = $2,
+        name = $3,
+        picture_url = $4,
+        last_seen_at = NOW(),
+        sign_in_count = sign_in_count + $5,
+        session_count = session_count + $6
+      WHERE google_sub = $1
+    `,
+      [
+        user.sub,
+        user.email,
+        user.name || user.email,
+        user.picture || null,
+        signInIncrement,
+        sessionIncrement
+      ]
+    )
+  }
+
   await sql.query(
     `
       INSERT INTO app_user_daily_activity (google_sub, activity_date)
@@ -109,17 +128,20 @@ export async function recordUser (user, event = 'session') {
     `,
     [user.sub]
   )
+
+  return { isNew }
 }
 
 export async function recordUserSafely (user, event) {
-  if (!process.env.DATABASE_URL) return
+  if (!process.env.DATABASE_URL) return { isNew: false }
 
   try {
-    await recordUser(user, event)
+    return await recordUser(user, event)
   } catch (error) {
     // User tracking is operational metadata, never a reason to lock someone
     // out of their own spreadsheet during a temporary database outage.
     console.error('[user-registry] failed to record user:', error)
+    return { isNew: false }
   }
 }
 

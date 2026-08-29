@@ -52,11 +52,15 @@ GOOGLE_CLIENT_SECRET=xxx
 SESSION_SECRET=<hasil perintah di bawah>
 ADMIN_EMAILS=email-admin@gmail.com
 DATABASE_URL=postgresql://...
+RESEND_API_KEY=re_xxx
+EMAIL_FROM=Hartaku <halo@domain-yang-sudah-diverifikasi.com>
 ```
 
-`DATABASE_URL` dapat berasal dari database Neon gratis. Tanpa dua variabel terakhir, login
-tetap berfungsi untuk pengembangan fitur keuangan, tetapi pencatatan user dan `/admin` tidak
-tersedia.
+`DATABASE_URL` dapat berasal dari database Neon gratis. `RESEND_API_KEY` dan `EMAIL_FROM`
+dipakai untuk email selamat datang serta pemberitahuan user baru ke seluruh alamat pada
+`ADMIN_EMAILS`; domain pengirim harus sudah diverifikasi di Resend. Tanpa konfigurasi registry
+atau email, login tetap berfungsi untuk pengembangan fitur keuangan, tetapi pencatatan user,
+`/admin`, atau email terkait tidak tersedia.
 
 Generate `SESSION_SECRET`:
 
@@ -87,7 +91,8 @@ vercel
 ```
 
 Lalu di dashboard Vercel → **Settings → Environment Variables**, isi `GOOGLE_CLIENT_ID`,
-`GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `ADMIN_EMAILS`, dan `DATABASE_URL`. Untuk database,
+`GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `ADMIN_EMAILS`, `DATABASE_URL`, `RESEND_API_KEY`, dan
+`EMAIL_FROM`. Untuk database,
 pasang integrasi **Neon** dari Vercel Marketplace dan hubungkan ke project; connection string
 akan tersedia sebagai `DATABASE_URL`. Isi `ADMIN_EMAILS` dengan email Google admin (pisahkan
 dengan koma jika lebih dari satu). Terakhir, tambahkan URL produksi ke **Authorized
@@ -473,7 +478,9 @@ tampilan harian.
 ## PWA
 
 `manifest.webmanifest` + ikon 192/512/maskable, `display: standalone`, dan `theme-color` terpisah
-untuk mode terang dan gelap. Bisa di-install dari Chrome Android dan Safari iOS.
+untuk mode terang dan gelap. Bisa di-install dari Chrome Android dan Safari iOS; tombol
+**Tambah ke layar utama** tersedia di Pengaturan, dengan petunjuk manual ketika browser tidak
+menyediakan dialog instalasi.
 
 Belum ada service worker, jadi **belum bisa dipakai offline** — aplikasi ini memang selalu butuh
 jaringan untuk membaca dan menulis Google Sheets.

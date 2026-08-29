@@ -112,6 +112,21 @@ export const ExternalIcon = (props) => (
   </Icon>
 )
 
+export const InstallIcon = (props) => (
+  <Icon {...props}>
+    <rect x="5" y="3" width="14" height="18" rx="2.5" />
+    <path d="M9 11.5h6M12 8.5v6" />
+    <path d="M10.5 18h3" />
+  </Icon>
+)
+
+export const MessageIcon = (props) => (
+  <Icon {...props}>
+    <path d="M21 11.5a8 8 0 0 1-8.5 8 9 9 0 0 1-3.8-.9L3 20l1.5-4.8A8.5 8.5 0 1 1 21 11.5Z" />
+    <path d="M8 11.5h.01M12 11.5h.01M16 11.5h.01" />
+  </Icon>
+)
+
 export const MoreIcon = (props) => (
   <Icon {...props}>
     <circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none" />
