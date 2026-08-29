@@ -1,6 +1,8 @@
 import { adminEmails } from './admin.js'
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
+export const TEAM_CONTACT_URL =
+  'https://wa.me/6283141469381?text=Hai%20tim%20hartaku%20saya%20ingin%20menyampaikan%20request%20%2F%20feedback'
 
 function escapeHtml (value) {
   return String(value || '')
@@ -20,10 +22,31 @@ function headerText (value) {
   return String(value || '').replace(/[\r\n]+/g, ' ').trim()
 }
 
-function appLink (appUrl) {
-  if (!appUrl) return ''
-  const safeUrl = escapeHtml(appUrl)
-  return `<p style="margin:24px 0 0"><a href="${safeUrl}" style="display:inline-block;padding:12px 18px;border-radius:12px;background:#4361ee;color:#fff;text-decoration:none;font-weight:600">Buka Hartaku</a></p>`
+export function emailSenderAddress () {
+  const explicitSender = String(process.env.EMAIL_FROM || '').trim()
+  if (explicitSender) return explicitSender
+
+  const domain = String(process.env.RESEND_EMAIL_DOMAIN || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '')
+
+  const validDomain = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(domain)
+  return validDomain ? `Hartaku <halo@${domain}>` : ''
+}
+
+function actionLinks (appUrl) {
+  const appButton = appUrl
+    ? `<a href="${escapeHtml(appUrl)}" style="display:inline-block;margin:0 8px 8px 0;padding:12px 18px;border-radius:12px;background:#4361ee;color:#fff;text-decoration:none;font-weight:600">Buka Hartaku</a>`
+    : ''
+
+  return `
+    <p style="margin:24px 0 0">
+      ${appButton}
+      <a href="${escapeHtml(TEAM_CONTACT_URL)}" style="display:inline-block;margin:0 0 8px;padding:11px 17px;border:1px solid #d1d5db;border-radius:12px;background:#fff;color:#374151;text-decoration:none;font-weight:600">Hubungi tim kami</a>
+    </p>
+  `
 }
 
 export function welcomeEmail (user, appUrl) {
@@ -38,6 +61,7 @@ export function welcomeEmail (user, appUrl) {
       'Catatan keuanganmu tetap tersimpan di Google Spreadsheet milikmu sendiri.',
       '',
       appUrl ? `Buka Hartaku: ${appUrl}` : '',
+      `Hubungi tim kami: ${TEAM_CONTACT_URL}`,
       '',
       'Salam,',
       'Hartaku'
@@ -48,7 +72,7 @@ export function welcomeEmail (user, appUrl) {
         <p>Halo ${escapeHtml(greetingName)},</p>
         <p>Kamu sudah bisa mulai mencatat pemasukan, pengeluaran, transfer antar akun, dan investasi emas.</p>
         <p>Catatan keuanganmu tetap tersimpan di <strong>Google Spreadsheet milikmu sendiri</strong>.</p>
-        ${appLink(appUrl)}
+        ${actionLinks(appUrl)}
         <p style="margin-top:28px;color:#6b7280">Salam,<br />Hartaku</p>
       </div>
     `
@@ -86,7 +110,7 @@ export function newUserAdminEmail (user) {
   }
 }
 
-async function sendEmail (message, idempotencyKey) {
+async function sendEmail (message, idempotencyKey, from) {
   const response = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -96,7 +120,7 @@ async function sendEmail (message, idempotencyKey) {
       'User-Agent': 'hartaku/1.0'
     },
     body: JSON.stringify({
-      from: process.env.EMAIL_FROM,
+      from,
       ...message
     })
   })
@@ -112,8 +136,9 @@ async function sendEmail (message, idempotencyKey) {
  * Deterministic idempotency keys also protect against a retried OAuth callback.
  */
 export async function sendNewUserEmailsSafely (user, { appUrl } = {}) {
-  if (!process.env.RESEND_API_KEY || !process.env.EMAIL_FROM) {
-    console.warn('[email] RESEND_API_KEY atau EMAIL_FROM belum dikonfigurasi; email user baru dilewati.')
+  const from = emailSenderAddress()
+  if (!process.env.RESEND_API_KEY || !from) {
+    console.warn('[email] RESEND_API_KEY dan alamat/domain pengirim belum dikonfigurasi; email user baru dilewati.')
     return
   }
 
@@ -135,7 +160,7 @@ export async function sendNewUserEmailsSafely (user, { appUrl } = {}) {
   }
 
   const results = await Promise.allSettled(
-    messages.map(({ message, idempotencyKey }) => sendEmail(message, idempotencyKey))
+    messages.map(({ message, idempotencyKey }) => sendEmail(message, idempotencyKey, from))
   )
 
   results.forEach((result, index) => {
