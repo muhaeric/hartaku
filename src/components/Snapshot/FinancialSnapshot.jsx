@@ -58,6 +58,8 @@ export function FinancialSnapshotView ({ snapshot, month }) {
 
       {snapshot.score !== null && <HealthScore snapshot={snapshot} />}
 
+      {snapshot.wealthStanding && <WealthPercentile standing={snapshot.wealthStanding} />}
+
       {snapshot.spending.length > 0 && (
         <SnapshotSection
           eyebrow="Pola bulan ini"
@@ -193,6 +195,54 @@ function SnapshotSection ({ eyebrow, title, description, children }) {
       </div>
       <Card>{children}</Card>
     </section>
+  )
+}
+
+function WealthPercentile ({ standing }) {
+  const marker = Math.max(1, Math.min(99, standing.percentile))
+
+  return (
+    <SnapshotSection
+      eyebrow="Posisi kekayaan"
+      title="Kekayaanku Dibanding Indonesia"
+      description="Estimasi posisi kekayaan bersih yang tercatat di antara orang dewasa Indonesia."
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[40px] font-extrabold leading-none tracking-[-0.055em] text-brand tabular-nums">{standing.percentileLabel}</p>
+          <p className="mt-2 text-[17px] font-bold tracking-tight">{standing.label}</p>
+          <p className="mt-0.5 text-caption text-subtitle">Termasuk {standing.group} ({standing.range})</p>
+        </div>
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-brand-soft text-xl" aria-hidden="true">◇</span>
+      </div>
+
+      <div className="mt-5">
+        <div className="relative h-5" aria-hidden="true">
+          <div className="absolute inset-x-0 top-1/2 flex h-2.5 -translate-y-1/2 overflow-hidden rounded-full">
+            <span className="h-full w-1/2 bg-[#9aa6bd]" />
+            <span className="h-full w-[40%] bg-brand/65" />
+            <span className="h-full w-[9%] bg-[#d89b28]" />
+            <span className="h-full w-[1%] bg-[#8b5fc7]" />
+          </div>
+          <span
+            className="absolute top-1/2 h-5 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full border border-surface bg-ink shadow-sm"
+            style={{ left: `${marker}%` }}
+          />
+        </div>
+        <div className="relative mt-1 h-3 text-[9px] font-semibold text-subtitle">
+          <span className="absolute left-0">P0</span>
+          <span className="absolute left-1/2 -translate-x-1/2">P50</span>
+          <span className="absolute left-[90%] -translate-x-1/2">P90</span>
+          <span className="absolute right-0">P99+</span>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-[14px] border border-hairline bg-canvas/50 px-3 py-3">
+        <p className="text-[11px] leading-[17px] text-subtitle">
+          Berdasarkan ambang World Inequality Database 2024. Ini kelompok distribusi kekayaan, bukan klasifikasi pendapatan atau pengeluaran BPS. Hasil hanya menghitung aset dan kewajiban yang sudah kamu catat di Hartaku.
+        </p>
+      </div>
+    </SnapshotSection>
   )
 }
 
