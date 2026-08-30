@@ -1,5 +1,6 @@
-import { accountBalances, categoryBreakdown, filterByMonth, netWorthHistory, summarize } from './summary.js'
+import { accountBalances, categoryBreakdown, filterByMonth, netWorth, netWorthHistory, summarize } from './summary.js'
 import { currentMonthKey, shiftMonth, todayIso } from './dates.js'
+import { indonesiaWealthStanding } from './wealthPercentile.js'
 
 const clamp = (value, min = 0, max = 100) => Math.min(max, Math.max(min, value))
 const round = (value) => Math.round(value)
@@ -106,6 +107,16 @@ function assetComposition (accounts, transactions, goldLots, goldPrice) {
   return values
     .map(({ value, ...item }) => ({ ...item, percentage: round((value / total) * 100) }))
     .sort((a, b) => b.percentage - a.percentage)
+}
+
+function recordedNetWorth (accounts, transactions, goldLots, goldPrice) {
+  if (!accounts.length && !goldLots.length) return null
+
+  const balances = accountBalances(accounts, transactions, goldLots)
+  const goldValue = goldLots.reduce((sum, lot) => sum + Number(lot.grams || 0) * Number(goldPrice || 0), 0) ||
+    goldLots.reduce((sum, lot) => sum + Number(lot.cost || 0), 0)
+
+  return netWorth(balances, goldValue).total
 }
 
 function diversification (assets) {
@@ -263,6 +274,7 @@ export function buildFinancialSnapshot ({
   const consistency = recordingConsistency(transactions, month)
   const assets = assetComposition(accounts, transactions, goldLots, goldPrice)
   const diversity = diversification(assets)
+  const wealthStanding = indonesiaWealthStanding(recordedNetWorth(accounts, transactions, goldLots, goldPrice))
 
   const components = [
     { value: rate, weight: 0.3 },
@@ -326,6 +338,7 @@ export function buildFinancialSnapshot ({
     savingTrend: rates,
     progressChange,
     assets,
+    wealthStanding,
     achievements,
     insight: personalInsight({ monthItems, previousItems, rate, previousRate, consistency }),
     share: {

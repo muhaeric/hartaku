@@ -40,6 +40,14 @@ test('snapshot derives visible percentages from actual rows', () => {
     balance: 600
   })
   assert.equal(result.assets.reduce((sum, item) => sum + item.percentage, 0), 100)
+  assert.deepEqual(result.wealthStanding, {
+    percentile: 11,
+    percentileLabel: 'P11',
+    key: 'lower',
+    label: 'Kelompok kekayaan bawah',
+    group: '50% bawah',
+    range: 'P0–P49'
+  })
   assert.equal(result.share.assetTypes, 2)
   assert.equal(result.share.largestAsset.label, 'Kas & Bank')
   assert.equal(result.insight, 'Tingkat menabungmu meningkat 10 poin persentase dibanding bulan lalu.')
@@ -52,6 +60,7 @@ test('snapshot hides unsupported sections instead of inventing values', () => {
   assert.deepEqual(result.spending, [])
   assert.equal(result.spendingSummary, null)
   assert.deepEqual(result.assets, [])
+  assert.equal(result.wealthStanding, null)
   assert.equal(result.insight, null)
 })
 
