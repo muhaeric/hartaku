@@ -50,6 +50,7 @@ Salin `.env.example` menjadi `.env`, lalu isi:
 GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=xxx
 SESSION_SECRET=<hasil perintah di bawah>
+ADMIN_PIN=<pin-admin-yang-kuat>
 ADMIN_EMAILS=email-admin@gmail.com
 DATABASE_URL=postgresql://...
 RESEND_API_KEY=re_xxx
@@ -57,7 +58,8 @@ RESEND_EMAIL_DOMAIN=domain-yang-sudah-diverifikasi.com
 # Opsional: EMAIL_FROM=Hartaku <halo@domain-yang-sudah-diverifikasi.com>
 ```
 
-`DATABASE_URL` dapat berasal dari database Neon gratis. `RESEND_API_KEY` dan
+`ADMIN_PIN` dipakai untuk masuk ke `/admin` tanpa akun Google. Gunakan PIN unik yang panjang dan
+jangan commit nilainya. `DATABASE_URL` dapat berasal dari database Neon gratis. `RESEND_API_KEY` dan
 `RESEND_EMAIL_DOMAIN` dipakai untuk email selamat datang serta pemberitahuan user baru ke
 seluruh alamat pada `ADMIN_EMAILS`; domain pengirim harus sudah diverifikasi di Resend.
 `EMAIL_FROM` boleh diisi untuk mengganti nama/alamat pengirim default. Tanpa konfigurasi registry
@@ -93,14 +95,14 @@ vercel
 ```
 
 Lalu di dashboard Vercel → **Settings → Environment Variables**, isi `GOOGLE_CLIENT_ID`,
-`GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `ADMIN_EMAILS`, `DATABASE_URL`, `RESEND_API_KEY`, dan
+`GOOGLE_CLIENT_SECRET`, `SESSION_SECRET`, `ADMIN_PIN`, `ADMIN_EMAILS`, `DATABASE_URL`, `RESEND_API_KEY`, dan
 `RESEND_EMAIL_DOMAIN`. Untuk database,
 pasang integrasi **Neon** dari Vercel Marketplace dan hubungkan ke project; connection string
-akan tersedia sebagai `DATABASE_URL`. Isi `ADMIN_EMAILS` dengan email Google admin (pisahkan
-dengan koma jika lebih dari satu). Terakhir, tambahkan URL produksi ke **Authorized
+akan tersedia sebagai `DATABASE_URL`. Isi `ADMIN_EMAILS` dengan tujuan notifikasi user baru
+(pisahkan dengan koma jika lebih dari satu). Terakhir, tambahkan URL produksi ke **Authorized
 JavaScript origins** dan `<url>/auth/callback` ke **Authorized redirect URIs** di Google Cloud.
 
-Sesudah deploy, buka `/admin` dan masuk memakai salah satu akun pada `ADMIN_EMAILS`. Tabel
+Sesudah deploy, buka `/admin` dan masukkan `ADMIN_PIN`. Tabel
 `app_users` dan `app_user_daily_activity` dibuat otomatis saat login pertama.
 
 > ⚠️ Repo ini publik. Jangan pernah commit `.env` atau menempelkan Client Secret di kode.
@@ -497,6 +499,7 @@ jaringan untuk membaca dan menulis Google Sheets.
 api/
   _lib/{session,google,http}.js   enkripsi cookie, OAuth helper, guard request
   auth/{start,callback,session,logout}.js
+  admin/{login,session,logout,users,send-welcome}.js
   gold-price.js                   proxy + normalisasi feed harga emas
 src/
   components/{Auth,Dashboard,Transaction,Account,Gold,Category,Manage,Settings,Layout,ui}/

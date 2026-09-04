@@ -1,6 +1,5 @@
 import { DRIVE_SCOPE_MESSAGE, hasDriveScope, refreshAccessToken } from '../_lib/google.js'
 import { requireEnv, requireMethod, requireSameOrigin } from '../_lib/http.js'
-import { isAdminUser } from '../_lib/admin.js'
 import {
   SESSION_COOKIE,
   SESSION_MAX_AGE,
@@ -61,7 +60,6 @@ export default async function handler (req, res) {
 
   res.status(200).json({
     user: session.user,
-    isAdmin: isAdminUser(session.user),
     accessToken: tokens.access_token,
     expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000
   })

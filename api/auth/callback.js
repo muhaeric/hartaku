@@ -8,7 +8,6 @@ import {
   toUser
 } from '../_lib/google.js'
 import { requireEnv, requireMethod, requireSameOrigin, redirectUri } from '../_lib/http.js'
-import { isAdminUser } from '../_lib/admin.js'
 import { sendNewUserEmailsSafely } from '../_lib/email.js'
 import {
   OAUTH_COOKIE,
@@ -83,7 +82,6 @@ export default async function handler (req, res) {
 
   res.status(200).json({
     user,
-    isAdmin: isAdminUser(user),
     accessToken: tokens.access_token,
     expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000
   })

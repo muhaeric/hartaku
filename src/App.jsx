@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import AuthCallback from './components/Auth/AuthCallback.jsx'
 import LoginScreen from './components/Auth/LoginScreen.jsx'
 import AdminPage from './components/Admin/AdminPage.jsx'
@@ -23,22 +23,23 @@ import { DataProvider } from './context/DataContext.jsx'
 import { SettingsProvider } from './context/SettingsContext.jsx'
 import { StorageProvider, useStorage } from './context/StorageContext.jsx'
 import { ToastProvider } from './context/ToastContext.jsx'
+import { adminApi } from './services/appApi.js'
 
 export default function App () {
   return (
     <SettingsProvider>
       <ToastProvider>
         <StorageProvider>
-          <AuthProvider>
-            <Routes>
+          <Routes>
+            <Route path="/admin" element={<AdminRoute />} />
+            <Route element={<UserAuthBoundary />}>
               <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/admin" element={<AdminRoute />} />
               {/* Layout harness; excluded from production builds. */}
               {import.meta.env.DEV && <Route path="/__preview" element={<DevPreview />} />}
               {import.meta.env.DEV && <Route path="/__snapshot-preview" element={<PreviewLayout />} />}
               <Route path="/*" element={<AuthenticatedApp />} />
-            </Routes>
-          </AuthProvider>
+            </Route>
+          </Routes>
         </StorageProvider>
       </ToastProvider>
     </SettingsProvider>
@@ -54,44 +55,90 @@ function PreviewLayout () {
 }
 
 function AdminRoute () {
-  const { status, isAdmin, signIn, signOut, error, retrySession } = useAuth()
+  const [status, setStatus] = useState('loading')
+  const [pin, setPin] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const expireSession = useCallback(() => setStatus('anonymous'), [])
+
+  useEffect(() => {
+    let active = true
+    adminApi.session()
+      .then(() => {
+        if (active) setStatus('authenticated')
+      })
+      .catch((err) => {
+        if (!active) return
+        setStatus('anonymous')
+        if (err.status !== 401) setError(err.message)
+      })
+    return () => { active = false }
+  }, [])
+
+  const signIn = async (event) => {
+    event.preventDefault()
+    setSubmitting(true)
+    setError('')
+    try {
+      await adminApi.login(pin)
+      setPin('')
+      setStatus('authenticated')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const signOut = async () => {
+    try {
+      await adminApi.logout()
+    } finally {
+      setPin('')
+      setError('')
+      setStatus('anonymous')
+    }
+  }
 
   if (status === 'loading') {
     return <main className="flex min-h-dvh items-center justify-center"><LoadingBlock label="Memeriksa akses admin…" /></main>
   }
 
-  if (status === 'recovering') return <SessionRecovery error={error} retry={retrySession} />
-
   if (status === 'anonymous') {
     return (
       <main className="flex min-h-dvh items-center justify-center px-page">
-        <div className="card w-full max-w-sm text-center">
+        <form className="card w-full max-w-sm text-center" onSubmit={signIn}>
           <span className="text-4xl" aria-hidden="true">🔐</span>
           <h1 className="mt-3 text-page-title font-bold">Admin Hartaku</h1>
-          <p className="mt-2 text-body text-subtitle">Masuk dengan akun Google yang terdaftar sebagai admin.</p>
-          <Button className="mt-5 w-full justify-center" onClick={() => signIn({ returnTo: '/admin' })}>Masuk dengan Google</Button>
-        </div>
+          <p className="mt-2 text-body text-subtitle">Masukkan PIN admin untuk membuka dashboard.</p>
+          <label className="sr-only" htmlFor="admin-pin">PIN admin</label>
+          <input
+            id="admin-pin"
+            className="field mt-5 w-full text-center text-lg tracking-[0.3em]"
+            type="password"
+            inputMode="numeric"
+            autoComplete="current-password"
+            maxLength={128}
+            value={pin}
+            onChange={(event) => setPin(event.target.value.replace(/\D/g, ''))}
+            placeholder="PIN"
+            autoFocus
+            required
+          />
+          {error && <p className="mt-3 text-caption text-expense" role="alert">{error}</p>}
+          <Button className="mt-4 w-full justify-center" type="submit" loading={submitting} disabled={!pin}>
+            Masuk
+          </Button>
+        </form>
       </main>
     )
   }
 
-  if (!isAdmin) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center px-page">
-        <div className="card w-full max-w-sm text-center">
-          <span className="text-4xl" aria-hidden="true">⛔</span>
-          <h1 className="mt-3 text-page-title font-bold">Akses ditolak</h1>
-          <p className="mt-2 text-body text-subtitle">Akun ini bukan admin Hartaku.</p>
-          <div className="mt-5 flex justify-center gap-2">
-            <Button variant="secondary" onClick={() => window.location.assign('/')}>Kembali</Button>
-            <Button onClick={signOut}>Ganti akun</Button>
-          </div>
-        </div>
-      </main>
-    )
-  }
+  return <AdminPage onSignOut={signOut} onSessionExpired={expireSession} />
+}
 
-  return <AdminPage />
+function UserAuthBoundary () {
+  return <AuthProvider><Outlet /></AuthProvider>
 }
 
 /**

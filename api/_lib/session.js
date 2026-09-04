@@ -2,12 +2,14 @@ import crypto from 'node:crypto'
 
 export const SESSION_COOKIE = 'htk_session'
 export const OAUTH_COOKIE = 'htk_oauth'
+export const ADMIN_SESSION_COOKIE = 'htk_admin_session'
 
 // Sliding window: the cookie is re-issued on every successful refresh. Thirty
 // days is long enough for an installed mobile PWA to survive a few weeks of
 // inactivity without turning the refresh-token cookie into a permanent login.
 export const SESSION_MAX_AGE = 30 * 24 * 60 * 60
 export const OAUTH_MAX_AGE = 10 * 60
+export const ADMIN_SESSION_MAX_AGE = 12 * 60 * 60
 
 let cachedKey = null
 

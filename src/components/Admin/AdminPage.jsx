@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { adminApi } from '../../services/appApi.js'
 import Button from '../ui/Button.jsx'
@@ -95,8 +94,7 @@ function UserIdentity ({ user }) {
   )
 }
 
-export default function AdminPage () {
-  const { user, signOut } = useAuth()
+export default function AdminPage ({ onSignOut, onSessionExpired }) {
   const toast = useToast()
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
@@ -112,11 +110,15 @@ export default function AdminPage () {
     try {
       setData(await adminApi.users({ search, page }))
     } catch (err) {
+      if (err.status === 401) {
+        onSessionExpired()
+        return
+      }
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [search, page])
+  }, [search, page, onSessionExpired])
 
   useEffect(() => {
     load()
@@ -134,6 +136,10 @@ export default function AdminPage () {
       const result = await adminApi.sendWelcome(entry.id)
       toast.success(result.message || `Email sambutan dikirim ke ${entry.email}.`)
     } catch (err) {
+      if (err.status === 401) {
+        onSessionExpired()
+        return
+      }
       toast.error(err.message)
     } finally {
       setSendingWelcomeTo(null)
@@ -155,11 +161,9 @@ export default function AdminPage () {
           <Link className="inline-flex h-9 items-center rounded-control px-3 text-caption font-semibold text-subtitle hover:bg-tint/5" to="/">
             Buka aplikasi
           </Link>
-          <Button size="sm" variant="secondary" onClick={signOut}>Keluar</Button>
+          <Button size="sm" variant="secondary" onClick={onSignOut}>Keluar</Button>
         </div>
       </header>
-
-      <div className="mt-2 text-[11px] text-subtitle">Masuk sebagai {user?.email}</div>
 
       {loading && !data ? (
         <LoadingBlock label="Memuat data user…" />

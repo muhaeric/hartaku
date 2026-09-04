@@ -31,6 +31,9 @@ export const authApi = {
 }
 
 export const adminApi = {
+  login: (pin) => post('/api/admin/login', { pin }),
+  session: () => post('/api/admin/session'),
+  logout: () => post('/api/admin/logout'),
   users: ({ search = '', page = 1, limit = 25 } = {}) =>
     post('/api/admin/users', { search, page, limit }),
   sendWelcome: (userId) => post('/api/admin/send-welcome', { userId })

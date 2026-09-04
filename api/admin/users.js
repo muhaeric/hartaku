@@ -5,7 +5,7 @@ import { getUserDashboard } from '../_lib/users.js'
 export default async function handler (req, res) {
   if (!requireMethod(req, res, 'POST')) return
   if (!requireSameOrigin(req, res)) return
-  if (!requireEnv(res, ['SESSION_SECRET', 'ADMIN_EMAILS', 'DATABASE_URL'])) return
+  if (!requireEnv(res, ['SESSION_SECRET', 'ADMIN_PIN', 'DATABASE_URL'])) return
   if (!requireAdmin(req, res)) return
 
   try {
