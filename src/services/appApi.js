@@ -22,7 +22,7 @@ async function post (path, body, { keepalive = false } = {}) {
 
 export const authApi = {
   /** Returns the Google consent URL to redirect the browser to. */
-  start: () => post('/api/auth/start'),
+  start: ({ gmail = false } = {}) => post('/api/auth/start', { gmail }),
   /** Exchanges the authorization code for a session. */
   callback: (code, state) => post('/api/auth/callback', { code, state }),
   /** Restores the session and returns a fresh access token. */

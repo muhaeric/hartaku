@@ -23,12 +23,12 @@ import {
   updateValues
 } from './sheets.js'
 
-const TX_RANGE = `${SHEET.transactions}!A2:K`
+const TX_RANGE = `${SHEET.transactions}!A2:L`
 const CAT_RANGE = `${SHEET.categories}!A2:H`
 const ACC_RANGE = `${SHEET.accounts}!A2:I`
 const GOLD_RANGE = `${SHEET.gold}!A2:I`
 const BUDGET_RANGE = `${SHEET.budgets}!A2:F`
-const TX_LAST_COLUMN = 'K'
+const TX_LAST_COLUMN = 'L'
 const CAT_LAST_COLUMN = 'H'
 const ACC_LAST_COLUMN = 'I'
 const GOLD_LAST_COLUMN = 'I'
@@ -52,6 +52,7 @@ function rowToTransaction (row, index) {
     // Destination account; only set on transfers.
     toAccount: row[9] ?? '',
     tags: parseTags(row[10]),
+    sourceId: row[11] ?? '',
     rowNumber: index + 2
   }
 }
@@ -68,7 +69,8 @@ function transactionToRow (transaction) {
     transaction.createdAt,
     transaction.updatedAt,
     transaction.toAccount || '',
-    formatTags(transaction.tags)
+    formatTags(transaction.tags),
+    transaction.sourceId || ''
   ]
 }
 

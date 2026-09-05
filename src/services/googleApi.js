@@ -19,8 +19,11 @@ export class GoogleApiError extends Error {
 }
 
 /** Turns the two Google errors users actually hit into something they can act on. */
-function friendlyMessage (status, message) {
+function friendlyMessage (status, message, url) {
   if (status === 403 && /insufficient authentication scopes/i.test(message)) {
+    if (String(url).includes('gmail.googleapis.com')) {
+      return 'Izin baca Gmail belum tersedia. Hubungkan kembali Gmail lewat Pengaturan.'
+    }
     return 'Izin Google Drive belum diberikan saat login. Keluar lalu login lagi, dan centang izin Drive di layar persetujuan Google.'
   }
 
@@ -55,7 +58,7 @@ export async function googleFetch (url, options = {}, allowRetry = true) {
     const detail = payload.error || {}
     const message = detail.message || `Google API error (${response.status})`
 
-    throw new GoogleApiError(friendlyMessage(response.status, message), {
+    throw new GoogleApiError(friendlyMessage(response.status, message, url), {
       status: response.status,
       reason: detail.status || detail.errors?.[0]?.reason
     })

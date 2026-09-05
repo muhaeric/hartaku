@@ -1,4 +1,9 @@
-import { DRIVE_SCOPE_MESSAGE, hasDriveScope, refreshAccessToken } from '../_lib/google.js'
+import {
+  DRIVE_SCOPE_MESSAGE,
+  hasDriveScope,
+  hasGmailScope,
+  refreshAccessToken
+} from '../_lib/google.js'
 import { requireEnv, requireMethod, requireSameOrigin } from '../_lib/http.js'
 import {
   SESSION_COOKIE,
@@ -49,18 +54,20 @@ export default async function handler (req, res) {
 
   // A grant made without the Drive permission keeps refreshing happily and only
   // fails once the Sheets API is called - catch it here instead.
-  if (!hasDriveScope(tokens.scope)) {
+  const grantedScopes = tokens.scope || session.grantedScopes || ''
+  if (!hasDriveScope(grantedScopes)) {
     clearCookie(req, res, SESSION_COOKIE)
     return res.status(403).json({ error: 'missing_drive_scope', message: DRIVE_SCOPE_MESSAGE })
   }
 
-  // Sliding expiry: every visit pushes the 7-day logout window forward.
+  // Sliding expiry: every visit pushes the 30-day logout window forward.
   await recordUserSafely(session.user, 'session')
-  setCookie(req, res, SESSION_COOKIE, seal(session), SESSION_MAX_AGE)
+  setCookie(req, res, SESSION_COOKIE, seal({ ...session, grantedScopes }), SESSION_MAX_AGE)
 
   res.status(200).json({
     user: session.user,
     accessToken: tokens.access_token,
-    expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000
+    expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000,
+    hasGmailAccess: hasGmailScope(grantedScopes)
   })
 }

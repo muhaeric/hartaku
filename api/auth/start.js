@@ -11,16 +11,18 @@ export default async function handler (req, res) {
 
   const state = crypto.randomBytes(16).toString('base64url')
   const { verifier, challenge } = createPkcePair()
+  const gmail = req.body?.gmail === true
 
   // state + PKCE verifier live in a short-lived httpOnly cookie, never in JS-readable storage
-  setCookie(req, res, OAUTH_COOKIE, seal({ state, verifier }), OAUTH_MAX_AGE)
+  setCookie(req, res, OAUTH_COOKIE, seal({ state, verifier, gmail }), OAUTH_MAX_AGE)
 
   res.status(200).json({
     url: buildAuthUrl({
       clientId: process.env.GOOGLE_CLIENT_ID,
       redirectUri: redirectUri(req),
       state,
-      challenge
+      challenge,
+      gmail
     })
   })
 }

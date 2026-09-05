@@ -14,6 +14,7 @@ import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
 import { ExternalIcon, InstallIcon, MessageIcon, ScanIcon } from '../ui/icons.jsx'
 import LocalDataSection from './LocalDataSection.jsx'
+import EmailAutomationSection from './EmailAutomationSection.jsx'
 
 const FEEDBACK_URL =
   'https://wa.me/6283141469381?text=Hai%20tim%20hartaku%20saya%20ingin%20menyampaikan%20request%20%2F%20feedback'
@@ -196,6 +197,12 @@ export default function SettingsPage () {
           </span>
         </Link>
       </Section>
+
+      {!isLocal && (
+        <Section title="Otomatisasi">
+          <EmailAutomationSection />
+        </Section>
+      )}
 
       <InstallAppSection />
 

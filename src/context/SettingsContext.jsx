@@ -16,7 +16,12 @@ const DEFAULT_SETTINGS = {
   dateFormat: 'DD/MM/YYYY',
   defaultType: 'expense',
   defaultCategory: '',
-  defaultAccount: ''
+  defaultAccount: '',
+  emailAutoEnabled: false,
+  emailUser: '',
+  emailAccountMappings: {},
+  emailLastSyncAt: null,
+  emailLastSyncResult: null
 }
 
 const SettingsContext = createContext(null)

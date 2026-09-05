@@ -12,6 +12,7 @@ import ImportScreenshot from './components/Import/ImportScreenshot.jsx'
 import AppLayout from './components/Layout/AppLayout.jsx'
 import ManagePage from './components/Manage/ManagePage.jsx'
 import SettingsPage from './components/Settings/SettingsPage.jsx'
+import EmailAutomationRunner from './components/Settings/EmailAutomationRunner.jsx'
 import FinancialSnapshot from './components/Snapshot/FinancialSnapshot.jsx'
 import SnapshotPreview from './components/Snapshot/SnapshotPreview.jsx'
 import TransactionFormPage from './components/Transaction/TransactionFormPage.jsx'
@@ -173,6 +174,7 @@ function AuthenticatedApp () {
 
   return (
     <DataProvider>
+      <EmailAutomationRunner />
       <Routes>
         <Route element={<AppLayout />}>
           <Route index element={<Dashboard />} />

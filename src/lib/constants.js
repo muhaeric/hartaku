@@ -9,7 +9,7 @@ export const SHEET = {
 }
 
 /**
- * `to_account` and `tags` are appended rather than slotted next to the fields
+ * `to_account`, `tags`, and `source_id` are appended rather than slotted next to the fields
  * they belong with: columns are positional, so inserting one in the middle would
  * shift every existing row's data one cell to the right.
  */
@@ -24,7 +24,9 @@ export const TRANSACTION_HEADERS = [
   'created_at',
   'updated_at',
   'to_account',
-  'tags'
+  'tags',
+  // Stable external identifier, currently `gmail:<message id>`, for deduplication.
+  'source_id'
 ]
 
 /** `archived` is appended for the same reason `to_account` is: columns are positional. */

@@ -4,6 +4,7 @@ import {
   decodeIdToken,
   exchangeCode,
   hasDriveScope,
+  hasGmailScope,
   revokeToken,
   toUser
 } from '../_lib/google.js'
@@ -66,6 +67,14 @@ export default async function handler (req, res) {
     return res.status(403).json({ error: 'missing_drive_scope', message: DRIVE_SCOPE_MESSAGE })
   }
 
+  if (pending.gmail && !hasGmailScope(tokens.scope)) {
+    await revokeToken(tokens.refresh_token)
+    return res.status(403).json({
+      error: 'missing_gmail_scope',
+      message: 'Izin baca Gmail belum diberikan. Coba hubungkan lagi dan setujui izin Gmail.'
+    })
+  }
+
   const user = toUser(decodeIdToken(tokens.id_token))
   const registry = await recordUserSafely(user, 'sign_in')
   if (registry.isNew) {
@@ -76,14 +85,15 @@ export default async function handler (req, res) {
     req,
     res,
     SESSION_COOKIE,
-    seal({ refreshToken: tokens.refresh_token, user }),
+    seal({ refreshToken: tokens.refresh_token, user, grantedScopes: tokens.scope || '' }),
     SESSION_MAX_AGE
   )
 
   res.status(200).json({
     user,
     accessToken: tokens.access_token,
-    expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000
+    expiresAt: Date.now() + (tokens.expires_in || 3600) * 1000,
+    hasGmailAccess: hasGmailScope(tokens.scope)
   })
 }
 

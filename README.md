@@ -25,10 +25,13 @@ penggunanya sendiri**. Database PostgreSQL hanya menyimpan profil dasar dan akti
      yang terpisah per origin dan per browser, jadi tanpa Drive API setiap perangkat baru
      tidak akan menemukan data lamamu. Aplikasi menolak membuat spreadsheet baru diam-diam
      dalam keadaan itu — kamu akan disodori layar pilihan.)
+   - **Gmail API** (opsional, untuk fitur Transaksi Otomatis Beta). Isi email diproses
+     langsung di browser dan tidak dikirim ke backend Hartaku.
 3. **APIs & Services → OAuth consent screen**:
    - User type: **External**, isi nama app + email support.
    - Scopes: tambahkan `.../auth/drive.file` (yang lain — `openid`, `email`, `profile` — sudah
-     otomatis).
+     otomatis). Untuk menguji fitur email, tambahkan juga `.../auth/gmail.readonly`. Scope Gmail
+     ini bersifat restricted dan perlu verifikasi Google sebelum dipakai oleh aplikasi publik.
    - **Test users:** tambahkan alamat Gmail kamu. Selama app masih berstatus *Testing*, hanya
      akun di daftar ini yang bisa login.
 4. **APIs & Services → Credentials → Create Credentials → OAuth client ID**:
@@ -141,8 +144,9 @@ Browser                     api/ (serverless)                Google
   **In production**. Dalam mode Testing, refresh token untuk scope Drive tetap kedaluwarsa setelah
   7 hari, terlepas dari masa berlaku cookie aplikasi.
 - CSRF: semua endpoint hanya menerima `POST` dan menolak `Origin` lintas situs.
-- Scope OAuth cuma `drive.file` — aplikasi **hanya bisa melihat file yang dibuatnya sendiri**,
-  bukan seluruh isi Google Drive.
+- Login biasa hanya meminta `drive.file` — aplikasi **hanya bisa melihat file yang dibuatnya
+  sendiri**, bukan seluruh isi Google Drive. `gmail.readonly` diminta kemudian dan hanya saat
+  pengguna memilih Hubungkan Gmail pada fitur Transaksi Otomatis.
 
 ## Struktur spreadsheet
 
@@ -150,12 +154,14 @@ Dibuat otomatis saat login pertama, dengan nama `Hartaku - Expense Tracker`.
 
 **Sheet `Transactions`**
 
-| id | date | account | amount | type | category | description | created_at | updated_at | to_account |
-|----|------|---------|--------|------|----------|-------------|------------|------------|------------|
-| uuid | `YYYY-MM-DD` | nama akun | angka | `expense` \| `income` \| `transfer` | nama kategori | teks | ISO | ISO | nama akun tujuan |
+| id | date | account | amount | type | category | description | created_at | updated_at | to_account | tags | source_id |
+|----|------|---------|--------|------|----------|-------------|------------|------------|------------|------|-----------|
+| uuid | `YYYY-MM-DD` | nama akun | angka | `expense` \| `income` \| `transfer` | nama kategori | teks | ISO | ISO | nama akun tujuan | label | ID sumber eksternal |
 
 `to_account` hanya terisi pada baris `transfer`; `category` justru selalu kosong di baris
 transfer. Satu transfer = satu baris, bukan dua baris double-entry.
+`source_id` menyimpan ID stabil seperti `gmail:<message-id>` agar sinkronisasi lintas perangkat
+tidak mencatat email yang sama dua kali.
 
 **Sheet `Categories`**
 

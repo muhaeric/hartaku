@@ -9,6 +9,7 @@ const REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
  * read/write its own spreadsheet - it grants no access to the rest of Drive.
  */
 export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
+export const GMAIL_READONLY_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly'
 
 export const SCOPES = ['openid', 'email', 'profile', DRIVE_SCOPE].join(' ')
 
@@ -22,6 +23,10 @@ export function hasDriveScope (grantedScopes) {
   return String(grantedScopes || '').split(/\s+/).includes(DRIVE_SCOPE)
 }
 
+export function hasGmailScope (grantedScopes) {
+  return String(grantedScopes || '').split(/\s+/).includes(GMAIL_READONLY_SCOPE)
+}
+
 export const DRIVE_SCOPE_MESSAGE =
   'Izin Google Drive belum diberikan. Login lagi, lalu centang izin "Lihat, ubah, dan hapus hanya file Google Drive tertentu yang kamu pakai di aplikasi ini" pada layar persetujuan Google.'
 
@@ -31,12 +36,13 @@ export function createPkcePair () {
   return { verifier, challenge }
 }
 
-export function buildAuthUrl ({ clientId, redirectUri, state, challenge, loginHint }) {
+export function buildAuthUrl ({ clientId, redirectUri, state, challenge, loginHint, gmail = false }) {
+  const scope = gmail ? `${SCOPES} ${GMAIL_READONLY_SCOPE}` : SCOPES
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: 'code',
-    scope: SCOPES,
+    scope,
     state,
     code_challenge: challenge,
     code_challenge_method: 'S256',

@@ -43,7 +43,7 @@ export default function AuthCallback () {
         } catch {
           // See AuthContext: storage is only a navigation convenience.
         }
-        navigate(requested === '/admin' ? '/admin' : '/', { replace: true })
+        navigate(['/admin', '/settings'].includes(requested) ? requested : '/', { replace: true })
       })
       .catch((err) => setError(err.message))
   }, [params, completeSignIn, navigate])
