@@ -24,8 +24,8 @@ const MONTHS = {
 }
 
 const INCOME_WORDS = /\b(kredit|uang masuk|dana masuk|diterima|penerimaan|incoming|received|refund|pengembalian)\b/i
-const EXPENSE_WORDS = /\b(debit|debet|pembayaran|pembelian|transaksi keluar|uang keluar|transfer (?:ke|keluar)|purchase|payment|paid|qris)\b/i
-const SUCCESS_WORDS = /\b(berhasil|sukses|successful|success|telah dilakukan|completed)\b/i
+const EXPENSE_WORDS = /\b(debit|debet|pembayaran|pembelian|membayar|transaksi keluar|uang keluar|melakukan transfer|mengirimkan uang|transfer (?:ke|keluar)|top up|tarik tunai|penarikan uang tunai|purchase|payment|paid|qris)\b/i
+const SUCCESS_WORDS = /\b(berhasil|sukses|successful|success|telah dilakukan|completed|sudah bertransaksi)\b/i
 const FAILURE_WORDS = /\b(gagal|dibatalkan|batal|failed|declined|rejected|kedaluwarsa)\b/i
 const PENDING_WORDS = /\b(pending|diproses|menunggu|in progress)\b/i
 const ALERT_WORDS = /\b(notifikasi|pemberitahuan|transaction alert)\b.{0,30}\b(transaksi|debit|debet|kredit|payment)\b/i
@@ -128,7 +128,8 @@ function safeIso (year, month, day) {
 function extractDescription (text, subject, provider) {
   const fields = [
     /(?:merchant|pedagang|penerima|tujuan|kepada|keterangan|deskripsi)\s*[:\-]\s*([^\n]+)/i,
-    /(?:pembayaran|pembelian)\s+(?:di|ke)\s+([^\n]+)/i
+    /(?:pembayaran|pembelian|membayar)\s+(?:di|ke)\s+([^\n\p{Extended_Pictographic}]+)/iu,
+    /(?:^|\n)(?:ke|penerima)\s*:?\s*\n\s*([^\n]+)/im
   ]
   for (const pattern of fields) {
     const match = text.match(pattern)

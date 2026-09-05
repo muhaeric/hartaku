@@ -50,3 +50,43 @@ test('parses incoming funds as income', () => {
   assert.equal(parsed.type, 'income')
   assert.equal(parsed.amount, 250000)
 })
+
+test('parses the real Jago transfer notification wording', () => {
+  const parsed = parseTransactionEmail({
+    from: 'Jago <noreply@jago.com>',
+    subject: 'Kamu telah melakukan transfer 💸',
+    text: [
+      'Halo Muha,',
+      'Terima kasih sudah bertransaksi dengan Jago!',
+      'Kamu baru saja melakukan transfer uang, berikut rinciannya:',
+      'Ringkasan transaksi',
+      'Dari',
+      'MA • 104932226540',
+      'Ke',
+      'MUHAMMAD SHOLIHUDDIN',
+      'Jumlah',
+      'Rp10.000',
+      'Tanggal transaksi',
+      '05 September 2026 18:26 WIB'
+    ].join('\n'),
+    internalDate: String(new Date(2026, 8, 5, 18, 26).getTime())
+  })
+
+  assert.equal(parsed.provider, 'jago')
+  assert.equal(parsed.type, 'expense')
+  assert.equal(parsed.amount, 10000)
+  assert.equal(parsed.date, '2026-09-05')
+  assert.equal(parsed.description, 'MUHAMMAD SHOLIHUDDIN')
+})
+
+test('parses the real Jago payment subject wording', () => {
+  const parsed = parseTransactionEmail({
+    from: 'noreply@jago.com',
+    subject: 'Kamu telah membayar ke Warung Makan Pak Rudi 21 💸',
+    text: 'Terima kasih sudah bertransaksi dengan Jago!\nJumlah Rp25.000\nTanggal transaksi 05 September 2026 09:38 WIB'
+  })
+
+  assert.equal(parsed.type, 'expense')
+  assert.equal(parsed.amount, 25000)
+  assert.equal(parsed.description, 'Warung Makan Pak Rudi 21')
+})

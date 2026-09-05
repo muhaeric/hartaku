@@ -4,7 +4,8 @@ const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me/messages'
 const SUBJECT_QUERY = [
   'subject:transaksi', 'subject:pembayaran', 'subject:transfer', 'subject:debit',
   'subject:debet', 'subject:kredit', 'subject:purchase', 'subject:payment',
-  'subject:berhasil', 'subject:notifikasi'
+  'subject:berhasil', 'subject:notifikasi', 'subject:membayar',
+  'subject:"top up"', 'subject:"tarik tunai"'
 ].join(' ')
 
 export async function listRecentTransactionEmails ({ after, lookbackDays = 14, maxResults = 100 } = {}) {
