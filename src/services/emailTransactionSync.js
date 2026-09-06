@@ -4,20 +4,36 @@ import { listRecentTransactionEmails } from './gmail.js'
 
 let inflight = null
 
-export function syncEmailTransactions (options) {
+export function scanEmailTransactions (options) {
   if (inflight) return inflight
-  inflight = runSync(options).finally(() => { inflight = null })
+  inflight = runScan(options).finally(() => { inflight = null })
   return inflight
 }
 
-async function runSync ({ settings, accounts, categories, transactions, addTransactions }) {
+async function runScan (options) {
+  const emails = await listRecentTransactionEmails({ after: options.settings.emailLastSyncAt })
+  return prepareEmailTransactions({ ...options, emails })
+}
+
+export function prepareEmailTransactions ({
+  emails,
+  settings,
+  accounts,
+  categories,
+  transactions,
+  pendingTransactions = settings.emailPendingTransactions || [],
+  dismissedSourceIds = settings.emailDismissedSourceIds || []
+}) {
   const mappings = settings.emailAccountMappings || {}
-  const emails = await listRecentTransactionEmails({ after: settings.emailLastSyncAt })
-  const knownSources = new Set(transactions.map((item) => item.sourceId).filter(Boolean))
-  const inputs = []
+  const knownSources = new Set([
+    ...transactions.map((item) => item.sourceId),
+    ...pendingTransactions.map((item) => item.sourceId),
+    ...dismissedSourceIds
+  ].filter(Boolean))
+  const candidates = []
   const result = {
     scanned: emails.length,
-    imported: 0,
+    found: 0,
     duplicates: 0,
     unmapped: 0,
     unrecognized: 0,
@@ -62,7 +78,7 @@ async function runSync ({ settings, accounts, categories, transactions, addTrans
       continue
     }
 
-    inputs.push({
+    candidates.push({
       date: parsed.date,
       account,
       toAccount: '',
@@ -76,9 +92,19 @@ async function runSync ({ settings, accounts, categories, transactions, addTrans
     knownSources.add(sourceId)
   }
 
-  if (inputs.length) await addTransactions(inputs)
-  result.imported = inputs.length
-  return result
+  result.found = candidates.length
+  return { candidates, result }
+}
+
+export function mergeEmailCandidates (existing = [], incoming = []) {
+  const merged = []
+  const seen = new Set()
+  for (const candidate of [...existing, ...incoming]) {
+    if (!candidate?.sourceId || seen.has(candidate.sourceId)) continue
+    seen.add(candidate.sourceId)
+    merged.push(candidate)
+  }
+  return merged
 }
 
 export function mappedProviderCount (settings, accounts = null) {

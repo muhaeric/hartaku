@@ -5,17 +5,25 @@ import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { EMAIL_PROVIDERS } from '../../lib/emailTransactionParser.js'
 import { formatDate } from '../../lib/format.js'
-import { mappedProviderCount, syncEmailTransactions } from '../../services/emailTransactionSync.js'
+import {
+  mappedProviderCount,
+  mergeEmailCandidates,
+  scanEmailTransactions
+} from '../../services/emailTransactionSync.js'
 import Button from '../ui/Button.jsx'
 import { RefreshIcon } from '../ui/icons.jsx'
+import { EMAIL_REVIEW_EVENT } from './EmailAutomationRunner.jsx'
 
 export default function EmailAutomationSection () {
   const toast = useToast()
   const { hasGmailAccess, signIn, user } = useAuth()
   const { settings, updateSettings } = useSettings()
-  const { activeAccounts, activeCategories, transactions, addTransactions, loading } = useData()
+  const { activeAccounts, activeCategories, transactions, loading } = useData()
   const [syncing, setSyncing] = useState(false)
   const mappingCount = mappedProviderCount(settings, activeAccounts)
+  const pendingCount = settings.emailUser === user?.email
+    ? (settings.emailPendingTransactions || []).length
+    : 0
 
   useEffect(() => {
     if (!hasGmailAccess || !user?.email || settings.emailUser === user.email) return
@@ -26,7 +34,9 @@ export default function EmailAutomationSection () {
       emailAutoEnabled: false,
       emailAccountMappings: {},
       emailLastSyncAt: null,
-      emailLastSyncResult: null
+      emailLastSyncResult: null,
+      emailPendingTransactions: [],
+      emailDismissedSourceIds: []
     })
   }, [hasGmailAccess, user?.email, settings.emailUser, updateSettings])
 
@@ -48,7 +58,7 @@ export default function EmailAutomationSection () {
         emailAutoEnabled: true,
         emailLastSyncAt: new Date().toISOString()
       })
-      toast.success('Pencatatan otomatis diaktifkan untuk email baru.')
+      toast.success('Pemantauan email diaktifkan. Transaksi tetap menunggu konfirmasi.')
     } else {
       updateSettings({ emailAutoEnabled: false })
     }
@@ -57,17 +67,24 @@ export default function EmailAutomationSection () {
   const syncNow = async () => {
     setSyncing(true)
     try {
-      const result = await syncEmailTransactions({
+      const { candidates, result } = await scanEmailTransactions({
         settings,
         accounts: activeAccounts,
         categories: activeCategories,
-        transactions,
-        addTransactions
+        transactions
       })
       const now = new Date().toISOString()
-      updateSettings({ emailLastSyncAt: now, emailLastSyncResult: result })
-      if (result.imported) toast.success(`${result.imported} transaksi baru dicatat dari email.`)
-      else toast.show('Tidak ada transaksi email baru yang bisa dicatat.')
+      updateSettings((current) => ({
+        ...current,
+        emailPendingTransactions: mergeEmailCandidates(current.emailPendingTransactions, candidates),
+        emailLastSyncAt: now,
+        emailLastSyncResult: result
+      }))
+      if (candidates.length) {
+        toast.success(`${candidates.length} transaksi email baru menunggu konfirmasi.`)
+      } else {
+        toast.show('Tidak ada transaksi email baru yang perlu dikonfirmasi.')
+      }
     } catch (err) {
       toast.error(err.message)
     } finally {
@@ -89,7 +106,7 @@ export default function EmailAutomationSection () {
             </span>
           </div>
           <p className="text-caption text-subtitle">
-            Membaca notifikasi bank dan e-wallet saat Hartaku aktif. Isi email diproses di perangkat ini.
+            Mendeteksi notifikasi bank dan e-wallet saat Hartaku aktif. Transaksi baru selalu menunggu konfirmasi.
           </p>
         </div>
       </div>
@@ -133,8 +150,8 @@ export default function EmailAutomationSection () {
 
           <label className="flex items-center justify-between gap-4 rounded-control bg-tint/[0.04] p-3">
             <span>
-              <span className="block text-body font-medium">Catat otomatis</span>
-              <span className="block text-caption text-subtitle">Hanya email baru yang dikenali dengan yakin.</span>
+              <span className="block text-body font-medium">Pantau email otomatis</span>
+              <span className="block text-caption text-subtitle">Hartaku hanya menyiapkan kandidat; kamu yang memutuskan pencatatannya.</span>
             </span>
             <input
               type="checkbox"
@@ -154,8 +171,17 @@ export default function EmailAutomationSection () {
               onClick={syncNow}
             >
               <RefreshIcon className="h-4 w-4" />
-              Sinkronkan sekarang
+              Periksa email sekarang
             </Button>
+            {pendingCount > 0 && (
+              <Button
+                variant="soft"
+                size="sm"
+                onClick={() => window.dispatchEvent(new Event(EMAIL_REVIEW_EVENT))}
+              >
+                Tinjau {pendingCount} transaksi
+              </Button>
+            )}
             {settings.emailLastSyncAt && (
               <span className="text-caption text-subtitle">
                 Terakhir {formatSyncTime(settings.emailLastSyncAt, settings.dateFormat)}
@@ -163,24 +189,27 @@ export default function EmailAutomationSection () {
             )}
           </div>
 
-          {settings.emailLastSyncResult && <SyncSummary result={settings.emailLastSyncResult} />}
+          {settings.emailLastSyncResult && (
+            <SyncSummary result={settings.emailLastSyncResult} pendingCount={pendingCount} />
+          )}
           {!mappingCount && <p className="hint">Pilih minimal satu akun sebelum mengaktifkan sinkronisasi.</p>}
         </>
       )}
 
       <p className="hint">
-        Hartaku mengabaikan email gagal, nominal ambigu, pengirim yang belum dipetakan, dan transaksi tanpa kategori yang cocok. Periksa catatan secara berkala selama fitur masih beta.
+        Tidak ada transaksi email yang ditulis ke spreadsheet sebelum kamu menekan “Catat transaksi”. Email gagal, nominal ambigu, pengirim yang belum dipetakan, dan transaksi tanpa kategori yang cocok tetap dilewati.
       </p>
     </div>
   )
 }
 
-function SyncSummary ({ result }) {
+function SyncSummary ({ result, pendingCount }) {
   const skipped = (result.unmapped || 0) + (result.unrecognized || 0) + (result.uncategorized || 0)
   return (
     <p className="rounded-control bg-tint/[0.04] p-3 text-caption text-subtitle">
-      Pemindaian terakhir: {result.scanned || 0} email diperiksa, {result.imported || 0} dicatat,
-      {' '}{result.duplicates || 0} duplikat, dan {skipped} dilewati.
+      Pemindaian terakhir: {result.scanned || 0} email diperiksa, {result.found || 0} kandidat ditemukan,
+      {' '}{result.duplicates || 0} sudah ditangani, dan {skipped} dilewati.
+      {pendingCount > 0 && <> Saat ini {pendingCount} menunggu konfirmasi.</>}
     </p>
   )
 }

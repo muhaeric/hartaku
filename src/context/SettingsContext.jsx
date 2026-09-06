@@ -21,7 +21,11 @@ const DEFAULT_SETTINGS = {
   emailUser: '',
   emailAccountMappings: {},
   emailLastSyncAt: null,
-  emailLastSyncResult: null
+  emailLastSyncResult: null,
+  // Parsed email stays on-device until the user explicitly records or ignores it.
+  emailPendingTransactions: [],
+  // Gmail queries overlap by a day, so ignored message ids prevent repeat prompts.
+  emailDismissedSourceIds: []
 }
 
 const SettingsContext = createContext(null)
