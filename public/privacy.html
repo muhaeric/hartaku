@@ -16,7 +16,7 @@
       <header>
         <a class="brand" href="/"><span>💸</span> Hartaku</a>
         <h1>Kebijakan Privasi</h1>
-        <p class="updated">Terakhir diperbarui: 5 September 2026</p>
+        <p class="updated">Terakhir diperbarui: 7 September 2026</p>
       </header>
 
       <div class="note">
@@ -24,7 +24,9 @@
           <strong>Ringkasnya:</strong> Seluruh catatan keuanganmu disimpan di Google
           Spreadsheet di dalam Google Drive milikmu sendiri. Hartaku hanya menyimpan profil
           dasar Google dan waktu aktivitas untuk mengelola pengguna layanan; kami tidak
-          menyimpan, membaca, maupun membagikan isi catatan keuanganmu.
+          menyimpan, membaca, maupun membagikan isi catatan keuanganmu. Jika kamu memilih
+          fitur Transaksi Otomatis, email notifikasi transaksi hanya dibaca dan diproses di
+          browser setelah kamu memberi izin Gmail baca-saja.
         </p>
       </div>
 
@@ -61,9 +63,11 @@
         <li>
           <strong>Email notifikasi transaksi (opsional).</strong> Jika kamu mengaktifkan fitur
           Transaksi Otomatis (Beta), browser membaca email terbaru yang tampak seperti
-          notifikasi transaksi bank atau e-wallet. Isi email diproses langsung di browser,
-          tidak dikirim ke server Hartaku, dan tidak disimpan. Hanya hasil transaksi serta
-          ID pesan untuk mencegah duplikasi yang ditulis ke spreadsheet milikmu.
+          notifikasi transaksi bank atau e-wallet. Isi asli email diproses langsung di
+          browser, tidak dikirim ke server Hartaku, dan tidak disimpan secara permanen.
+          Kandidat transaksi hasil ekstraksi disimpan sementara di browser sampai kamu
+          memilih Catat atau Abaikan. Hanya setelah kamu memilih Catat, data transaksi hasil
+          ekstraksi dan ID pesan sumber ditulis ke spreadsheet milikmu.
         </li>
         <li>
           <strong>Token akses Google.</strong> Refresh token disimpan dalam bentuk
@@ -94,7 +98,99 @@
         Kontak, Kalender, atau layanan Google lainnya.
       </p>
 
-      <h2>4. Penyimpanan di perangkatmu</h2>
+      <h2 id="google-user-data">4. Penggunaan dan perlindungan Data Pengguna Google</h2>
+      <p>
+        Bagian ini menjelaskan secara khusus cara Hartaku mengakses, menggunakan, menyimpan,
+        membagikan, melindungi, dan menghapus data yang diterima dari Google APIs.
+      </p>
+
+      <h3>Data yang diakses dan alasan penggunaannya</h3>
+      <ul>
+        <li>
+          <strong>Profil Google:</strong> nama, alamat email, dan foto profil digunakan untuk
+          login, menampilkan akun yang aktif, serta mengelola pengguna layanan.
+        </li>
+        <li>
+          <strong>Google Drive dan Sheets:</strong> Hartaku membuat dan mengelola hanya
+          spreadsheet yang dibuat melalui aplikasi untuk menyimpan catatan keuanganmu.
+        </li>
+        <li>
+          <strong>Gmail (opsional):</strong> jika kamu menghubungkan fitur Transaksi Otomatis,
+          browser mencari dan membaca pengirim, subjek, waktu, serta isi email notifikasi
+          transaksi terbaru. Isi pesan diperlukan untuk mengambil nominal, tanggal,
+          penerima atau merchant, dan arah transaksi. Izin metadata saja tidak menyediakan
+          isi pesan tersebut. Hartaku tidak mengirim, mengubah, atau menghapus email.
+        </li>
+      </ul>
+      <p>
+        Hasil pemindaian hanya menjadi kandidat yang ditampilkan kepadamu. Tidak ada transaksi
+        yang dicatat sebelum kamu menekan <strong>Catat transaksi</strong>. Jika kamu menekan
+        <strong>Abaikan</strong>, transaksi tidak ditulis ke spreadsheet.
+      </p>
+
+      <h3>Penyimpanan dan retensi data Gmail</h3>
+      <ul>
+        <li>
+          Isi asli email diproses di browser dan tidak dikirim ke server Hartaku, tidak
+          dimasukkan ke database Hartaku, serta tidak disimpan secara permanen.
+        </li>
+        <li>
+          Kandidat hasil ekstraksi, pemetaan akun, waktu sinkronisasi, dan ID pesan yang sudah
+          ditangani disimpan lokal di browser. Kandidat disimpan sampai kamu mencatat,
+          mengabaikan, atau membersihkan data situs. Maksimal 500 ID pesan yang diabaikan
+          disimpan lokal agar pesan yang sama tidak ditawarkan berulang kali.
+        </li>
+        <li>
+          Setelah kamu menekan Catat, data transaksi hasil ekstraksi dan ID pesan sumber
+          disimpan di spreadsheet Google milikmu untuk pencatatan dan pencegahan duplikasi.
+        </li>
+      </ul>
+
+      <h3>Berbagi dan transfer data</h3>
+      <p>
+        Hartaku tidak menjual data Google, tidak menggunakannya untuk iklan atau profiling,
+        dan tidak mentransfer isi Gmail maupun kandidat transaksi ke pihak ketiga. Penyedia
+        hosting, database, dan email operasional Hartaku tidak menerima isi Gmail atau data
+        transaksi hasil ekstraksi. Data Google hanya digunakan untuk menyediakan fungsi yang
+        kamu minta di dalam Hartaku.
+      </p>
+
+      <h3>Mekanisme perlindungan</h3>
+      <ul>
+        <li>Komunikasi aplikasi produksi dilindungi dengan HTTPS/TLS.</li>
+        <li>
+          Pemrosesan Gmail dan catatan keuangan dilakukan di browser untuk meminimalkan data
+          yang melewati server Hartaku.
+        </li>
+        <li>
+          Hartaku memakai izin minimum dan meminta akses Gmail secara terpisah hanya saat
+          fitur opsional dihubungkan.
+        </li>
+        <li>
+          Access token Google hanya disimpan sementara di memori halaman. Refresh token
+          dienkripsi dengan AES-256-GCM dan disimpan dalam cookie <code>HttpOnly</code>,
+          <code>SameSite=Strict</code>, dan <code>Secure</code> pada lingkungan produksi.
+        </li>
+        <li>Server Hartaku tidak menyimpan salinan refresh token atau isi asli email.</li>
+      </ul>
+
+      <h3>Kontrol dan penghapusan</h3>
+      <p>
+        Kamu dapat mencabut akses Hartaku kapan saja melalui
+        <a href="https://myaccount.google.com/permissions" rel="noopener noreferrer">Izin akun Google</a>.
+        Membersihkan data situs Hartaku di browser akan menghapus kandidat, pemetaan, dan ID
+        pesan yang tersimpan lokal. Menghapus spreadsheet Hartaku di Google Drive akan
+        menghapus transaksi yang sudah dikonfirmasi. Kamu juga dapat meminta penghapusan
+        profil Hartaku melalui alamat kontak di bawah.
+      </p>
+      <p>
+        Penggunaan dan transfer informasi yang diterima Hartaku dari Google APIs ke aplikasi
+        lain akan mematuhi
+        <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener noreferrer">Google API Services User Data Policy</a>,
+        termasuk persyaratan Limited Use.
+      </p>
+
+      <h2>5. Penyimpanan di perangkatmu</h2>
       <ul>
         <li>
           <strong>Cache lokal.</strong> Salinan isi spreadsheet disimpan di
@@ -108,14 +204,14 @@
         </li>
       </ul>
 
-      <h2>5. Fitur OCR (import dari screenshot)</h2>
+      <h2>6. Fitur OCR (import dari screenshot)</h2>
       <p>
         Pembacaan teks dari screenshot berjalan <strong>sepenuhnya di perangkatmu</strong>
         memakai Tesseract. Gambar tidak diunggah ke server kami maupun ke layanan pihak
         ketiga, dan tidak disimpan setelah kamu meninggalkan halaman import.
       </p>
 
-      <h2>6. Pihak ketiga</h2>
+      <h2>7. Pihak ketiga</h2>
       <ul>
         <li>
           <strong>Google</strong> — autentikasi, Google Sheets, Google Drive, serta Gmail jika
@@ -142,7 +238,7 @@
         </li>
       </ul>
 
-      <h2>7. Yang tidak kami lakukan</h2>
+      <h2>8. Yang tidak kami lakukan</h2>
       <ul>
         <li>Tidak ada pixel pelacak, profiling perilaku, atau cookie iklan.</li>
         <li>Tidak ada pelacakan lintas situs.</li>
@@ -153,7 +249,7 @@
         <li>Tidak membaca isi spreadsheet-mu dari sisi server.</li>
       </ul>
 
-      <h2>8. Retensi</h2>
+      <h2>9. Retensi</h2>
       <p>
         Cookie sesi berlaku 30 hari dan diperpanjang setiap kali kamu membuka aplikasi. Jika
         aplikasi tidak dibuka selama 30 hari, sesi berakhir dan kamu perlu masuk lagi. Profil
@@ -162,7 +258,7 @@
         sepenuhnya ada padamu.
       </p>
 
-      <h2>9. Mengontrol dan menghapus datamu</h2>
+      <h2>10. Mengontrol dan menghapus datamu</h2>
       <ul>
         <li>
           <strong>Cabut akses aplikasi:</strong> buka
@@ -184,19 +280,19 @@
         </li>
       </ul>
 
-      <h2>10. Anak-anak</h2>
+      <h2>11. Anak-anak</h2>
       <p>
         Hartaku tidak ditujukan untuk pengguna di bawah 13 tahun dan tidak secara sengaja
         memproses data mereka.
       </p>
 
-      <h2>11. Perubahan kebijakan</h2>
+      <h2>12. Perubahan kebijakan</h2>
       <p>
         Kebijakan ini dapat diperbarui seiring berkembangnya aplikasi. Tanggal pembaruan
         terakhir selalu tercantum di bagian atas halaman ini.
       </p>
 
-      <h2>12. Kontak</h2>
+      <h2>13. Kontak</h2>
       <p>
         Pertanyaan soal privasi bisa dikirim ke
         <a href="mailto:sholihuddinnur@gmail.com">sholihuddinnur@gmail.com</a>.

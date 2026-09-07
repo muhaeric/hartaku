@@ -111,6 +111,15 @@ export default function EmailAutomationSection () {
         </div>
       </div>
 
+      <div className="rounded-control border border-hairline bg-brand-soft/40 p-3 text-caption text-subtitle">
+        Hartaku membaca pengirim, subjek, waktu, dan isi notifikasi transaksi terbaru hanya
+        setelah kamu menghubungkan Gmail. Pemrosesan berlangsung di browser dan hasilnya
+        selalu menunggu konfirmasimu sebelum dicatat.{' '}
+        <a className="font-medium text-brand underline" href="/privacy#google-user-data">
+          Cara data Gmail digunakan dan dilindungi
+        </a>
+      </div>
+
       {!hasGmailAccess ? (
         <div className="space-y-2 rounded-control bg-tint/[0.04] p-3">
           <p className="text-caption text-subtitle">
