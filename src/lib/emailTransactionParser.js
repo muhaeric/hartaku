@@ -143,6 +143,7 @@ function extractDescription (text, subject, provider) {
 
 function cleanDescription (value) {
   return String(value)
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
     .replace(/\s+/g, ' ')
     .replace(/(?:nomor referensi|reference|ref)\s*[:#].*$/i, '')
     .trim()

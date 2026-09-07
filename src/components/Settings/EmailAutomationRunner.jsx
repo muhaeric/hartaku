@@ -30,6 +30,10 @@ export default function EmailAutomationRunner () {
     [settings.emailPendingTransactions, settings.emailUser, user?.email]
   )
   const pendingKey = pending.map((item) => item.sourceId).join('|')
+  const eligibleCategories = useMemo(
+    () => currentCategories(activeCategories, pending[0]?.type),
+    [activeCategories, pending]
+  )
 
   useEffect(() => {
     if (pendingKey) setReviewOpen(true)
@@ -129,8 +133,18 @@ export default function EmailAutomationRunner () {
 
   const current = pending[0]
 
-  const confirmCurrent = async () => {
+  const updateCurrent = (patch) => {
     if (!current || reviewBusy) return
+    updateSettings((settings) => ({
+      ...settings,
+      emailPendingTransactions: (settings.emailPendingTransactions || []).map((item) =>
+        item.sourceId === current.sourceId ? { ...item, ...patch } : item
+      )
+    }))
+  }
+
+  const confirmCurrent = async () => {
+    if (!current || !current.category || reviewBusy) return
     setReviewBusy(true)
     try {
       await addTransactions([current])
@@ -193,6 +207,7 @@ export default function EmailAutomationRunner () {
           <Button
             className="flex-1 justify-center"
             loading={reviewBusy}
+            disabled={!current?.category}
             onClick={confirmCurrent}
           >
             Catat transaksi
@@ -216,9 +231,27 @@ export default function EmailAutomationRunner () {
             <dd className="text-right font-medium">{formatDate(current.date, settings.dateFormat)}</dd>
             <dt className="text-subtitle">Akun</dt>
             <dd className="text-right font-medium">{current.account}</dd>
-            <dt className="text-subtitle">Kategori</dt>
-            <dd className="text-right font-medium">{current.category}</dd>
+            <dt className="self-center text-subtitle">Kategori</dt>
+            <dd className="text-right">
+              <select
+                aria-label="Kategori transaksi email"
+                className="field h-9 w-full max-w-[220px] py-0 text-caption"
+                value={current.category}
+                disabled={reviewBusy}
+                onChange={(event) => updateCurrent({ category: event.target.value })}
+              >
+                <option value="">Pilih kategori</option>
+                {eligibleCategories.map((category) => (
+                  <option key={category.name} value={category.name}>{category.name}</option>
+                ))}
+              </select>
+            </dd>
           </dl>
+          {!current.category && (
+            <p className="text-caption text-expense">
+              Pilih kategori sebelum mencatat transaksi ini.
+            </p>
+          )}
         </div>
       )}
     </Sheet>
@@ -229,4 +262,11 @@ function typeLabel (type) {
   if (type === 'income') return 'Pemasukan terdeteksi'
   if (type === 'transfer') return 'Transfer terdeteksi'
   return 'Pengeluaran terdeteksi'
+}
+
+function currentCategories (categories, type) {
+  if (!type) return []
+  return categories.filter(
+    (category) => !category.archived && (category.type === type || category.type === 'both')
+  )
 }

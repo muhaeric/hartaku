@@ -90,3 +90,30 @@ test('parses the real Jago payment subject wording', () => {
   assert.equal(parsed.amount, 25000)
   assert.equal(parsed.description, 'Warung Makan Pak Rudi 21')
 })
+
+test('parses the Jago Mengantar payment with a zero-width subject and zero rupiah tip', () => {
+  const parsed = parseTransactionEmail({
+    from: 'Jago <noreply@jago.com>',
+    subject: 'Kamu telah membayar ke Mengantar\u200b.com 💸',
+    text: [
+      'Terima kasih sudah bertransaksi dengan Jago!',
+      'Kamu baru saja mengirimkan uang, berikut rinciannya:',
+      'Ke',
+      'Mengantar\u200b.com',
+      'Jumlah',
+      'Rp 50',
+      'Tanggal Transaksi',
+      '07 September 2026, 08:42 WIB',
+      'Status Transaksi',
+      'Berhasil',
+      'Jumlah Tip',
+      'Rp 0'
+    ].join('\n')
+  })
+
+  assert.equal(parsed.provider, 'jago')
+  assert.equal(parsed.type, 'expense')
+  assert.equal(parsed.amount, 50)
+  assert.equal(parsed.date, '2026-09-07')
+  assert.equal(parsed.description, 'Mengantar.com')
+})

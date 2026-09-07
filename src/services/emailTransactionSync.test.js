@@ -57,3 +57,19 @@ test('merges pending candidates by Gmail source id', () => {
     { sourceId: 'gmail:b', amount: 2 }
   ])
 })
+
+test('keeps a recognized transaction for confirmation when no category can be guessed', () => {
+  const { candidates, result } = prepareEmailTransactions({
+    emails: [jagoEmail('needs-category')],
+    settings: { ...settings, emailPendingTransactions: [], emailDismissedSourceIds: [] },
+    accounts,
+    categories: [{ name: 'Self-development', type: 'expense', archived: false }],
+    transactions: []
+  })
+
+  assert.equal(candidates.length, 1)
+  assert.equal(candidates[0].category, '')
+  assert.equal(result.found, 1)
+  assert.equal(result.needsCategory, 1)
+  assert.equal(result.uncategorized, 0)
+})

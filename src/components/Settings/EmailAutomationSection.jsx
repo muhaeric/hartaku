@@ -25,6 +25,9 @@ export default function EmailAutomationSection () {
   const pendingCount = settings.emailUser === user?.email
     ? (settings.emailPendingTransactions || []).length
     : 0
+  const dismissedCount = settings.emailUser === user?.email
+    ? (settings.emailDismissedSourceIds || []).length
+    : 0
 
   useEffect(() => {
     if (!hasGmailAccess || !user?.email || settings.emailUser === user.email) return
@@ -114,6 +117,40 @@ export default function EmailAutomationSection () {
         toast.success(`${candidates.length} transaksi email baru menunggu konfirmasi.`)
       } else {
         toast.show('Tidak ada transaksi email baru yang perlu dikonfirmasi.')
+      }
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const retryDismissed = async () => {
+    setSyncing(true)
+    try {
+      const retrySettings = {
+        ...settings,
+        emailDismissedSourceIds: [],
+        emailLastSyncAt: null
+      }
+      const { candidates, result } = await scanEmailTransactions({
+        settings: retrySettings,
+        accounts: activeAccounts,
+        categories: activeCategories,
+        transactions
+      })
+      const now = new Date().toISOString()
+      updateSettings((current) => ({
+        ...current,
+        emailDismissedSourceIds: [],
+        emailPendingTransactions: mergeEmailCandidates(current.emailPendingTransactions, candidates),
+        emailLastSyncAt: now,
+        emailLastSyncResult: result
+      }))
+      if (candidates.length) {
+        toast.success(`${candidates.length} transaksi email ditampilkan kembali untuk dikonfirmasi.`)
+      } else {
+        toast.show('Email yang diabaikan sudah diperiksa ulang, tetapi tidak ada kandidat baru.')
       }
     } catch (err) {
       toast.error(err.message)
@@ -244,6 +281,17 @@ export default function EmailAutomationSection () {
                 Tinjau {pendingCount} transaksi
               </Button>
             )}
+            {dismissedCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                loading={syncing}
+                disabled={!mappingCount || loading}
+                onClick={retryDismissed}
+              >
+                Periksa ulang {dismissedCount} email diabaikan
+              </Button>
+            )}
             {settings.emailLastSyncAt && (
               <span className="text-caption text-subtitle">
                 Terakhir {formatSyncTime(settings.emailLastSyncAt, settings.dateFormat)}
@@ -259,7 +307,7 @@ export default function EmailAutomationSection () {
       )}
 
       <p className="hint">
-        Tidak ada transaksi email yang ditulis ke spreadsheet sebelum kamu menekan “Catat transaksi”. Email gagal, nominal ambigu, pengirim yang belum dipetakan, dan transaksi tanpa kategori yang cocok tetap dilewati.
+        Tidak ada transaksi email yang ditulis ke spreadsheet sebelum kamu menekan “Catat transaksi”. Email gagal, nominal ambigu, dan pengirim yang belum dipetakan tetap dilewati; kategori yang belum dikenali harus kamu pilih saat konfirmasi.
       </p>
     </div>
   )
@@ -271,6 +319,7 @@ function SyncSummary ({ result, pendingCount }) {
     <p className="rounded-control bg-tint/[0.04] p-3 text-caption text-subtitle">
       Pemindaian terakhir: {result.scanned || 0} email diperiksa, {result.found || 0} kandidat ditemukan,
       {' '}{result.duplicates || 0} sudah ditangani, dan {skipped} dilewati.
+      {(result.needsCategory || 0) > 0 && <> {result.needsCategory} kandidat perlu dipilih kategorinya.</>}
       {pendingCount > 0 && <> Saat ini {pendingCount} menunggu konfirmasi.</>}
     </p>
   )

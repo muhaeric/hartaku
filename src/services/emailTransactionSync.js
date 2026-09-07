@@ -37,7 +37,8 @@ export function prepareEmailTransactions ({
     duplicates: 0,
     unmapped: 0,
     unrecognized: 0,
-    uncategorized: 0
+    uncategorized: 0,
+    needsCategory: 0
   }
 
   for (const email of emails) {
@@ -73,10 +74,7 @@ export function prepareEmailTransactions ({
     const fallback = eligible.find((item) => /^(other|lainnya?)$/i.test(item.name))?.name || ''
     const category = suggested || fallback
 
-    if (!category) {
-      result.uncategorized += 1
-      continue
-    }
+    if (!category) result.needsCategory += 1
 
     candidates.push({
       date: parsed.date,
@@ -84,7 +82,7 @@ export function prepareEmailTransactions ({
       toAccount: '',
       amount: parsed.amount,
       type: parsed.type,
-      category,
+      category: category || '',
       description: parsed.description,
       tags: [],
       sourceId
