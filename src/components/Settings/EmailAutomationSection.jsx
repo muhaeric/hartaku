@@ -16,10 +16,11 @@ import { EMAIL_REVIEW_EVENT } from './EmailAutomationRunner.jsx'
 
 export default function EmailAutomationSection () {
   const toast = useToast()
-  const { hasGmailAccess, signIn, user } = useAuth()
+  const { hasGmailAccess, signIn, signOut, user } = useAuth()
   const { settings, updateSettings } = useSettings()
   const { activeAccounts, activeCategories, transactions, loading } = useData()
   const [syncing, setSyncing] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
   const mappingCount = mappedProviderCount(settings, activeAccounts)
   const pendingCount = settings.emailUser === user?.email
     ? (settings.emailPendingTransactions || []).length
@@ -42,6 +43,35 @@ export default function EmailAutomationSection () {
 
   const connect = async () => {
     await signIn({ gmail: true, returnTo: '/settings' })
+  }
+
+  const disconnect = async () => {
+    const confirmed = window.confirm(
+      'Putuskan Gmail dari Hartaku? Izin Google akan dicabut, kandidat transaksi email di perangkat ini akan dihapus, lalu kamu diminta masuk lagi tanpa akses Gmail.'
+    )
+    if (!confirmed) return
+
+    setDisconnecting(true)
+    try {
+      // Google does not support revoking just one scope from a combined grant.
+      // Revoke the grant, clear all Gmail-derived local state, then immediately
+      // request the normal Drive-only session again.
+      await signOut()
+      updateSettings({
+        emailUser: '',
+        emailAutoEnabled: false,
+        emailAccountMappings: {},
+        emailLastSyncAt: null,
+        emailLastSyncResult: null,
+        emailPendingTransactions: [],
+        emailDismissedSourceIds: []
+      })
+      await signIn({ returnTo: '/settings' })
+      setDisconnecting(false)
+    } catch (err) {
+      toast.error(err.message || 'Gmail belum berhasil diputuskan.')
+      setDisconnecting(false)
+    }
   }
 
   const setMapping = (provider, account) => {
@@ -131,9 +161,20 @@ export default function EmailAutomationSection () {
         </div>
       ) : (
         <>
-          <p className="text-caption text-subtitle">
-            Gmail terhubung sebagai <span className="font-medium text-ink">{user?.email}</span>.
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-caption text-subtitle">
+              Gmail terhubung sebagai <span className="font-medium text-ink">{user?.email}</span>.
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-expense"
+              loading={disconnecting}
+              onClick={disconnect}
+            >
+              Putuskan Gmail
+            </Button>
+          </div>
 
           <div>
             <p className="label">Hubungkan pengirim ke akun Hartaku</p>
@@ -157,19 +198,31 @@ export default function EmailAutomationSection () {
             </div>
           </div>
 
-          <label className="flex items-center justify-between gap-4 rounded-control bg-tint/[0.04] p-3">
+          <div className="flex items-center justify-between gap-4 rounded-control bg-tint/[0.04] p-3">
             <span>
               <span className="block text-body font-medium">Pantau email otomatis</span>
               <span className="block text-caption text-subtitle">Hartaku hanya menyiapkan kandidat; kamu yang memutuskan pencatatannya.</span>
             </span>
-            <input
-              type="checkbox"
-              className="h-5 w-5 shrink-0 accent-brand"
-              checked={settings.emailAutoEnabled}
-              disabled={!settings.emailAutoEnabled && (!mappingCount || !activeCategories.length)}
-              onChange={toggle}
-            />
-          </label>
+            <span className="flex shrink-0 items-center gap-2">
+              <span className={`text-caption font-semibold ${settings.emailAutoEnabled ? 'text-brand' : 'text-subtitle'}`}>
+                {settings.emailAutoEnabled ? 'ON' : 'OFF'}
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={settings.emailAutoEnabled}
+                aria-label="Pantau email otomatis"
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${settings.emailAutoEnabled ? 'bg-brand' : 'bg-tint/20'} disabled:cursor-not-allowed disabled:opacity-50`}
+                disabled={!settings.emailAutoEnabled && (!mappingCount || !activeCategories.length)}
+                onClick={toggle}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`h-5 w-5 rounded-full bg-surface shadow-sm transition-transform ${settings.emailAutoEnabled ? 'translate-x-[22px]' : 'translate-x-0.5'}`}
+                />
+              </button>
+            </span>
+          </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <Button
