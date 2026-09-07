@@ -22,6 +22,7 @@ export default function EmailAutomationRunner () {
   const { activeAccounts, activeCategories, transactions, addTransactions, loading, workbook } = useData()
   const toast = useToast()
   const busy = useRef(false)
+  const startupScanKey = useRef('')
   const [reviewOpen, setReviewOpen] = useState(false)
   const [reviewBusy, setReviewBusy] = useState(false)
   const pending = useMemo(
@@ -40,13 +41,13 @@ export default function EmailAutomationRunner () {
     return () => window.removeEventListener(EMAIL_REVIEW_EVENT, openReview)
   }, [])
 
-  const sync = useCallback(async () => {
+  const sync = useCallback(async ({ force = false, reportError = false } = {}) => {
     const lastSync = new Date(settings.emailLastSyncAt || 0).getTime()
     if (
       busy.current || isLocal || !hasGmailAccess || !settings.emailAutoEnabled ||
       settings.emailUser !== user?.email || loading || !workbook ||
       !mappedProviderCount(settings, activeAccounts) ||
-      (Number.isFinite(lastSync) && Date.now() - lastSync < 60_000)
+      (!force && Number.isFinite(lastSync) && Date.now() - lastSync < 60_000)
     ) return
 
     busy.current = true
@@ -66,8 +67,8 @@ export default function EmailAutomationRunner () {
       if (candidates.length) {
         toast.success(`${candidates.length} transaksi email baru menunggu konfirmasi.`)
       }
-    } catch {
-      // Background sync stays quiet. The explicit Settings action reports errors.
+    } catch (err) {
+      if (reportError) toast.error(`Pemeriksaan email gagal: ${err.message}`)
     } finally {
       busy.current = false
     }
@@ -85,16 +86,44 @@ export default function EmailAutomationRunner () {
     toast
   ])
 
+  const autoReady = Boolean(
+    !isLocal && hasGmailAccess && settings.emailAutoEnabled &&
+    settings.emailUser === user?.email && !loading && workbook &&
+    mappedProviderCount(settings, activeAccounts)
+  )
+
+  /*
+   * A homescreen launch is a user asking for fresh state. It must not inherit
+   * the interval's cooldown: otherwise a recently saved timestamp can make the
+   * initial scan silently disappear. The key prevents the settings update at
+   * the end of a scan from starting a second one during the same app mount.
+   */
   useEffect(() => {
-    sync()
+    if (!autoReady) return
+    const key = `${user?.email || ''}:${workbook?.spreadsheetId || workbook?.id || 'workbook'}`
+    if (startupScanKey.current === key) return
+    startupScanKey.current = key
+    sync({ force: true, reportError: true })
+  }, [autoReady, user?.email, workbook, sync])
+
+  useEffect(() => {
     const whenVisible = () => {
-      if (document.visibilityState === 'visible') sync()
+      if (document.visibilityState === 'visible') {
+        sync({ force: true, reportError: true })
+      }
     }
-    const timer = window.setInterval(whenVisible, 5 * 60_000)
+    const onPageShow = (event) => {
+      if (event.persisted) sync({ force: true, reportError: true })
+    }
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'visible') sync()
+    }, 5 * 60_000)
     document.addEventListener('visibilitychange', whenVisible)
+    window.addEventListener('pageshow', onPageShow)
     return () => {
       window.clearInterval(timer)
       document.removeEventListener('visibilitychange', whenVisible)
+      window.removeEventListener('pageshow', onPageShow)
     }
   }, [sync])
 
