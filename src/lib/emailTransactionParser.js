@@ -25,7 +25,7 @@ const MONTHS = {
 
 const INCOME_WORDS = /\b(kredit|uang masuk|dana masuk|diterima|penerimaan|incoming|received|refund|pengembalian)\b/i
 const EXPENSE_WORDS = /\b(debit|debet|pembayaran|pembelian|membayar|transaksi keluar|uang keluar|melakukan transfer|mengirimkan uang|transfer (?:ke|keluar)|top up|tarik tunai|penarikan uang tunai|purchase|payment|paid|qris)\b/i
-const SUCCESS_WORDS = /\b(berhasil|sukses|successful|success|telah dilakukan|completed|sudah bertransaksi)\b/i
+const SUCCESS_WORDS = /\b(berhasil|sukses|successful|success|telah dilakukan|telah melakukan transaksi|completed|sudah bertransaksi)\b/i
 const FAILURE_WORDS = /\b(gagal|dibatalkan|batal|failed|declined|rejected|kedaluwarsa)\b/i
 const PENDING_WORDS = /\b(pending|diproses|menunggu|in progress)\b/i
 const ALERT_WORDS = /\b(notifikasi|pemberitahuan|transaction alert)\b.{0,30}\b(transaksi|debit|debet|kredit|payment)\b/i

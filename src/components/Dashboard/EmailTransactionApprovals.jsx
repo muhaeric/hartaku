@@ -4,23 +4,32 @@ import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { formatCurrency, formatDate } from '../../lib/format.js'
+import {
+  mappedProviderCount,
+  mergeEmailCandidates,
+  scanEmailTransactions
+} from '../../services/emailTransactionSync.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
 import Carousel from '../ui/Carousel.jsx'
+import { RefreshIcon } from '../ui/icons.jsx'
 
 export const EMAIL_APPROVALS_HASH = '#email-transaction-approvals'
 
 export default function EmailTransactionApprovals () {
-  const { user } = useAuth()
-  const { activeCategories, addTransactions } = useData()
+  const { hasGmailAccess, user } = useAuth()
+  const { activeAccounts, activeCategories, transactions, addTransactions, loading } = useData()
   const { settings, updateSettings } = useSettings()
   const toast = useToast()
   const section = useRef(null)
   const [busySourceId, setBusySourceId] = useState('')
+  const [syncing, setSyncing] = useState(false)
+  const enabled = Boolean(settings.emailAutoEnabled && settings.emailUser === user?.email)
   const pending = useMemo(
     () => settings.emailUser === user?.email ? settings.emailPendingTransactions || [] : [],
     [settings.emailPendingTransactions, settings.emailUser, user?.email]
   )
+  const canSync = hasGmailAccess && !loading && mappedProviderCount(settings, activeAccounts) > 0
 
   useEffect(() => {
     if (pending.length && window.location.hash === EMAIL_APPROVALS_HASH) {
@@ -77,7 +86,35 @@ export default function EmailTransactionApprovals () {
     }))
   }
 
-  if (!pending.length) return null
+  const syncNow = async () => {
+    if (!canSync || syncing) return
+    setSyncing(true)
+    try {
+      const { candidates, result } = await scanEmailTransactions({
+        settings,
+        accounts: activeAccounts,
+        categories: activeCategories,
+        transactions
+      })
+      updateSettings((current) => ({
+        ...current,
+        emailPendingTransactions: mergeEmailCandidates(current.emailPendingTransactions, candidates),
+        emailLastSyncAt: new Date().toISOString(),
+        emailLastSyncResult: result
+      }))
+      if (candidates.length) {
+        toast.success(`${candidates.length} transaksi email baru menunggu konfirmasi.`)
+      } else {
+        toast.show('Tidak ada transaksi email baru yang perlu dikonfirmasi.')
+      }
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  if (!enabled) return null
 
   return (
     <section
@@ -88,35 +125,58 @@ export default function EmailTransactionApprovals () {
     >
       <SectionHeader
         title="Transaksi otomatis menunggu persetujuan"
-        hint="Periksa satu per satu sebelum transaksi dicatat."
+        hint={pending.length ? 'Periksa satu per satu sebelum transaksi dicatat.' : 'Transaksi baru dari email akan muncul di sini.'}
         action={
           <span className="rounded-full bg-brand-soft px-2.5 py-1 text-caption font-semibold text-brand-onsoft">
-            {pending.length} menunggu
+            {pending.length ? `${pending.length} menunggu` : 'Aktif'}
           </span>
         }
       />
-      <Card flush>
-        <Carousel
-          label="Transaksi otomatis yang menunggu persetujuan"
-          slides={pending.map((candidate, index) => ({
-            key: candidate.sourceId,
-            title: `Transaksi ${index + 1} dari ${pending.length}`,
-            content: (
-              <TransactionApprovalCard
-                candidate={candidate}
-                categories={categoriesFor(activeCategories, candidate.type)}
-                currency={settings.currency}
-                dateFormat={settings.dateFormat}
-                busy={Boolean(busySourceId)}
-                saving={busySourceId === candidate.sourceId}
-                onChange={(patch) => updateCandidate(candidate.sourceId, patch)}
-                onConfirm={() => confirmCandidate(candidate)}
-                onDismiss={() => dismissCandidate(candidate)}
-              />
-            )
-          }))}
-        />
-      </Card>
+      {pending.length ? (
+        <Card flush>
+          <Carousel
+            label="Transaksi otomatis yang menunggu persetujuan"
+            slides={pending.map((candidate, index) => ({
+              key: candidate.sourceId,
+              title: `Transaksi ${index + 1} dari ${pending.length}`,
+              content: (
+                <TransactionApprovalCard
+                  candidate={candidate}
+                  categories={categoriesFor(activeCategories, candidate.type)}
+                  currency={settings.currency}
+                  dateFormat={settings.dateFormat}
+                  busy={Boolean(busySourceId)}
+                  saving={busySourceId === candidate.sourceId}
+                  onChange={(patch) => updateCandidate(candidate.sourceId, patch)}
+                  onConfirm={() => confirmCandidate(candidate)}
+                  onDismiss={() => dismissCandidate(candidate)}
+                />
+              )
+            }))}
+          />
+        </Card>
+      ) : (
+        <Card className="flex flex-col items-center py-6 text-center">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft text-xl" aria-hidden="true">
+            ✉️
+          </span>
+          <h3 className="mt-3 text-body font-semibold">Belum ada transaksi yang perlu disetujui</h3>
+          <p className="mt-1 max-w-sm text-caption text-subtitle">
+            Hartaku akan menampilkan transaksi baru setelah menemukan notifikasi bank atau e-wallet yang sesuai.
+          </p>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-4"
+            loading={syncing}
+            disabled={!canSync}
+            onClick={syncNow}
+          >
+            <RefreshIcon className="h-4 w-4" />
+            Cek email sekarang
+          </Button>
+        </Card>
+      )}
     </section>
   )
 }

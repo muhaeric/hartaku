@@ -91,6 +91,25 @@ test('parses the real Jago payment subject wording', () => {
   assert.equal(parsed.description, 'Warung Makan Pak Rudi 21')
 })
 
+test('parses the Jago debit card transaction wording', () => {
+  const parsed = parseTransactionEmail({
+    from: 'Jago <noreply@jago.com>',
+    subject: 'Transaksi kartu debit Jago',
+    text: [
+      'Halo Muha,',
+      'Kamu telah melakukan transaksi sebesar Rp69.000 menggunakan kartu debit Jago.',
+      'Kamu bisa melihat riwayat transaksi di Rincian Kantong melalui aplikasi Jago.'
+    ].join('\n'),
+    internalDate: String(new Date(2026, 8, 8, 16, 23).getTime())
+  })
+
+  assert.equal(parsed.provider, 'jago')
+  assert.equal(parsed.type, 'expense')
+  assert.equal(parsed.amount, 69000)
+  assert.equal(parsed.date, '2026-09-08')
+  assert.equal(parsed.description, 'Transaksi kartu debit Jago')
+})
+
 test('parses the Jago Mengantar payment with a zero-width subject and zero rupiah tip', () => {
   const parsed = parseTransactionEmail({
     from: 'Jago <noreply@jago.com>',
