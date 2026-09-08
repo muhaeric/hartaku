@@ -29,6 +29,7 @@ import SummaryCards from './SummaryCards.jsx'
 import TagSpending from './TagSpending.jsx'
 import TopExpenses from './TopExpenses.jsx'
 import BudgetSummary from './BudgetSummary.jsx'
+import EmailTransactionApprovals from './EmailTransactionApprovals.jsx'
 import InstallAppBanner from './InstallAppBanner.jsx'
 import SnapshotTeaser from '../Snapshot/SnapshotTeaser.jsx'
 
@@ -163,6 +164,8 @@ export default function Dashboard () {
           holdsGold={gold.grams > 0}
         />
       </NetWorthCard>
+
+      <EmailTransactionApprovals />
 
       <AccountBalances balances={listed} gold={gold} archived={archived} />
 

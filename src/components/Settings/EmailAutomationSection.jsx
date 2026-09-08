@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
@@ -12,9 +13,10 @@ import {
 } from '../../services/emailTransactionSync.js'
 import Button from '../ui/Button.jsx'
 import { RefreshIcon } from '../ui/icons.jsx'
-import { EMAIL_REVIEW_EVENT } from './EmailAutomationRunner.jsx'
+import { EMAIL_APPROVALS_HASH } from '../Dashboard/EmailTransactionApprovals.jsx'
 
 export default function EmailAutomationSection () {
+  const navigate = useNavigate()
   const toast = useToast()
   const { hasGmailAccess, signIn, signOut, user } = useAuth()
   const { settings, updateSettings } = useSettings()
@@ -276,9 +278,9 @@ export default function EmailAutomationSection () {
               <Button
                 variant="soft"
                 size="sm"
-                onClick={() => window.dispatchEvent(new Event(EMAIL_REVIEW_EVENT))}
+                onClick={() => navigate(`/${EMAIL_APPROVALS_HASH}`)}
               >
-                Tinjau {pendingCount} transaksi
+                Lihat {pendingCount} di dashboard
               </Button>
             )}
             {dismissedCount > 0 && (
