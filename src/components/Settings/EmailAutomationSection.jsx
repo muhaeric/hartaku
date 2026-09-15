@@ -20,7 +20,7 @@ export default function EmailAutomationSection () {
   const toast = useToast()
   const { hasGmailAccess, signIn, signOut, user } = useAuth()
   const { settings, updateSettings } = useSettings()
-  const { activeAccounts, activeCategories, transactions, loading } = useData()
+  const { activeAccounts, activeCategories, transactions } = useData()
   const [syncing, setSyncing] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
   const mappingCount = mappedProviderCount(settings, activeAccounts)
@@ -100,6 +100,7 @@ export default function EmailAutomationSection () {
   }
 
   const syncNow = async () => {
+    if (!hasGmailAccess || !mappingCount || syncing) return
     setSyncing(true)
     try {
       const { candidates, result } = await scanEmailTransactions({
@@ -128,6 +129,7 @@ export default function EmailAutomationSection () {
   }
 
   const retryDismissed = async () => {
+    if (!hasGmailAccess || !mappingCount || syncing) return
     setSyncing(true)
     try {
       const retrySettings = {
@@ -268,7 +270,7 @@ export default function EmailAutomationSection () {
               variant="secondary"
               size="sm"
               loading={syncing}
-              disabled={!mappingCount || loading}
+              disabled={!mappingCount}
               onClick={syncNow}
             >
               <RefreshIcon className="h-4 w-4" />
@@ -288,7 +290,7 @@ export default function EmailAutomationSection () {
                 variant="ghost"
                 size="sm"
                 loading={syncing}
-                disabled={!mappingCount || loading}
+                disabled={!mappingCount}
                 onClick={retryDismissed}
               >
                 Periksa ulang {dismissedCount} email diabaikan

@@ -18,7 +18,7 @@ export const EMAIL_APPROVALS_HASH = '#email-transaction-approvals'
 
 export default function EmailTransactionApprovals () {
   const { hasGmailAccess, user } = useAuth()
-  const { activeAccounts, activeCategories, transactions, addTransactions, loading } = useData()
+  const { activeAccounts, activeCategories, transactions, addTransactions } = useData()
   const { settings, updateSettings } = useSettings()
   const toast = useToast()
   const section = useRef(null)
@@ -29,7 +29,8 @@ export default function EmailTransactionApprovals () {
     () => settings.emailUser === user?.email ? settings.emailPendingTransactions || [] : [],
     [settings.emailPendingTransactions, settings.emailUser, user?.email]
   )
-  const canSync = hasGmailAccess && !loading && mappedProviderCount(settings, activeAccounts) > 0
+  // Cached accounts are ready to use while the spreadsheet refreshes in the background.
+  const canSync = hasGmailAccess && mappedProviderCount(settings, activeAccounts) > 0
 
   useEffect(() => {
     if (pending.length && window.location.hash === EMAIL_APPROVALS_HASH) {
