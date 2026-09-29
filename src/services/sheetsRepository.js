@@ -6,6 +6,7 @@ import {
   SHEET,
   TRANSACTION_HEADERS
 } from '../lib/constants.js'
+import { normalizeGoldLot } from '../lib/gold.js'
 import { newId } from '../lib/id.js'
 import {
   formatTags,
@@ -26,12 +27,12 @@ import {
 const TX_RANGE = `${SHEET.transactions}!A2:L`
 const CAT_RANGE = `${SHEET.categories}!A2:H`
 const ACC_RANGE = `${SHEET.accounts}!A2:I`
-const GOLD_RANGE = `${SHEET.gold}!A2:I`
+const GOLD_RANGE = `${SHEET.gold}!A2:K`
 const BUDGET_RANGE = `${SHEET.budgets}!A2:F`
 const TX_LAST_COLUMN = 'L'
 const CAT_LAST_COLUMN = 'H'
 const ACC_LAST_COLUMN = 'I'
-const GOLD_LAST_COLUMN = 'I'
+const GOLD_LAST_COLUMN = 'K'
 const BUDGET_LAST_COLUMN = 'F'
 
 const TRANSACTION_TYPE_VALUES = ['expense', 'income', 'transfer']
@@ -144,7 +145,7 @@ function rowToGoldLot (row, index) {
   const grams = Number(row[2]) || 0
   const cost = Number(row[3]) || 0
 
-  return {
+  return normalizeGoldLot({
     id: row[0] || '',
     date: normalizeDate(row[1]),
     grams,
@@ -155,11 +156,14 @@ function rowToGoldLot (row, index) {
     description: row[6] ?? '',
     createdAt: row[7] ?? '',
     updatedAt: row[8] ?? '',
+    kind: row[9] ?? '',
+    karat: row[10] ?? '',
     rowNumber: index + 2
-  }
+  })
 }
 
-function goldLotToRow (lot) {
+function goldLotToRow (input) {
+  const lot = normalizeGoldLot(input)
   const grams = Number(lot.grams) || 0
   const cost = Number(lot.cost) || 0
 
@@ -172,7 +176,9 @@ function goldLotToRow (lot) {
     lot.fromAccount || '',
     lot.description || '',
     lot.createdAt,
-    lot.updatedAt
+    lot.updatedAt,
+    lot.kind,
+    lot.karat
   ]
 }
 
@@ -593,7 +599,7 @@ export async function listGoldLots (workbook) {
 
 export async function createGoldLot (workbook, input) {
   const now = new Date().toISOString()
-  const lot = { ...input, id: newId(), createdAt: now, updatedAt: now }
+  const lot = normalizeGoldLot({ ...input, id: newId(), createdAt: now, updatedAt: now })
 
   await appendValues(workbook.spreadsheetId, `${SHEET.gold}!A1`, [goldLotToRow(lot)])
   return { ...lot, pricePerGram: lot.grams ? lot.cost / lot.grams : 0 }
@@ -603,7 +609,7 @@ export async function updateGoldLot (workbook, input) {
   const rowNumber = await resolveRowNumber(workbook, GOLD_RANGE, input.id, input.rowNumber)
   if (!rowNumber) throw new Error('Catatan emas tidak ditemukan - mungkin sudah dihapus.')
 
-  const lot = { ...input, rowNumber, updatedAt: new Date().toISOString() }
+  const lot = normalizeGoldLot({ ...input, rowNumber, updatedAt: new Date().toISOString() })
   await updateValues(
     workbook.spreadsheetId,
     `${SHEET.gold}!A${rowNumber}:${GOLD_LAST_COLUMN}${rowNumber}`,

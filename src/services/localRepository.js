@@ -1,3 +1,4 @@
+import { normalizeGoldLot } from '../lib/gold.js'
 import { newId } from '../lib/id.js'
 import { mergeTags, normalizeTag, normalizeTags, parseTags, sameTags } from '../lib/tags.js'
 import { mutate, readDoc } from './localStore.js'
@@ -336,19 +337,19 @@ export async function listGoldLots () {
   const doc = await readDoc()
   return (doc?.goldLots || [])
     .filter((lot) => lot.id && lot.grams > 0)
-    .map((lot) => ({ ...lot, pricePerGram: perGram(lot) }))
+    .map((lot) => ({ ...normalizeGoldLot(lot), pricePerGram: perGram(lot) }))
 }
 
 export async function createGoldLot (workbook, input) {
   const stamp = now()
-  const lot = {
+  const lot = normalizeGoldLot({
     ...input,
     id: newId(),
     grams: Number(input.grams) || 0,
     cost: Number(input.cost) || 0,
     createdAt: stamp,
     updatedAt: stamp
-  }
+  })
 
   return mutate((doc) => ({
     doc: { ...doc, goldLots: [...doc.goldLots, lot] },
@@ -357,12 +358,12 @@ export async function createGoldLot (workbook, input) {
 }
 
 export async function updateGoldLot (workbook, input) {
-  const lot = {
+  const lot = normalizeGoldLot({
     ...input,
     grams: Number(input.grams) || 0,
     cost: Number(input.cost) || 0,
     updatedAt: now()
-  }
+  })
 
   return mutate((doc) => {
     if (!doc.goldLots.some((item) => item.id === input.id)) {

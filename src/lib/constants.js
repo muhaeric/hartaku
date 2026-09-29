@@ -41,7 +41,11 @@ export const CATEGORY_HEADERS = [
   'archived'
 ]
 
-/** One row per gold purchase. `price_per_gram` is derived, stored for readability. */
+/**
+ * One row per gold purchase. `price_per_gram` is derived, stored for readability.
+ * `kind` and `karat` are appended, like `to_account`: rows written before they
+ * existed read as blank, which means 24 karat bullion.
+ */
 export const GOLD_HEADERS = [
   'id',
   'date',
@@ -51,7 +55,9 @@ export const GOLD_HEADERS = [
   'from_account',
   'description',
   'created_at',
-  'updated_at'
+  'updated_at',
+  'kind',
+  'karat'
 ]
 
 export const ACCOUNT_HEADERS = [

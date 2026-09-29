@@ -4,7 +4,8 @@ import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
 import { useGoldPrice } from '../../hooks/useGoldPrice.js'
 import { formatCurrency, formatDate, formatGrams, formatPercent } from '../../lib/format.js'
-import { goldSummary } from '../../lib/summary.js'
+import { formatKarat, isJewelry } from '../../lib/gold.js'
+import { goldLotValue, goldSummary } from '../../lib/summary.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
@@ -59,7 +60,12 @@ export default function GoldManager () {
   }
 
   const startEdit = (lot) =>
-    setEditing({ ...lot, grams: String(lot.grams), cost: String(lot.cost) })
+    setEditing({
+      ...lot,
+      grams: String(lot.grams),
+      cost: String(lot.cost),
+      karat: String(lot.karat)
+    })
 
   return (
     <div className="space-y-gap-normal">
@@ -89,7 +95,7 @@ export default function GoldManager () {
           <EmptyState
             icon="🥇"
             title="Belum ada emas"
-            description="Catat pembelian pertama: gramasi, harga beli, dan tanggalnya."
+            description="Catat pembelian pertama - logam mulia atau perhiasan: gramasi, harga beli, dan tanggalnya."
             actionLabel="Catat pembelian"
             onAction={() => setEditing(emptyGoldLot())}
           />
@@ -99,14 +105,19 @@ export default function GoldManager () {
           {[...goldLots]
             .sort((a, b) => b.date.localeCompare(a.date))
             .map((lot) => {
-              const value = quote ? lot.grams * quote.buybackPerGram : null
+              const value = goldLotValue(lot, quote?.buybackPerGram)
               const profit = value === null ? null : value - lot.cost
+              const jewelry = isJewelry(lot)
 
               return (
                 <li key={lot.id}>
                   <ListRow
-                    leading={<RowIcon icon="🥇" color="#eda100" />}
-                    title={formatGrams(lot.grams)}
+                    leading={<RowIcon icon={jewelry ? '💍' : '🥇'} color="#eda100" />}
+                    title={
+                      jewelry
+                        ? `${formatGrams(lot.grams)} · perhiasan ${formatKarat(lot.karat)}`
+                        : formatGrams(lot.grams)
+                    }
                     subtitle={formatDate(lot.date, settings.dateFormat)}
                     meta={`${money(lot.pricePerGram)}/gr${lot.fromAccount ? ` · ${lot.fromAccount}` : ''}`}
                     trailing={money(lot.cost)}
@@ -163,7 +174,7 @@ export default function GoldManager () {
       <ConfirmDialog
         open={Boolean(pendingDelete)}
         title="Hapus catatan emas?"
-        message={`Pembelian ${formatGrams(pendingDelete?.grams || 0)} akan dihapus. Kalau pembelian ini memotong saldo akun, saldonya ikut kembali.`}
+        message={`Pembelian ${formatGrams(pendingDelete?.grams || 0)}${pendingDelete && isJewelry(pendingDelete) ? ` perhiasan ${formatKarat(pendingDelete.karat)}` : ''} akan dihapus. Kalau pembelian ini memotong saldo akun, saldonya ikut kembali.`}
         onConfirm={handleDelete}
         onClose={() => setPendingDelete(null)}
       />
@@ -227,16 +238,23 @@ export function GoldPortfolio ({ summary, quote, loading, error, stale, onRefres
         </div>
       )}
 
+      {/* With jewellery in the pile the scale weight and the gold content part
+          ways, so both are shown and every per-gram figure says it is per gram
+          of 24K - the only unit the quote and a mixed average agree on. */}
       <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5 border-t border-hairline pt-2.5">
         <Stat label="Total gram" value={formatGrams(summary.grams)} />
+        {summary.hasJewelry && (
+          <Stat label="Setara emas 24K" value={formatGrams(summary.fineGrams)} />
+        )}
         <Stat label="Total investasi" value={money(summary.invested)} />
         <Stat
-          label="Rata-rata beli"
-          value={summary.grams > 0 ? `${money(summary.averageCost)}/gr` : '—'}
+          label={summary.hasJewelry ? 'Rata-rata beli (24K)' : 'Rata-rata beli'}
+          value={summary.fineGrams > 0 ? `${money(summary.averageCost)}/gr` : '—'}
         />
         <Stat
-          label="Harga buyback"
+          label={summary.hasJewelry ? 'Harga buyback (24K)' : 'Harga buyback'}
           value={quote ? `${money(quote.buybackPerGram)}/gr` : '—'}
+          className={summary.hasJewelry ? 'col-span-2' : ''}
         />
       </dl>
 
@@ -252,13 +270,22 @@ export function GoldPortfolio ({ summary, quote, loading, error, stale, onRefres
           error || 'Mengambil harga emas…'
         )}
       </p>
+
+      {/* The quote is for bullion; what a jeweller pays back for a piece
+          depends on the shop, so the figure above is only ever a guide. */}
+      {summary.hasJewelry && (
+        <p className="mt-1.5 text-caption text-subtitle">
+          Nilai perhiasan merupakan estimasi dari kadar × harga buyback 24K. Untuk harga yang
+          lebih tepat, tanyakan ke toko — tiap toko bisa berbeda-beda.
+        </p>
+      )}
     </Card>
   )
 }
 
-function Stat ({ label, value }) {
+function Stat ({ label, value, className = '' }) {
   return (
-    <div className="min-w-0">
+    <div className={`min-w-0 ${className}`}>
       <dt className="truncate text-caption text-subtitle">{label}</dt>
       {/* `truncate` rather than wrap: `.amount` forbids wrapping anyway, so
           without it a long figure escapes its column instead of ending in an

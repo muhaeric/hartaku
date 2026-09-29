@@ -1,4 +1,5 @@
 import { PERIODS, monthKeyOf, todayIso } from './dates.js'
+import { fineGrams, isJewelry } from './gold.js'
 import { parseTags } from './tags.js'
 
 export function filterByMonth (transactions, monthKey) {
@@ -87,29 +88,43 @@ export function totalBalance (balances) {
  * Gold position. `value` uses the dealer's buyback price - what the metal would
  * actually fetch today - so the profit shown is the profit you could realise,
  * not the paper figure the higher retail price would suggest.
+ *
+ * The quote is for 24 karat, so it is applied to `fineGrams`, the pure gold
+ * inside each lot, never to the weight on the scale. `averageCost` is per gram
+ * of that pure gold too, which is what makes it comparable with the quote once
+ * jewellery of different karats sits in the same pile.
  */
 export function goldSummary (goldLots, buybackPerGram) {
   let grams = 0
+  let fine = 0
   let invested = 0
 
   for (const lot of goldLots) {
     grams += lot.grams
+    fine += fineGrams(lot)
     invested += lot.cost
   }
 
   const priced = Number(buybackPerGram) > 0
-  const value = priced ? grams * buybackPerGram : null
+  const value = priced ? fine * buybackPerGram : null
   const profit = priced ? value - invested : null
 
   return {
     grams,
+    fineGrams: fine,
+    hasJewelry: goldLots.some(isJewelry),
     invested,
     value,
     profit,
     profitPct: priced && invested > 0 ? (profit / invested) * 100 : null,
-    averageCost: grams > 0 ? invested / grams : 0,
+    averageCost: fine > 0 ? invested / fine : 0,
     lots: goldLots.length
   }
+}
+
+/** Today's worth of one lot at a 24K buyback price, or null with no price. */
+export function goldLotValue (lot, buybackPerGram) {
+  return Number(buybackPerGram) > 0 ? fineGrams(lot) * buybackPerGram : null
 }
 
 /**

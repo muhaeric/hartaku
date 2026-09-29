@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { ACCOUNT_KINDS } from '../lib/constants.js'
 import { ALL_MONTHS } from '../lib/dates.js'
 import { accountTransactionsPath } from '../lib/links.js'
@@ -13,6 +14,7 @@ import DayGroupHeader from './Transaction/DayGroup.jsx'
 import PeriodSummary from './Transaction/PeriodSummary.jsx'
 import SelectionBar from './Transaction/SelectionBar.jsx'
 import TransactionRow from './Transaction/TransactionRow.jsx'
+import GoldForm, { emptyGoldLot } from './Gold/GoldForm.jsx'
 import { GoldPortfolio } from './Gold/GoldManager.jsx'
 import AccountBalances from './Dashboard/AccountBalances.jsx'
 import NetWorthCard from './Dashboard/NetWorthCard.jsx'
@@ -67,7 +69,8 @@ const HISTORY = Array.from({ length: 18 }, (_, index) => {
 const GOLD_LOTS = [
   { id: 'g1', date: '2026-07-21', grams: 1, cost: 2409000 },
   { id: 'g2', date: '2026-07-01', grams: 0.5, cost: 1300000 },
-  { id: 'g3', date: '2026-06-11', grams: 14, cost: 39545000 }
+  { id: 'g3', date: '2026-06-11', grams: 14, cost: 39545000 },
+  { id: 'g4', date: '2026-05-02', grams: 6.2, cost: 9800000, kind: 'jewelry', karat: 17 }
 ]
 
 const CATEGORIES = [
@@ -295,7 +298,7 @@ export default function DevPreview () {
           eight-figure rupiah amount and a percentage, and amounts never wrap. It
           belongs here so the next layout change has to survive it. */}
       <div className="space-y-gap-normal">
-        <SectionHeader title="Emas" hint="12 catatan" />
+        <SectionHeader title="Emas" hint="12 catatan" action={<GoldFormPreview />} />
         <GoldPortfolio
           summary={goldSummary(GOLD_LOTS, 2510000)}
           quote={{
@@ -318,5 +321,28 @@ export default function DevPreview () {
         />
       </div>
     </div>
+  )
+}
+
+/** Opens the purchase sheet on its own, so the karat picker can be tried without a book. */
+function GoldFormPreview () {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <Button size="sm" onClick={() => setOpen(true)}>
+        <PlusIcon className="h-4 w-4" />
+        Catat
+      </Button>
+      {open && (
+        <GoldForm
+          open
+          initial={emptyGoldLot()}
+          accounts={ACCOUNTS}
+          onSubmit={async () => {}}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
   )
 }
