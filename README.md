@@ -177,12 +177,14 @@ tidak mencatat email yang sama dua kali.
 
 **Sheet `Gold`** — satu baris per pembelian emas
 
-| id | date | grams | cost | price_per_gram | from_account | description | created_at | updated_at |
-|----|------|-------|------|----------------|--------------|-------------|------------|------------|
-| uuid | `YYYY-MM-DD` | angka | angka | angka (turunan) | nama akun (opsional) | teks | ISO | ISO |
+| id | date | grams | cost | price_per_gram | from_account | description | created_at | updated_at | kind | karat |
+|----|------|-------|------|----------------|--------------|-------------|------------|------------|------|-------|
+| uuid | `YYYY-MM-DD` | angka | angka | angka (turunan) | nama akun (opsional) | teks | ISO | ISO | `bar` \| `jewelry` | angka (maks. 24) |
 
 `price_per_gram` disimpan supaya spreadsheet enak dibaca, tapi aplikasi selalu menghitung
-ulang dari `cost / grams` — sheet ini bisa diedit tangan.
+ulang dari `cost / grams` — sheet ini bisa diedit tangan. `kind` dan `karat` ditambahkan di
+ujung (kolom posisional); baris lama yang kosong dibaca sebagai logam mulia 24K, dan `bar`
+selalu 24K apa pun isi kolom `karat`-nya.
 
 **Sheet `Budgets`** — satu batas pengeluaran per kategori per bulan
 
@@ -252,6 +254,13 @@ cuma berubah sekali sehari).
 **Penilaian memakai harga buyback, bukan harga jual dealer.** Buyback adalah uang yang
 benar-benar kamu terima kalau emasnya dijual hari ini; harga jual dealer sekitar 3% lebih
 tinggi dan akan melebih-lebihkan profit. Keduanya tetap ditampilkan.
+
+**Perhiasan dinilai dari kandungan emas murninya.** Harga feed adalah logam mulia 24K, jadi
+tiap catatan dikalikan `grams × karat / 24` dulu — cincin 17K seberat 6,2 gr dihitung sebagai
+~4,39 gr emas murni. Karena itu, begitu ada perhiasan, kartu portofolio menampilkan
+"Setara emas 24K" di samping total gram, dan rata-rata beli dihitung per gram 24K supaya bisa
+dibandingkan langsung dengan harga buyback. Ini tetap perkiraan: toko emas biasanya memotong
+lagi saat membeli kembali perhiasan (ongkos, susut), dan form-nya bilang begitu.
 
 Dua kehati-hatian terhadap kualitas data feed-nya:
 

@@ -1,4 +1,4 @@
-import { accountBalances, categoryBreakdown, filterByMonth, netWorth, netWorthHistory, summarize } from './summary.js'
+import { accountBalances, categoryBreakdown, filterByMonth, goldSummary, netWorth, netWorthHistory, summarize } from './summary.js'
 import { currentMonthKey, shiftMonth, todayIso } from './dates.js'
 import { indonesiaWealthStanding } from './wealthPercentile.js'
 
@@ -76,6 +76,12 @@ function recordingConsistency (transactions, month) {
   return clamp((complete * 0.65 + rhythm * 0.35) * 100)
 }
 
+/** At today's price when there is one, else at what was paid - never zero for gold that is held. */
+function heldGoldValue (goldLots, goldPrice) {
+  const summary = goldSummary(goldLots, goldPrice)
+  return summary.value || summary.invested
+}
+
 function assetComposition (accounts, transactions, goldLots, goldPrice) {
   const buckets = new Map()
   const add = (key, label, icon, color, value, featured = false) => {
@@ -96,8 +102,7 @@ function assetComposition (accounts, transactions, goldLots, goldPrice) {
     }
   }
 
-  const goldValue = goldLots.reduce((sum, lot) => sum + Number(lot.grams || 0) * Number(goldPrice || 0), 0) ||
-    goldLots.reduce((sum, lot) => sum + Number(lot.cost || 0), 0)
+  const goldValue = heldGoldValue(goldLots, goldPrice)
   add('gold', 'Emas', '🪙', '#d89b28', goldValue, true)
 
   const values = [...buckets.values()]
@@ -113,8 +118,7 @@ function recordedNetWorth (accounts, transactions, goldLots, goldPrice) {
   if (!accounts.length && !goldLots.length) return null
 
   const balances = accountBalances(accounts, transactions, goldLots)
-  const goldValue = goldLots.reduce((sum, lot) => sum + Number(lot.grams || 0) * Number(goldPrice || 0), 0) ||
-    goldLots.reduce((sum, lot) => sum + Number(lot.cost || 0), 0)
+  const goldValue = heldGoldValue(goldLots, goldPrice)
 
   return netWorth(balances, goldValue).total
 }
