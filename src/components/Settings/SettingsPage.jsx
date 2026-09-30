@@ -9,6 +9,7 @@ import { useInstallApp } from '../../hooks/useInstallApp.js'
 import { CURRENCIES, DATE_FORMATS, THEMES, isGlassTheme } from '../../lib/constants.js'
 import { extractSpreadsheetId } from '../../lib/spreadsheetId.js'
 import { sortOptions } from '../../lib/sortOptions.js'
+import { ONBOARDING, writeOnboarding } from '../../lib/onboarding.js'
 import { fileToThemePhoto } from '../../lib/themePhoto.js'
 import Button from '../ui/Button.jsx'
 import { Card, SectionHeader } from '../ui/Card.jsx'
@@ -205,6 +206,19 @@ export default function SettingsPage () {
       )}
 
       <InstallAppSection />
+
+      <Section title="Panduan awal">
+        <p className="text-body text-subtitle">
+          Lihat lagi perkenalan fitur transaksi dan pengelolaan emas.
+        </p>
+        <Button
+          variant="secondary"
+          className="w-full justify-center sm:w-auto"
+          onClick={() => writeOnboarding(ONBOARDING.replay)}
+        >
+          Buka panduan awal
+        </Button>
+      </Section>
 
       <Section title="Tentang">
         <a
