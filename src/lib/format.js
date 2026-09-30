@@ -104,6 +104,26 @@ export function parseAmount (input) {
   return Number(normalized)
 }
 
+/**
+ * For quantities that are not money - grams, karat. `parseAmount` reads
+ * "0,4016" as 4016 because three or more digits after a separator look like
+ * thousands in a price, but a weight quoted to four decimals is ordinary. Here
+ * the last separator is always the decimal point: "0,4016", "0.4016" and
+ * "1.250,5" all read the way they are written.
+ */
+export function parseDecimal (input) {
+  if (typeof input === 'number') return input
+
+  const cleaned = String(input ?? '').trim().replace(/[^\d.,-]/g, '')
+  if (!cleaned) return NaN
+
+  const decimalAt = Math.max(cleaned.lastIndexOf(','), cleaned.lastIndexOf('.'))
+  if (decimalAt === -1) return Number(cleaned)
+
+  const whole = cleaned.slice(0, decimalAt).replace(/[.,]/g, '')
+  return Number(`${whole}.${cleaned.slice(decimalAt + 1)}`)
+}
+
 export function formatDate (isoDate, dateFormat = 'DD/MM/YYYY') {
   if (!isoDate) return ''
 

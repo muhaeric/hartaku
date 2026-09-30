@@ -200,5 +200,5 @@ export const LIMITS = {
   tagsPerTransaction: 8
 }
 
-/** Gold is quoted per gram; three decimals covers the smallest bars sold. */
-export const GRAM_DECIMALS = 3
+/** Gold is quoted per gram; digital gold (Pegadaian, e-wallets) is weighed to four decimals. */
+export const GRAM_DECIMALS = 4
