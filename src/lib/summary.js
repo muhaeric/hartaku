@@ -6,6 +6,11 @@ export function filterByMonth (transactions, monthKey) {
   return transactions.filter((transaction) => monthKeyOf(transaction.date) === monthKey)
 }
 
+// Both ends are inclusive ISO dates, which compare correctly as plain strings.
+export function filterByRange (transactions, { from, to }) {
+  return transactions.filter((transaction) => transaction.date >= from && transaction.date <= to)
+}
+
 /**
  * Income, expense and their difference.
  *
