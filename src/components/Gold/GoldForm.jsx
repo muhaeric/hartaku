@@ -3,7 +3,7 @@ import { useSettings } from '../../context/SettingsContext.jsx'
 import { LIMITS } from '../../lib/constants.js'
 import { accountOptionLabel } from '../../lib/accountIcon.js'
 import { isFutureDate, todayIso } from '../../lib/dates.js'
-import { formatCurrency, formatGrams, parseAmount } from '../../lib/format.js'
+import { formatCurrency, formatGrams, parseAmount, parseDecimal } from '../../lib/format.js'
 import {
   GOLD_KIND,
   GOLD_KIND_OPTIONS,
@@ -38,12 +38,12 @@ function validate (draft) {
   else if (isFutureDate(draft.date)) errors.date = 'Tanggal tidak boleh di masa depan.'
 
   if (draft.kind === GOLD_KIND.jewelry) {
-    const karat = parseAmount(draft.karat)
+    const karat = parseDecimal(draft.karat)
     if (draft.karat === '') errors.karat = 'Kadar wajib diisi.'
     else if (!isValidKarat(karat)) errors.karat = `Kadar harus antara 0 dan ${PURE_KARAT} karat.`
   }
 
-  const grams = parseAmount(draft.grams)
+  const grams = parseDecimal(draft.grams)
   if (draft.grams === '') errors.grams = 'Gramasi wajib diisi.'
   else if (!Number.isFinite(grams)) errors.grams = 'Gramasi harus berupa angka.'
   else if (grams <= 0) errors.grams = 'Gramasi harus lebih besar dari 0.'
@@ -69,9 +69,9 @@ export default function GoldForm ({ open, initial, accounts, onSubmit, onClose }
   const patch = (changes) => setDraft((current) => ({ ...current, ...changes }))
 
   const jewelry = draft.kind === GOLD_KIND.jewelry
-  const grams = parseAmount(draft.grams)
+  const grams = parseDecimal(draft.grams)
   const cost = parseAmount(draft.cost)
-  const karat = jewelry ? parseAmount(draft.karat) : PURE_KARAT
+  const karat = jewelry ? parseDecimal(draft.karat) : PURE_KARAT
   const perGram = Number.isFinite(grams) && Number.isFinite(cost) && grams > 0 ? cost / grams : null
   const fine = jewelry && isValidKarat(karat) && Number.isFinite(grams) && grams > 0
     ? (grams * karat) / PURE_KARAT
