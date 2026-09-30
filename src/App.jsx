@@ -3,6 +3,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import AuthCallback from './components/Auth/AuthCallback.jsx'
 import LoginScreen from './components/Auth/LoginScreen.jsx'
 import AdminPage from './components/Admin/AdminPage.jsx'
+import { OnboardingGate } from './components/Onboarding/Onboarding.jsx'
 import LocalMigration from './components/Setup/LocalMigration.jsx'
 import CategoryDetail from './components/Category/CategoryDetail.jsx'
 import Dashboard from './components/Dashboard/Dashboard.jsx'
@@ -175,22 +176,24 @@ function AuthenticatedApp () {
   return (
     <DataProvider>
       <EmailAutomationRunner />
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="transactions" element={<TransactionList />} />
-          <Route path="add" element={<TransactionFormPage />} />
-          <Route path="import" element={<ImportScreenshot />} />
-          <Route path="import/money-manager" element={<ImportMoneyManager />} />
-          <Route path="transactions/:id/edit" element={<TransactionFormPage />} />
-          <Route path="manage" element={<ManagePage />} />
-          <Route path="categories" element={<Navigate to="/manage?tab=categories" replace />} />
-          <Route path="categories/:name" element={<CategoryDetail />} />
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="snapshot" element={<FinancialSnapshot />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
+      <OnboardingGate>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="transactions" element={<TransactionList />} />
+            <Route path="add" element={<TransactionFormPage />} />
+            <Route path="import" element={<ImportScreenshot />} />
+            <Route path="import/money-manager" element={<ImportMoneyManager />} />
+            <Route path="transactions/:id/edit" element={<TransactionFormPage />} />
+            <Route path="manage" element={<ManagePage />} />
+            <Route path="categories" element={<Navigate to="/manage?tab=categories" replace />} />
+            <Route path="categories/:name" element={<CategoryDetail />} />
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="snapshot" element={<FinancialSnapshot />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </OnboardingGate>
     </DataProvider>
   )
 }
