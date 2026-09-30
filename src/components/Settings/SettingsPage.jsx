@@ -209,7 +209,7 @@ export default function SettingsPage () {
 
       <Section title="Panduan awal">
         <p className="text-body text-subtitle">
-          Ulangi langkah pengenalan: pilih mata uang dan cocokkan saldo awal tiap akun.
+          Lihat lagi perkenalan fitur transaksi dan pengelolaan emas.
         </p>
         <Button
           variant="secondary"
