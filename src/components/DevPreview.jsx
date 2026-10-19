@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ACCOUNT_KINDS } from '../lib/constants.js'
 import { ALL_MONTHS } from '../lib/dates.js'
+import { resolveBuyback } from '../lib/gold.js'
 import { accountTransactionsPath } from '../lib/links.js'
 import {
   accountBalances,
@@ -72,6 +73,18 @@ const GOLD_LOTS = [
   { id: 'g3', date: '2026-06-11', grams: 14, cost: 39545000 },
   { id: 'g4', date: '2026-05-02', grams: 6.2, cost: 9800000, kind: 'jewelry', karat: 17 }
 ]
+
+// UBS is missing on purpose, so the "tidak tersedia" option is always on screen.
+const GOLD_QUOTE = {
+  buybackPerGram: 2355000,
+  sellPerGram: 2572000,
+  recordedDate: '2026-10-19',
+  brands: {
+    antam: { buybackPerGram: 2389000, sources: ['Aneka Logam', 'Indogold', 'Galeri 24'], recordedDate: '2026-10-19' },
+    emasku: { buybackPerGram: 2346000, sources: ['EmasKu'], recordedDate: '2026-10-19' }
+  }
+}
+const GOLD_BUYBACK = resolveBuyback(GOLD_QUOTE, 'antam')
 
 const CATEGORIES = [
   { id: 'c1', name: 'Food & Beverages', color: '#eb6834' },
@@ -300,13 +313,12 @@ export default function DevPreview () {
       <div className="space-y-gap-normal">
         <SectionHeader title="Emas" hint="12 catatan" action={<GoldFormPreview />} />
         <GoldPortfolio
-          summary={goldSummary(GOLD_LOTS, 2510000)}
-          quote={{
-            buybackPerGram: 2510000,
-            sellPerGram: 2590000,
-            source: 'Aneka Logam',
-            recordedDate: '2026-08-05'
-          }}
+          summary={goldSummary(GOLD_LOTS, GOLD_BUYBACK.perGram)}
+          quote={GOLD_QUOTE}
+          buyback={GOLD_BUYBACK}
+          reference="antam"
+          onReferenceChange={() => {}}
+          onManualPriceChange={() => {}}
           loading={false}
           error={null}
           stale={false}

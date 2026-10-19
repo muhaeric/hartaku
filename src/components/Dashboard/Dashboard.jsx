@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useData } from '../../context/DataContext.jsx'
-import { useGoldPrice } from '../../hooks/useGoldPrice.js'
+import { useGoldBuyback } from '../../hooks/useGoldPrice.js'
 import {
   readDashboardCategories,
   writeDashboardCategories
@@ -35,7 +35,7 @@ import SnapshotTeaser from '../Snapshot/SnapshotTeaser.jsx'
 
 export default function Dashboard () {
   const { transactions, categories, accounts, goldLots, budgets, loading, error, reload } = useData()
-  const { quote } = useGoldPrice()
+  const { buyback } = useGoldBuyback()
   const [month, setMonth] = useState(currentMonthKey)
   const [expenseCategories, setExpenseCategories] = useState(readDashboardCategories)
   const [breakdownReset, setBreakdownReset] = useState(0)
@@ -104,8 +104,8 @@ export default function Dashboard () {
   }, [balances])
 
   const gold = useMemo(
-    () => goldSummary(goldLots, quote?.buybackPerGram),
-    [goldLots, quote]
+    () => goldSummary(goldLots, buyback?.perGram),
+    [goldLots, buyback]
   )
 
   const worth = useMemo(() => netWorth(balances, gold.value || 0), [balances, gold.value])

@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
-import { useGoldPrice } from '../../hooks/useGoldPrice.js'
+import { useGoldBuyback } from '../../hooks/useGoldPrice.js'
 import { currentMonthKey, monthLabel, monthLabelShort } from '../../lib/dates.js'
 import { buildFinancialSnapshot } from '../../lib/financialSnapshot.js'
 import { formatCurrency } from '../../lib/format.js'
@@ -31,7 +31,7 @@ function ringGradient (items) {
 
 export default function FinancialSnapshot () {
   const { transactions, categories, accounts, goldLots, budgets } = useData()
-  const { quote } = useGoldPrice()
+  const { buyback } = useGoldBuyback()
   const month = currentMonthKey()
   const snapshot = useMemo(
     () => buildFinancialSnapshot({
@@ -40,10 +40,10 @@ export default function FinancialSnapshot () {
       accounts,
       goldLots,
       budgets,
-      goldPrice: quote?.buybackPerGram,
+      goldPrice: buyback?.perGram,
       month
     }),
-    [transactions, categories, accounts, goldLots, budgets, quote, month]
+    [transactions, categories, accounts, goldLots, budgets, buyback, month]
   )
 
   return <FinancialSnapshotView snapshot={snapshot} month={month} />
