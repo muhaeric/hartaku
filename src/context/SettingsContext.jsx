@@ -17,6 +17,9 @@ const DEFAULT_SETTINGS = {
   defaultType: 'expense',
   defaultCategory: '',
   defaultAccount: '',
+  // Which buyback price gold is valued at - see GOLD_REFERENCE in lib/gold.js.
+  goldReference: 'market',
+  goldManualPrice: 0,
   emailAutoEnabled: false,
   emailUser: '',
   emailAccountMappings: {},
