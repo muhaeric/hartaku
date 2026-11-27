@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   TEAM_CONTACT_URL,
+  announcementEmail,
   emailSenderAddress,
   newUserAdminEmail,
   sendWelcomeEmail,
@@ -39,6 +40,58 @@ test('welcome email escapes profile text before rendering HTML', () => {
   assert.match(email.html, />Kritik dan saran<\/a>/)
   assert.match(email.text, /Kritik dan saran:/)
   assert.ok(email.text.includes(TEAM_CONTACT_URL))
+})
+
+test('announcement email carries the new brand, greets by first name, and links to the app', () => {
+  const email = announcementEmail(
+    { email: 'user@example.com', name: 'Budi Santoso' },
+    'https://app.example'
+  )
+
+  assert.deepEqual(email.to, ['user@example.com'])
+  assert.match(email.subject, /HartakuSigma/)
+  assert.match(email.html, /Halo Budi/)
+  assert.match(email.html, /https:\/\/app\.example/)
+  // The spreadsheet in the user's Drive keeps its original name.
+  assert.match(email.text, /"Hartaku - Expense Tracker"/)
+})
+
+test('announcement email escapes the name before rendering HTML', () => {
+  const email = announcementEmail(
+    { email: 'user@example.com', name: '<script>alert(1)</script>' },
+    'https://app.example'
+  )
+  assert.match(email.html, /&lt;script&gt;/)
+  assert.doesNotMatch(email.html, /<script>/)
+})
+
+test('announcement email omits the app button when no url is given', () => {
+  const email = announcementEmail({ email: 'user@example.com', name: 'Budi' })
+  assert.doesNotMatch(email.html, /<a href/)
+})
+
+test('announcement email applies a custom draft with {nama} and {link} placeholders', () => {
+  const email = announcementEmail(
+    { email: 'user@example.com', name: 'Budi Santoso' },
+    'https://app.example',
+    { subject: 'Halo {nama}, ada kabar', body: 'Hai {nama}!\n\n{link}' }
+  )
+
+  assert.equal(email.subject, 'Halo Budi, ada kabar')
+  assert.match(email.text, /Hai Budi!/)
+  assert.match(email.text, /https:\/\/app\.example/)
+  assert.match(email.html, /Hai Budi!/)
+  assert.match(email.html, /<a href="https:\/\/app\.example"/)
+})
+
+test('announcement email escapes a custom body so authored text cannot inject HTML', () => {
+  const email = announcementEmail(
+    { email: 'user@example.com', name: 'Budi' },
+    'https://app.example',
+    { subject: 'Hai', body: 'Lihat <img src=x onerror=alert(1)> ini' }
+  )
+  assert.match(email.html, /&lt;img/)
+  assert.doesNotMatch(email.html, /<img/)
 })
 
 test('manual welcome email sends only the selected user with a fresh idempotency key', async () => {
