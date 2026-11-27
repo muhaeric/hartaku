@@ -36,7 +36,20 @@ export const adminApi = {
   logout: () => post('/api/admin/logout'),
   users: ({ search = '', page = 1, limit = 25 } = {}) =>
     post('/api/admin/users', { search, page, limit }),
-  sendWelcome: (userId) => post('/api/admin/send-welcome', { userId })
+  sendWelcome: (userId) => post('/api/admin/send-welcome', { userId }),
+  /**
+   * Processes one batch of the rebrand announcement, or previews it (dryRun).
+   * Pass subject/body to save an edited draft before sending/previewing.
+   */
+  sendAnnouncement: ({ dryRun = false, subject, body } = {}) => {
+    const payload = { dryRun }
+    if (subject !== undefined) payload.subject = subject
+    if (body !== undefined) payload.body = body
+    return post('/api/admin/send-announcement', payload)
+  },
+  /** Sends the current draft only to a registered admin email, for preview. */
+  testAnnouncement: ({ testEmail, subject, body } = {}) =>
+    post('/api/admin/send-announcement', { test: true, testEmail, subject, body })
 }
 
 export const activityApi = {

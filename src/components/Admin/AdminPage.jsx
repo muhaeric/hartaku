@@ -94,6 +94,190 @@ function UserIdentity ({ user }) {
   )
 }
 
+function AnnouncementCard ({ onSessionExpired }) {
+  const toast = useToast()
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
+  const [status, setStatus] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [blasting, setBlasting] = useState(false)
+  const [testEmail, setTestEmail] = useState('')
+  const [testing, setTesting] = useState(false)
+
+  const handle401 = (err) => {
+    if (err.status === 401) {
+      onSessionExpired()
+      return true
+    }
+    return false
+  }
+
+  const applyDraft = (result) => {
+    setStatus(result)
+    if (result.subject !== undefined) setSubject(result.subject)
+    if (result.body !== undefined) setBody(result.body)
+  }
+
+  // Load the saved (or default) draft and current progress once.
+  useEffect(() => {
+    let active = true
+    adminApi.sendAnnouncement({ dryRun: true })
+      .then((result) => { if (active) applyDraft(result) })
+      .catch((err) => { if (active && !handle401(err)) toast.error(err.message) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
+
+  const saveDraft = async () => {
+    try {
+      const result = await adminApi.sendAnnouncement({ dryRun: true, subject, body })
+      applyDraft(result)
+      toast.success('Draft pengumuman disimpan.')
+    } catch (err) {
+      if (handle401(err)) return
+      toast.error(err.message)
+    }
+  }
+
+  const sendTest = async () => {
+    if (!testEmail.trim()) {
+      toast.error('Isi dulu email tujuan tes (harus email admin terdaftar).')
+      return
+    }
+    if (!subject.trim() || !body.trim()) {
+      toast.error('Subjek dan isi pengumuman tidak boleh kosong.')
+      return
+    }
+    setTesting(true)
+    try {
+      const result = await adminApi.testAnnouncement({ testEmail: testEmail.trim(), subject, body })
+      toast.success(`Email tes dikirim ke ${result.sentTo}.`)
+    } catch (err) {
+      if (handle401(err)) return
+      toast.error(err.message)
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  const sendAll = async () => {
+    if (!subject.trim() || !body.trim()) {
+      toast.error('Subjek dan isi pengumuman tidak boleh kosong.')
+      return
+    }
+    const remaining = status?.remaining ?? 0
+    if (!remaining) {
+      toast.success('Semua user sudah menerima pengumuman ini.')
+      return
+    }
+    if (!window.confirm(`Kirim email pengumuman ke ${remaining} user yang belum menerima? Email dikirim nyata dengan teks di atas dan tidak bisa ditarik kembali.`)) return
+
+    setBlasting(true)
+    try {
+      // First call saves the current draft and sends the first batch; the rest
+      // reuse the saved draft so every recipient gets identical text.
+      let result = await adminApi.sendAnnouncement({ subject, body })
+      setStatus(result)
+      while (!result.done) {
+        result = await adminApi.sendAnnouncement({})
+        setStatus(result)
+      }
+      toast.success('Pengumuman selesai dikirim ke semua user.')
+    } catch (err) {
+      if (handle401(err)) return
+      toast.error(`Pengiriman berhenti: ${err.message} Tekan "Kirim" lagi untuk melanjutkan dari sisanya.`)
+    } finally {
+      setBlasting(false)
+    }
+  }
+
+  const pct = status?.total ? Math.round((status.sent / status.total) * 100) : 0
+
+  return (
+    <Card>
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+        <div className="min-w-0">
+          <h2 className="text-section-title font-semibold">Pengumuman rebrand</h2>
+          <p className="text-[11px] leading-4 text-subtitle">
+            Kirim email satu kali ke semua user. Aman diulang — tiap user hanya menerima sekali.
+            Pakai <code>{'{nama}'}</code> untuk nama depan dan <code>{'{link}'}</code> untuk tombol buka aplikasi.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-3">
+        <div>
+          <label className="label" htmlFor="announcement-subject">Subjek</label>
+          <input
+            id="announcement-subject"
+            className="field w-full"
+            value={subject}
+            disabled={loading || blasting}
+            onChange={(event) => setSubject(event.target.value)}
+            placeholder="Subjek email"
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="announcement-body">Isi email</label>
+          <textarea
+            id="announcement-body"
+            className="field min-h-44 w-full resize-y font-mono text-caption leading-5"
+            value={body}
+            disabled={loading || blasting}
+            onChange={(event) => setBody(event.target.value)}
+            placeholder="Tulis isi pengumuman…"
+          />
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <label className="label" htmlFor="announcement-test-email">Kirim tes ke email admin</label>
+            <input
+              id="announcement-test-email"
+              className="field w-full"
+              type="email"
+              value={testEmail}
+              disabled={loading || blasting}
+              onChange={(event) => setTestEmail(event.target.value)}
+              placeholder="email-admin@contoh.com"
+            />
+          </div>
+          <Button size="sm" variant="secondary" loading={testing} disabled={loading || blasting} onClick={sendTest}>
+            Kirim tes
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" disabled={loading || blasting || testing} onClick={saveDraft}>
+            Simpan draft
+          </Button>
+          <Button size="sm" loading={blasting} disabled={loading || testing} onClick={sendAll}>
+            Kirim ke semua user
+          </Button>
+        </div>
+      </div>
+
+      {status && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-caption text-subtitle">
+            <span>{status.sent} dari {status.total} terkirim</span>
+            <span>{status.remaining} tersisa</span>
+          </div>
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-tint/10">
+            <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${pct}%` }} />
+          </div>
+          {status.dryRun && status.sample?.length > 0 && (
+            <p className="mt-2 text-[11px] leading-4 text-subtitle">
+              Contoh penerima berikutnya: {status.sample.join(', ')}
+              {status.remaining > status.sample.length ? ', …' : ''}
+            </p>
+          )}
+          {blasting && <p className="mt-2 text-[11px] leading-4 text-subtitle">Mengirim batch…</p>}
+        </div>
+      )}
+    </Card>
+  )
+}
+
 export default function AdminPage ({ onSignOut, onSessionExpired }) {
   const toast = useToast()
   const [data, setData] = useState(null)
@@ -182,6 +366,10 @@ export default function AdminPage ({ onSignOut, onSessionExpired }) {
 
           <section className="mt-4">
             <ActivityChart daily={data?.daily} />
+          </section>
+
+          <section className="mt-4">
+            <AnnouncementCard onSessionExpired={onSessionExpired} />
           </section>
 
           <section className="mt-6">
