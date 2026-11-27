@@ -1,6 +1,7 @@
 import { adminEmails } from './admin.js'
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
+const RESEND_BATCH_ENDPOINT = 'https://api.resend.com/emails/batch'
 export const TEAM_CONTACT_URL =
   'https://wa.me/6283141469381?text=Hai%20tim%20HartakuSigma%20saya%20ingin%20menyampaikan%20request%20%2F%20feedback'
 
@@ -110,6 +111,77 @@ export function newUserAdminEmail (user) {
   }
 }
 
+/**
+ * Default copy for the one-time rebrand notice. The admin can override subject
+ * and body from the dashboard; `{nama}` is replaced with the recipient's first
+ * name and `{link}` with a button to open the app.
+ */
+export const ANNOUNCEMENT_DEFAULTS = {
+  subject: 'Hartaku kini bernama HartakuSigma',
+  body: [
+    'Halo {nama},',
+    '',
+    'Mulai sekarang, Hartaku berganti nama menjadi HartakuSigma.',
+    '',
+    'Yang berubah hanya namanya. Semua fitur, catatan keuangan, dan spreadsheet ' +
+      '"Hartaku - Expense Tracker" di Google Drive-mu tetap sama dan tetap milikmu. ' +
+      'Kamu tidak perlu melakukan apa pun — cukup buka aplikasi seperti biasa.',
+    '',
+    '{link}',
+    '',
+    'Terima kasih sudah mencatat keuanganmu bersama kami.',
+    '',
+    'Salam,',
+    'HartakuSigma'
+  ].join('\n')
+}
+
+const LINK_LABEL = 'Buka HartakuSigma'
+
+function announcementText (body, name, appUrl) {
+  return body
+    .replace(/\{nama\}/g, name)
+    .replace(/\{link\}/g, appUrl ? `${LINK_LABEL}: ${appUrl}` : '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+function announcementHtml (body, name, appUrl) {
+  const button = appUrl
+    ? `<a href="${escapeHtml(appUrl)}" style="display:inline-block;padding:12px 18px;border-radius:12px;background:#4361ee;color:#fff;text-decoration:none;font-weight:600">${LINK_LABEL}</a>`
+    : ''
+
+  // Escape the whole body first; the {nama}/{link} tokens survive escaping
+  // (they contain no special characters), so author text can never inject HTML.
+  const safe = escapeHtml(body).replace(/\{nama\}/g, escapeHtml(name))
+
+  const paragraphs = safe
+    .split(/\n\s*\n/)
+    .map((block) => block.replace(/\{link\}/g, button).replace(/\n/g, '<br>'))
+    .filter((block) => block.trim())
+    .map((block) => `<p style="margin:0 0 16px">${block}</p>`)
+    .join('\n')
+
+  return `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937;max-width:560px;margin:auto">
+        ${paragraphs}
+      </div>
+    `
+}
+
+export function announcementEmail (user, appUrl, draft = {}) {
+  const name = firstName(user)
+  const subject = headerText((draft.subject || ANNOUNCEMENT_DEFAULTS.subject).replace(/\{nama\}/g, name))
+  const body = draft.body || ANNOUNCEMENT_DEFAULTS.body
+
+  return {
+    to: [user.email],
+    subject,
+    text: announcementText(body, name, appUrl),
+    html: announcementHtml(body, name, appUrl)
+  }
+}
+
 async function sendEmail (message, idempotencyKey, from) {
   const response = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
@@ -190,4 +262,46 @@ export async function sendNewUserEmailsSafely (user, { appUrl } = {}) {
       console.error(`[email] ${messages[index].label} gagal dikirim:`, result.reason)
     }
   })
+}
+
+/**
+ * Sends one announcement to many recipients in a single Resend batch request
+ * (max 100 per call). The caller keeps the campaign log that makes the blast
+ * idempotent, so this does not set per-message idempotency keys.
+ */
+export async function sendAnnouncementEmails (users, { appUrl, draft } = {}) {
+  const from = emailSenderAddress()
+  if (!process.env.RESEND_API_KEY || !from) {
+    const error = new Error('Resend belum dikonfigurasi. Periksa API key dan domain/alamat pengirim.')
+    error.code = 'email_not_configured'
+    throw error
+  }
+
+  const recipients = (users || []).filter((user) => user?.email)
+  if (!recipients.length) return { sent: 0 }
+  if (recipients.length > 100) {
+    const error = new Error('Batch pengumuman melebihi 100 penerima.')
+    error.code = 'announcement_batch_too_large'
+    throw error
+  }
+
+  const batch = recipients.map((user) => ({ from, ...announcementEmail(user, appUrl, draft) }))
+
+  const response = await fetch(RESEND_BATCH_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'hartaku/1.0'
+    },
+    body: JSON.stringify(batch)
+  })
+
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(`Resend ${response.status}: ${detail.slice(0, 500)}`)
+  }
+
+  await response.json().catch(() => ({}))
+  return { sent: recipients.length }
 }

@@ -47,6 +47,26 @@ async function ensureSchema () {
         PRIMARY KEY (google_sub, activity_date)
       )
     `)
+    // Records which users already received a given one-time announcement, so a
+    // blast can be resumed and re-run without ever sending twice.
+    await sql.query(`
+      CREATE TABLE IF NOT EXISTS app_announcement_log (
+        campaign TEXT NOT NULL,
+        google_sub TEXT NOT NULL REFERENCES app_users(google_sub) ON DELETE CASCADE,
+        sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (campaign, google_sub)
+      )
+    `)
+    // Editable copy for an announcement, so the admin can revise subject/body
+    // in the dashboard and every batch (including resumes) uses the same text.
+    await sql.query(`
+      CREATE TABLE IF NOT EXISTS app_announcement_draft (
+        campaign TEXT PRIMARY KEY,
+        subject TEXT NOT NULL,
+        body TEXT NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `)
     await sql.query(`
       CREATE INDEX IF NOT EXISTS app_users_last_seen_idx
       ON app_users (last_seen_at DESC)
@@ -226,6 +246,109 @@ export async function getUserDashboard ({ search = '', page = 1, limit = 25 } = 
       pages: Math.max(1, Math.ceil(total / safeLimit))
     }
   }
+}
+
+/** How many users exist and how many already received this announcement. */
+export async function getAnnouncementProgress (campaign) {
+  const name = String(campaign || '').trim()
+  if (!name) throw new Error('Campaign pengumuman tidak valid.')
+
+  await ensureSchema()
+  const sql = database()
+  const rows = await sql.query(
+    `
+      SELECT
+        (SELECT COUNT(*)::INT FROM app_users WHERE email IS NOT NULL AND email <> '') AS total,
+        (SELECT COUNT(*)::INT FROM app_announcement_log WHERE campaign = $1) AS sent
+    `,
+    [name]
+  )
+  const total = rows[0]?.total || 0
+  const sent = rows[0]?.sent || 0
+  return { total, sent, remaining: Math.max(0, total - sent) }
+}
+
+/** The saved subject/body for this campaign, or null if none saved yet. */
+export async function getAnnouncementDraft (campaign) {
+  const name = String(campaign || '').trim()
+  if (!name) throw new Error('Campaign pengumuman tidak valid.')
+
+  await ensureSchema()
+  const rows = await database().query(
+    `SELECT subject, body FROM app_announcement_draft WHERE campaign = $1 LIMIT 1`,
+    [name]
+  )
+  const row = rows[0]
+  return row ? { subject: row.subject, body: row.body } : null
+}
+
+/** Stores (upserts) the subject/body the admin wants to send. */
+export async function saveAnnouncementDraft (campaign, { subject, body }) {
+  const name = String(campaign || '').trim()
+  const cleanSubject = String(subject || '').trim()
+  const cleanBody = String(body || '').trim()
+  if (!name) throw new Error('Campaign pengumuman tidak valid.')
+  if (!cleanSubject || !cleanBody) {
+    const error = new Error('Subjek dan isi pengumuman tidak boleh kosong.')
+    error.code = 'announcement_draft_empty'
+    throw error
+  }
+
+  await ensureSchema()
+  await database().query(
+    `
+      INSERT INTO app_announcement_draft (campaign, subject, body, updated_at)
+      VALUES ($1, $2, $3, NOW())
+      ON CONFLICT (campaign) DO UPDATE SET
+        subject = EXCLUDED.subject,
+        body = EXCLUDED.body,
+        updated_at = NOW()
+    `,
+    [name, cleanSubject, cleanBody]
+  )
+  return { subject: cleanSubject, body: cleanBody }
+}
+
+/** The next chunk of users who have not yet received this announcement. */
+export async function getPendingAnnouncementRecipients (campaign, limit = 100) {
+  const name = String(campaign || '').trim()
+  if (!name) throw new Error('Campaign pengumuman tidak valid.')
+  const safeLimit = Math.min(100, Math.max(1, Number.parseInt(limit, 10) || 100))
+
+  await ensureSchema()
+  const sql = database()
+  const rows = await sql.query(
+    `
+      SELECT u.google_sub, u.email, u.name
+      FROM app_users u
+      LEFT JOIN app_announcement_log l
+        ON l.campaign = $1 AND l.google_sub = u.google_sub
+      WHERE l.google_sub IS NULL
+        AND u.email IS NOT NULL AND u.email <> ''
+      ORDER BY u.google_sub
+      LIMIT $2
+    `,
+    [name, safeLimit]
+  )
+  return rows.map((row) => ({ sub: row.google_sub, email: row.email, name: row.name }))
+}
+
+/** Marks these users as having received the announcement. */
+export async function markAnnouncementSent (campaign, subs) {
+  const name = String(campaign || '').trim()
+  const ids = (subs || []).map((sub) => String(sub || '').trim()).filter(Boolean)
+  if (!name || !ids.length) return
+
+  await ensureSchema()
+  const sql = database()
+  await sql.query(
+    `
+      INSERT INTO app_announcement_log (campaign, google_sub)
+      SELECT $1, UNNEST($2::TEXT[])
+      ON CONFLICT (campaign, google_sub) DO NOTHING
+    `,
+    [name, ids]
+  )
 }
 
 export async function getUserById (googleSub) {
