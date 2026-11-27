@@ -22,7 +22,7 @@ export default function InstallAppBanner () {
     try {
       const choice = await requestInstall()
       if (choice.outcome === 'accepted') {
-        toast.success('Hartaku berhasil ditambahkan ke perangkat.')
+        toast.success('HartakuSigma berhasil ditambahkan ke perangkat.')
       }
     } catch {
       setShowHelp(true)
@@ -33,14 +33,14 @@ export default function InstallAppBanner () {
   }
 
   return (
-    <aside className="rounded-card border border-brand/20 bg-brand-soft p-page text-brand-onsoft" aria-label="Tambahkan Hartaku ke layar utama">
+    <aside className="rounded-card border border-brand/20 bg-brand-soft p-page text-brand-onsoft" aria-label="Tambahkan HartakuSigma ke layar utama">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-surface/80 text-brand">
           <InstallIcon className="h-5 w-5" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-body font-semibold">Tambahkan Hartaku ke layar utama</h2>
-          <p className="text-caption opacity-80">Buka lebih cepat dan gunakan Hartaku tanpa bilah browser.</p>
+          <h2 className="text-body font-semibold">Tambahkan HartakuSigma ke layar utama</h2>
+          <p className="text-caption opacity-80">Buka lebih cepat dan gunakan HartakuSigma tanpa bilah browser.</p>
         </div>
         <Button className="justify-center" size="sm" onClick={handleInstall} loading={installing}>
           Tambahkan ke layar
@@ -55,7 +55,7 @@ export default function InstallAppBanner () {
 
       {showHelp && status === 'ios-other' && (
         <p className="mt-3 rounded-control bg-surface/70 p-3 text-caption">
-          Buka Hartaku di <strong>Safari</strong>, ketuk <strong>Bagikan</strong>, lalu pilih <strong>Tambahkan ke Layar Utama</strong>.
+          Buka HartakuSigma di <strong>Safari</strong>, ketuk <strong>Bagikan</strong>, lalu pilih <strong>Tambahkan ke Layar Utama</strong>.
         </p>
       )}
 

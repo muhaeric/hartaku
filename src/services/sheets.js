@@ -54,7 +54,7 @@ async function queryDrive (q) {
  *
  * The last query has no name or tag filter, which sounds broad but is not:
  * under `drive.file` the API only ever returns files this app created itself,
- * so the widest possible result is "the spreadsheets Hartaku made". That makes
+ * so the widest possible result is "the spreadsheets HartakuSigma made". That makes
  * discovery survive the user renaming the file in Drive - the case that
  * previously orphaned their data and led to a second, empty workbook.
  */

@@ -152,10 +152,10 @@ export default function AdminPage ({ onSignOut, onSessionExpired }) {
         <div>
           <div className="flex items-center gap-2 text-caption font-semibold text-brand">
             <span aria-hidden="true">💸</span>
-            Hartaku
+            HartakuSigma
           </div>
           <h1 className="mt-1 text-page-title font-bold tracking-tight">Admin user</h1>
-          <p className="mt-1 text-body text-subtitle">Pantau pertumbuhan dan aktivitas akun Hartaku.</p>
+          <p className="mt-1 text-body text-subtitle">Pantau pertumbuhan dan aktivitas akun HartakuSigma.</p>
         </div>
         <div className="flex items-center gap-2">
           <Link className="inline-flex h-9 items-center rounded-control px-3 text-caption font-semibold text-subtitle hover:bg-tint/5" to="/">

@@ -126,7 +126,7 @@ function HartakuMark ({ inverse = false }) {
       <span className={`flex h-9 w-9 items-center justify-center rounded-[12px] ${inverse ? 'bg-white/15' : 'bg-brand text-brand-fg'}`} aria-hidden="true">
         <LogoIcon className="h-5 w-5" />
       </span>
-      <span className="hidden text-caption font-bold sm:inline">Hartaku</span>
+      <span className="hidden text-caption font-bold sm:inline">HartakuSigma</span>
     </div>
   )
 }
@@ -239,7 +239,7 @@ function WealthPercentile ({ standing }) {
 
       <div className="mt-4 rounded-[14px] border border-hairline bg-canvas/50 px-3 py-3">
         <p className="text-[11px] leading-[17px] text-subtitle">
-          Berdasarkan ambang World Inequality Database 2024. Ini kelompok distribusi kekayaan, bukan klasifikasi pendapatan atau pengeluaran BPS. Hasil hanya menghitung aset dan kewajiban yang sudah kamu catat di Hartaku.
+          Berdasarkan ambang World Inequality Database 2024. Ini kelompok distribusi kekayaan, bukan klasifikasi pendapatan atau pengeluaran BPS. Hasil hanya menghitung aset dan kewajiban yang sudah kamu catat di HartakuSigma.
         </p>
       </div>
     </SnapshotSection>
@@ -469,7 +469,7 @@ function ShareSection ({ snapshot, month }) {
     setMessage('')
     try {
       const blob = await renderShareImage(month, selected)
-      const file = new File([blob], `hartaku-${selected.key}-${month}.png`, { type: 'image/png' })
+      const file = new File([blob], `hartakusigma-${selected.key}-${month}.png`, { type: 'image/png' })
       const payload = {
         title: selected.shareTitle,
         text: selected.shareText,
@@ -611,7 +611,7 @@ function ShareCard ({ variant, month, index }) {
         <div>
           <p className="text-[13px] font-semibold leading-5">{variant.closing}</p>
           <div className="mt-4 h-px bg-white/10" />
-          <p className="mt-3 text-[9px] font-medium tracking-wide text-white/45">HARTAKU · Kelola uang. Kenali hartamu.</p>
+          <p className="mt-3 text-[9px] font-medium tracking-wide text-white/45">HARTAKUSIGMA · Kelola uang. Kenali hartamu.</p>
         </div>
       </div>
     </div>
@@ -654,7 +654,7 @@ function shareVariants (snapshot) {
       metrics: shareMetrics(share),
       closing: 'Pelan-pelan, aku sedang membangun kebiasaan finansial yang lebih baik.',
       shareTitle: 'Ringkasan Keuanganku',
-      shareText: 'Aku sedang membangun kebiasaan finansial yang lebih baik bersama Hartaku.'
+      shareText: 'Aku sedang membangun kebiasaan finansial yang lebih baik bersama HartakuSigma.'
     },
     {
       key: 'progress',
@@ -678,7 +678,7 @@ function shareVariants (snapshot) {
       ].filter(Boolean).slice(0, 4),
       closing: 'Ternyata aku sudah sejauh ini. Next level, here I come.',
       shareTitle: 'Financial Level Up',
-      shareText: 'Kebiasaan finansialku naik level bersama Hartaku.'
+      shareText: 'Kebiasaan finansialku naik level bersama HartakuSigma.'
     },
     {
       key: 'assets',
@@ -712,7 +712,7 @@ function EmptySnapshot ({ month }) {
       <Card className="flex min-h-80 flex-col items-center justify-center px-6 py-10 text-center">
         <span className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-brand-soft text-3xl" aria-hidden="true">✦</span>
         <h2 className="mt-5 text-[20px] font-bold">Ringkasanmu sedang disiapkan</h2>
-        <p className="mt-2 max-w-sm text-body text-subtitle">Catat beberapa transaksi dulu. Hartaku akan mengubahnya menjadi pola, progres, dan pencapaian yang mudah dipahami.</p>
+        <p className="mt-2 max-w-sm text-body text-subtitle">Catat beberapa transaksi dulu. HartakuSigma akan mengubahnya menjadi pola, progres, dan pencapaian yang mudah dipahami.</p>
         <Link to="/add" className="mt-6 inline-flex h-11 items-center rounded-control bg-brand px-5 text-body font-semibold text-brand-fg transition hover:bg-brand-hover">Catat transaksi pertama</Link>
       </Card>
     </div>
@@ -738,7 +738,7 @@ async function renderShareImage (month, variant) {
 
   context.fillStyle = '#ffffff'
   context.font = '700 42px system-ui, sans-serif'
-  context.fillText('HARTAKU', 130, 170)
+  context.fillText('HARTAKUSIGMA', 130, 170)
   context.fillStyle = 'rgba(255,255,255,.55)'
   context.font = '700 28px system-ui, sans-serif'
   context.textAlign = 'right'
@@ -792,7 +792,7 @@ async function renderShareImage (month, variant) {
   wrapText(context, variant.closing, 130, 1580, 800, 56)
   context.fillStyle = 'rgba(255,255,255,.45)'
   context.font = '600 26px system-ui, sans-serif'
-  context.fillText('HARTAKU  ·  Kelola uang. Kenali hartamu.', 130, 1770)
+  context.fillText('HARTAKUSIGMA  ·  Kelola uang. Kenali hartamu.', 130, 1770)
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Gagal membuat gambar')), 'image/png', 0.95)

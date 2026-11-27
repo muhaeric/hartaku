@@ -18,7 +18,7 @@ import LocalDataSection from './LocalDataSection.jsx'
 import EmailAutomationSection from './EmailAutomationSection.jsx'
 
 const FEEDBACK_URL =
-  'https://wa.me/6283141469381?text=Hai%20tim%20hartaku%20saya%20ingin%20menyampaikan%20request%20%2F%20feedback'
+  'https://wa.me/6283141469381?text=Hai%20tim%20HartakuSigma%20saya%20ingin%20menyampaikan%20request%20%2F%20feedback'
 
 export default function SettingsPage () {
   const toast = useToast()
@@ -300,7 +300,7 @@ function InstallAppSection () {
     try {
       const choice = await requestInstall()
       if (choice.outcome === 'accepted') {
-        toast.success('Hartaku sedang ditambahkan ke perangkat.')
+        toast.success('HartakuSigma sedang ditambahkan ke perangkat.')
       }
     } catch {
       setShowHelp(true)
@@ -321,8 +321,8 @@ function InstallAppSection () {
             {checking
               ? 'Memeriksa status instalasi…'
               : installed
-                ? 'Hartaku sudah terpasang'
-                : 'Buka Hartaku seperti aplikasi biasa'}
+                ? 'HartakuSigma sudah terpasang'
+                : 'Buka HartakuSigma seperti aplikasi biasa'}
           </p>
           <p className="text-caption text-subtitle">
             {checking

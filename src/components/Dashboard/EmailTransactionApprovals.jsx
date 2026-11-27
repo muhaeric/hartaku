@@ -163,7 +163,7 @@ export default function EmailTransactionApprovals () {
           </span>
           <h3 className="mt-3 text-body font-semibold">Belum ada transaksi yang perlu disetujui</h3>
           <p className="mt-1 max-w-sm text-caption text-subtitle">
-            Hartaku akan menampilkan transaksi baru setelah menemukan notifikasi bank atau e-wallet yang sesuai.
+            HartakuSigma akan menampilkan transaksi baru setelah menemukan notifikasi bank atau e-wallet yang sesuai.
           </p>
           <Button
             variant="secondary"

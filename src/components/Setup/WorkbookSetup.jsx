@@ -89,7 +89,7 @@ export default function WorkbookSetup ({
           ) : (
             <>
               <p className="text-body text-subtitle">
-                Pilih ini kalau kamu memang belum pernah pakai Hartaku sebelumnya.
+                Pilih ini kalau kamu memang belum pernah pakai HartakuSigma sebelumnya.
               </p>
               <Button variant="secondary" onClick={() => setConfirmingCreate(true)}>
                 Buat spreadsheet baru
@@ -100,7 +100,7 @@ export default function WorkbookSetup ({
 
         {!lookupFailed && (
           <p className="border-t border-hairline pt-4 text-caption text-subtitle">
-            Pencariannya sudah mencakup seluruh spreadsheet yang pernah dibuat Hartaku di akun ini,
+            Pencariannya sudah mencakup seluruh spreadsheet yang pernah dibuat HartakuSigma di akun ini,
             apa pun namanya sekarang — dan hasilnya kosong. Periksa email yang tampil di layar
             login: paling sering penyebabnya akun Google yang berbeda.
           </p>

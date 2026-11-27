@@ -52,7 +52,7 @@ export default function EmailAutomationSection () {
 
   const disconnect = async () => {
     const confirmed = window.confirm(
-      'Putuskan Gmail dari Hartaku? Izin Google akan dicabut, kandidat transaksi email di perangkat ini akan dihapus, lalu kamu diminta masuk lagi tanpa akses Gmail.'
+      'Putuskan Gmail dari HartakuSigma? Izin Google akan dicabut, kandidat transaksi email di perangkat ini akan dihapus, lalu kamu diminta masuk lagi tanpa akses Gmail.'
     )
     if (!confirmed) return
 
@@ -177,13 +177,13 @@ export default function EmailAutomationSection () {
             </span>
           </div>
           <p className="text-caption text-subtitle">
-            Mendeteksi notifikasi bank dan e-wallet saat Hartaku aktif. Transaksi baru selalu menunggu konfirmasi.
+            Mendeteksi notifikasi bank dan e-wallet saat HartakuSigma aktif. Transaksi baru selalu menunggu konfirmasi.
           </p>
         </div>
       </div>
 
       <div className="rounded-control border border-hairline bg-brand-soft/40 p-3 text-caption text-subtitle">
-        Hartaku membaca pengirim, subjek, waktu, dan isi notifikasi transaksi terbaru hanya
+        HartakuSigma membaca pengirim, subjek, waktu, dan isi notifikasi transaksi terbaru hanya
         setelah kamu menghubungkan Gmail. Pemrosesan berlangsung di browser dan hasilnya
         selalu menunggu konfirmasimu sebelum dicatat.{' '}
         <a className="font-medium text-brand underline" href="/privacy#google-user-data">
@@ -218,7 +218,7 @@ export default function EmailAutomationSection () {
           </div>
 
           <div>
-            <p className="label">Hubungkan pengirim ke akun Hartaku</p>
+            <p className="label">Hubungkan pengirim ke akun HartakuSigma</p>
             <div className="divide-y divide-hairline rounded-control border border-hairline">
               {EMAIL_PROVIDERS.map((provider) => (
                 <label key={provider.id} className="flex items-center justify-between gap-3 px-3 py-2">
@@ -242,7 +242,7 @@ export default function EmailAutomationSection () {
           <div className="flex items-center justify-between gap-4 rounded-control bg-tint/[0.04] p-3">
             <span>
               <span className="block text-body font-medium">Pantau email otomatis</span>
-              <span className="block text-caption text-subtitle">Hartaku hanya menyiapkan kandidat; kamu yang memutuskan pencatatannya.</span>
+              <span className="block text-caption text-subtitle">HartakuSigma hanya menyiapkan kandidat; kamu yang memutuskan pencatatannya.</span>
             </span>
             <span className="flex shrink-0 items-center gap-2">
               <span className={`text-caption font-semibold ${settings.emailAutoEnabled ? 'text-brand' : 'text-subtitle'}`}>

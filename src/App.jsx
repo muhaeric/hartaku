@@ -111,7 +111,7 @@ function AdminRoute () {
       <main className="flex min-h-dvh items-center justify-center px-page">
         <form className="card w-full max-w-sm text-center" onSubmit={signIn}>
           <span className="text-4xl" aria-hidden="true">🔐</span>
-          <h1 className="mt-3 text-page-title font-bold">Admin Hartaku</h1>
+          <h1 className="mt-3 text-page-title font-bold">Admin HartakuSigma</h1>
           <p className="mt-2 text-body text-subtitle">Masukkan PIN admin untuk membuka dashboard.</p>
           <label className="sr-only" htmlFor="admin-pin">PIN admin</label>
           <input

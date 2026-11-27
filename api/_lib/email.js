@@ -2,7 +2,7 @@ import { adminEmails } from './admin.js'
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
 export const TEAM_CONTACT_URL =
-  'https://wa.me/6283141469381?text=Hai%20tim%20hartaku%20saya%20ingin%20menyampaikan%20request%20%2F%20feedback'
+  'https://wa.me/6283141469381?text=Hai%20tim%20HartakuSigma%20saya%20ingin%20menyampaikan%20request%20%2F%20feedback'
 
 function escapeHtml (value) {
   return String(value || '')
@@ -33,12 +33,12 @@ export function emailSenderAddress () {
     .replace(/\/.*$/, '')
 
   const validDomain = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(domain)
-  return validDomain ? `Hartaku <halo@${domain}>` : ''
+  return validDomain ? `HartakuSigma <halo@${domain}>` : ''
 }
 
 function actionLinks (appUrl) {
   const appButton = appUrl
-    ? `<a href="${escapeHtml(appUrl)}" style="display:inline-block;margin:0 8px 8px 0;padding:12px 18px;border-radius:12px;background:#4361ee;color:#fff;text-decoration:none;font-weight:600">Buka Hartaku</a>`
+    ? `<a href="${escapeHtml(appUrl)}" style="display:inline-block;margin:0 8px 8px 0;padding:12px 18px;border-radius:12px;background:#4361ee;color:#fff;text-decoration:none;font-weight:600">Buka HartakuSigma</a>`
     : ''
 
   return `
@@ -53,27 +53,27 @@ export function welcomeEmail (user, appUrl) {
   const greetingName = firstName(user)
   return {
     to: [user.email],
-    subject: 'Selamat datang di Hartaku 👋',
+    subject: 'Selamat datang di HartakuSigma 👋',
     text: [
       `Halo ${greetingName},`,
       '',
-      'Selamat datang di Hartaku. Kamu sudah bisa mulai mencatat pemasukan, pengeluaran, transfer antar akun, dan investasi emas.',
+      'Selamat datang di HartakuSigma. Kamu sudah bisa mulai mencatat pemasukan, pengeluaran, transfer antar akun, dan investasi emas.',
       'Catatan keuanganmu tetap tersimpan di Google Spreadsheet milikmu sendiri.',
       '',
-      appUrl ? `Buka Hartaku: ${appUrl}` : '',
+      appUrl ? `Buka HartakuSigma: ${appUrl}` : '',
       `Kritik dan saran: ${TEAM_CONTACT_URL}`,
       '',
       'Salam,',
-      'Hartaku'
+      'HartakuSigma'
     ].filter((line, index, lines) => line || lines[index - 1] !== '').join('\n'),
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937;max-width:560px;margin:auto">
-        <h1 style="font-size:24px;margin:0 0 16px">Selamat datang di Hartaku 👋</h1>
+        <h1 style="font-size:24px;margin:0 0 16px">Selamat datang di HartakuSigma 👋</h1>
         <p>Halo ${escapeHtml(greetingName)},</p>
         <p>Kamu sudah bisa mulai mencatat pemasukan, pengeluaran, transfer antar akun, dan investasi emas.</p>
         <p>Catatan keuanganmu tetap tersimpan di <strong>Google Spreadsheet milikmu sendiri</strong>.</p>
         ${actionLinks(appUrl)}
-        <p style="margin-top:28px;color:#6b7280">Salam,<br />Hartaku</p>
+        <p style="margin-top:28px;color:#6b7280">Salam,<br />HartakuSigma</p>
       </div>
     `
   }
@@ -89,9 +89,9 @@ export function newUserAdminEmail (user) {
 
   return {
     to: adminEmails(),
-    subject: `User baru Hartaku: ${name}`,
+    subject: `User baru HartakuSigma: ${name}`,
     text: [
-      'Ada user baru yang masuk ke Hartaku.',
+      'Ada user baru yang masuk ke HartakuSigma.',
       '',
       `Nama: ${name}`,
       `Email: ${user.email}`,
@@ -99,7 +99,7 @@ export function newUserAdminEmail (user) {
     ].join('\n'),
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937;max-width:560px;margin:auto">
-        <h1 style="font-size:22px;margin:0 0 16px">User baru Hartaku</h1>
+        <h1 style="font-size:22px;margin:0 0 16px">User baru HartakuSigma</h1>
         <table style="border-collapse:collapse;width:100%">
           <tr><td style="padding:6px 12px 6px 0;color:#6b7280">Nama</td><td style="padding:6px 0;font-weight:600">${escapeHtml(name)}</td></tr>
           <tr><td style="padding:6px 12px 6px 0;color:#6b7280">Email</td><td style="padding:6px 0">${escapeHtml(user.email)}</td></tr>

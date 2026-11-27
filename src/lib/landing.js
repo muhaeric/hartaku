@@ -8,12 +8,12 @@
  * drift the way they did when each was written by hand.
  */
 export const LANDING = {
-  name: 'Hartaku',
+  name: 'HartakuSigma',
   tagline:
     'Pencatat keuangan pribadi yang menyimpan datamu di Google Spreadsheet milikmu sendiri.',
 
   intro:
-    'Hartaku dipakai untuk mencatat pemasukan, pengeluaran, transfer antar akun, dan investasi emas dalam satu tempat, lalu meringkasnya jadi total aset dan kewajiban. Setiap catatan keuangan ditulis langsung ke sebuah Google Spreadsheet di dalam Google Drive kamu, bukan ke database Hartaku. Datanya tetap bisa kamu buka, ubah, ekspor, atau hapus kapan saja tanpa lewat aplikasi ini.',
+    'HartakuSigma dipakai untuk mencatat pemasukan, pengeluaran, transfer antar akun, dan investasi emas dalam satu tempat, lalu meringkasnya jadi total aset dan kewajiban. Setiap catatan keuangan ditulis langsung ke sebuah Google Spreadsheet di dalam Google Drive kamu, bukan ke database HartakuSigma. Datanya tetap bisa kamu buka, ubah, ekspor, atau hapus kapan saja tanpa lewat aplikasi ini.',
 
   features: [
     {
@@ -40,7 +40,7 @@ export const LANDING = {
 
   steps: [
     'Masuk dengan akun Google kamu.',
-    'Hartaku membuatkan satu spreadsheet bernama "Hartaku - Expense Tracker" di Google Drive kamu.',
+    'HartakuSigma membuatkan satu spreadsheet bernama "Hartaku - Expense Tracker" di Google Drive kamu.',
     'Setiap transaksi yang kamu catat ditulis ke spreadsheet itu, dan dibaca kembali dari sana.'
   ],
 
@@ -57,7 +57,7 @@ export const LANDING = {
   ],
 
   privacyNote:
-    'Hartaku tidak menyimpan isi catatan keuanganmu di server mana pun. Profil dasar Google, waktu aktivitas, dan waktu terakhir menambahkan transaksi disimpan untuk mengelola pengguna layanan; tidak ada iklan atau pelacakan lintas situs. Akses aplikasi bisa kamu cabut kapan saja lewat pengaturan izin akun Google.',
+    'HartakuSigma tidak menyimpan isi catatan keuanganmu di server mana pun. Profil dasar Google, waktu aktivitas, dan waktu terakhir menambahkan transaksi disimpan untuk mengelola pengguna layanan; tidak ada iklan atau pelacakan lintas situs. Akses aplikasi bisa kamu cabut kapan saja lewat pengaturan izin akun Google.',
 
   links: [
     { href: '/privacy', label: 'Kebijakan Privasi' },

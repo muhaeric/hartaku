@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-title Hartaku - Development Server
+title HartakuSigma - Development Server
 cd /d "%~dp0"
 
 where npm >nul 2>nul
@@ -15,7 +15,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo Menjalankan Hartaku...
+echo Menjalankan HartakuSigma...
 echo Tekan Ctrl+C untuk menghentikan server.
 echo.
 
