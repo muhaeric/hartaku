@@ -1,9 +1,13 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AccountPicker from '../ui/AccountPicker.jsx'
+import Button from '../ui/Button.jsx'
 import CategoryFilterChips from '../ui/CategoryFilterChips.jsx'
+import DatePicker from '../ui/DatePicker.jsx'
 import MonthStepper from '../ui/MonthStepper.jsx'
 import SegmentedControl from '../ui/SegmentedControl.jsx'
-import { CloseIcon, SearchIcon } from '../ui/icons.jsx'
+import Sheet from '../ui/Sheet.jsx'
+import { CalendarIcon, CloseIcon, SearchIcon } from '../ui/icons.jsx'
+import { currentMonthKey } from '../../lib/dates.js'
 import { sortByLabel } from '../../lib/sortOptions.js'
 
 const TYPE_OPTIONS = [
@@ -29,9 +33,13 @@ export default function TransactionFilters ({
   accounts,
   tags = [],
   searching = false,
+  range = null,
   onChange,
-  onMonthChange
+  onMonthChange,
+  onRangeChange
 }) {
+  const [pickingRange, setPickingRange] = useState(false)
+
   const toggleTag = (name) => {
     const selected = new Set(filters.tags)
     if (selected.has(name)) selected.delete(name)
@@ -105,8 +113,43 @@ export default function TransactionFilters ({
             <SearchIcon className="h-3.5 w-3.5 shrink-0" />
             <span className="truncate">Semua periode</span>
           </div>
+        ) : range ? (
+          <div className="flex h-9 min-w-0 items-center rounded-control border border-brand bg-brand-soft">
+            <button
+              type="button"
+              onClick={() => setPickingRange(true)}
+              aria-label="Ubah rentang tanggal"
+              className="flex h-full min-w-0 flex-1 items-center justify-center gap-1.5 px-2 text-[13px] font-medium text-brand-onsoft"
+            >
+              <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{rangeLabel(range)}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onRangeChange(null)}
+              aria-label="Hapus rentang tanggal"
+              className="flex h-full w-8 shrink-0 items-center justify-center text-brand-onsoft"
+            >
+              <CloseIcon className="h-3.5 w-3.5" />
+            </button>
+          </div>
         ) : (
-          <MonthStepper value={month} options={monthOptions} onChange={onMonthChange} />
+          <div className="flex min-w-0 items-center gap-1.5">
+            <MonthStepper
+              className="min-w-0 flex-1"
+              value={month}
+              options={monthOptions}
+              onChange={onMonthChange}
+            />
+            <button
+              type="button"
+              onClick={() => setPickingRange(true)}
+              aria-label="Pilih rentang tanggal"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-control border border-hairline bg-surface text-subtitle transition hover:text-ink"
+            >
+              <CalendarIcon className="h-4 w-4" />
+            </button>
+          </div>
         )}
         <AccountPicker
           id="transaction-account-filter"
@@ -171,6 +214,93 @@ export default function TransactionFilters ({
           </div>
         </div>
       )}
+
+      <RangeSheet
+        open={pickingRange}
+        range={range}
+        defaultMonth={month}
+        onClose={() => setPickingRange(false)}
+        onApply={(next) => {
+          onRangeChange(next)
+          setPickingRange(false)
+        }}
+      />
     </div>
+  )
+}
+
+function rangeLabel ({ from, to }) {
+  const format = (iso, withYear) =>
+    new Date(`${iso}T00:00:00`).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      ...(withYear ? { year: 'numeric' } : {})
+    })
+  const sameYear = from.slice(0, 4) === to.slice(0, 4)
+
+  return `${format(from, !sameYear)} – ${format(to, true)}`
+}
+
+/**
+ * Two date fields and an apply button. The end date follows the start when the
+ * start is moved past it, so the pair can never describe an empty range.
+ */
+function RangeSheet ({ open, range, defaultMonth, onClose, onApply }) {
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+
+  useEffect(() => {
+    if (!open) return
+    const month = /^\d{4}-\d{2}$/.test(defaultMonth) ? defaultMonth : currentMonthKey()
+    const last = `${month}-${String(new Date(Number(month.slice(0, 4)), Number(month.slice(5)), 0).getDate()).padStart(2, '0')}`
+
+    setFrom(range?.from || `${month}-01`)
+    setTo(range?.to || last)
+  }, [open, range, defaultMonth])
+
+  return (
+    <Sheet open={open} title="Rentang tanggal" onClose={onClose}>
+      <div className="space-y-gap-normal">
+        <div className="grid grid-cols-2 gap-gap">
+          <div>
+            <label className="label" htmlFor="range-from">Dari</label>
+            <DatePicker
+              id="range-from"
+              label="Dari tanggal"
+              value={from}
+              onChange={(value) => {
+                setFrom(value)
+                if (to < value) setTo(value)
+              }}
+            />
+          </div>
+          <div>
+            <label className="label" htmlFor="range-to">Sampai</label>
+            <DatePicker
+              id="range-to"
+              label="Sampai tanggal"
+              value={to}
+              onChange={(value) => {
+                setTo(value)
+                if (from > value) setFrom(value)
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-gap pt-1">
+          <Button variant="secondary" className="flex-1 justify-center" onClick={onClose}>
+            Batal
+          </Button>
+          <Button
+            className="flex-1 justify-center"
+            disabled={!from || !to}
+            onClick={() => onApply({ from, to })}
+          >
+            Terapkan
+          </Button>
+        </div>
+      </div>
+    </Sheet>
   )
 }

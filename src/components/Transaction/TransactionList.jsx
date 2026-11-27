@@ -7,7 +7,7 @@ import { ALL_MONTHS, buildMonthOptions, currentMonthKey, monthLabel } from '../.
 import { readLastAccount, writeLastAccount } from '../../lib/lastAccount.js'
 import { sortByLabel } from '../../lib/sortOptions.js'
 import { collectTags, hasAllTags, normalizeTags } from '../../lib/tags.js'
-import { filterByMonth, groupByDay, monthsWithData, summarize } from '../../lib/summary.js'
+import { filterByMonth, filterByRange, groupByDay, monthsWithData, summarize } from '../../lib/summary.js'
 import Button from '../ui/Button.jsx'
 import { Card } from '../ui/Card.jsx'
 import ConfirmDialog from '../ui/ConfirmDialog.jsx'
@@ -67,6 +67,8 @@ export default function TransactionList () {
     : 'all'
 
   const [month, setMonth] = useState(() => monthParam || currentMonthKey())
+  // { from, to } of inclusive ISO dates, or null while the month stepper rules.
+  const [range, setRange] = useState(null)
   // The account filter survives leaving the page: it is what the entry form
   // preselects, so silently forgetting it here would make that preselection
   // look random.
@@ -115,12 +117,14 @@ export default function TransactionList () {
    */
   // Search forces every period whether or not one is picked, so the two reasons
   // to drop the month scope collapse into one flag rather than two branches.
-  const allTime = Boolean(search) || month === ALL_MONTHS
+  const allTime = Boolean(search) || month === ALL_MONTHS || Boolean(range)
 
-  const scoped = useMemo(
-    () => (allTime ? transactions : filterByMonth(transactions, month)),
-    [transactions, month, allTime]
-  )
+  // A custom range replaces the month while it is set; search still wins over both.
+  const scoped = useMemo(() => {
+    if (search || (month === ALL_MONTHS && !range)) return transactions
+    if (range) return filterByRange(transactions, range)
+    return filterByMonth(transactions, month)
+  }, [transactions, month, range, search])
 
   const visible = useMemo(() => {
     const wantedCategories = new Set(filters.categories)
@@ -213,8 +217,8 @@ export default function TransactionList () {
     return () => observer.disconnect()
   }, [hasMore, limit, loadMore])
 
-  useEffect(() => setLimit(PAGE_SIZE), [month, filters])
-  useEffect(() => setSelected([]), [month, filters])
+  useEffect(() => setLimit(PAGE_SIZE), [month, range, filters])
+  useEffect(() => setSelected([]), [month, range, filters])
 
   useEffect(() => writeLastAccount(filters.account), [filters.account])
 
@@ -454,7 +458,12 @@ export default function TransactionList () {
         tags={tagSuggestions}
         searching={Boolean(search)}
         onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))}
-        onMonthChange={setMonth}
+        range={range}
+        onMonthChange={(value) => {
+          setRange(null)
+          setMonth(value)
+        }}
+        onRangeChange={setRange}
       />
 
       <PeriodSummary summary={summary} />
@@ -498,9 +507,11 @@ export default function TransactionList () {
           description={
             search
               ? `Tidak ada transaksi yang cocok dengan "${filters.search.trim()}" di seluruh periode.`
-              : month === ALL_MONTHS
-                ? 'Tidak ada transaksi yang cocok dengan filter ini di periode mana pun.'
-                : 'Tidak ada transaksi yang cocok dengan filter di bulan ini.'
+              : range
+                ? 'Tidak ada transaksi yang cocok dengan filter di rentang tanggal ini.'
+                : month === ALL_MONTHS
+                  ? 'Tidak ada transaksi yang cocok dengan filter ini di periode mana pun.'
+                  : 'Tidak ada transaksi yang cocok dengan filter di bulan ini.'
           }
           actionLabel="Tambah transaksi"
           onAction={() => navigate('/add')}

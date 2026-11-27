@@ -1,5 +1,22 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CloseIcon } from './icons.jsx'
+
+// Open sheets can nest (a date picker inside a form sheet), so the scroll lock is
+// counted rather than saved/restored per sheet: restoring a "previous" value that
+// another sheet had already set would leave the page stuck at overflow: hidden.
+let scrollLocks = 0
+let originalOverflow = ''
+
+function lockScroll () {
+  if (scrollLocks === 0) originalOverflow = document.body.style.overflow
+  scrollLocks += 1
+  document.body.style.overflow = 'hidden'
+}
+
+function unlockScroll () {
+  scrollLocks = Math.max(0, scrollLocks - 1)
+  if (scrollLocks === 0) document.body.style.overflow = originalOverflow
+}
 
 /**
  * Bottom sheet on phones, centred dialog from `sm` up. Replaces the old modal so
@@ -7,23 +24,24 @@ import { CloseIcon } from './icons.jsx'
  */
 export default function Sheet ({ open, title, description, onClose, children, footer, size = 'md' }) {
   const [keyboard, setKeyboard] = useState(0)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     if (!open) return undefined
 
     const onKeyDown = (event) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') onCloseRef.current()
     }
 
     document.addEventListener('keydown', onKeyDown)
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    lockScroll()
 
     return () => {
       document.removeEventListener('keydown', onKeyDown)
-      document.body.style.overflow = previousOverflow
+      unlockScroll()
     }
-  }, [open, onClose])
+  }, [open])
 
   /*
    * A `position: fixed` sheet is anchored to the layout viewport, which the

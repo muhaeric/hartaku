@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext.jsx'
 import { useData } from '../../context/DataContext.jsx'
 import { useSettings } from '../../context/SettingsContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
+import { LIMITS } from '../../lib/constants.js'
 import { formatCurrency, formatDate } from '../../lib/format.js'
 import {
   mappedProviderCount,
@@ -52,7 +53,7 @@ export default function EmailTransactionApprovals () {
     if (!candidate.category || busySourceId) return
     setBusySourceId(candidate.sourceId)
     try {
-      await addTransactions([candidate])
+      await addTransactions([{ ...candidate, description: (candidate.description || '').trim() }])
       updateSettings((current) => ({
         ...current,
         emailPendingTransactions: (current.emailPendingTransactions || [])
@@ -196,14 +197,23 @@ function TransactionApprovalCard ({
   return (
     <article className="mx-page mb-4 mt-2 space-y-3 rounded-control border border-hairline bg-tint/[0.03] p-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-caption text-subtitle">{typeLabel(candidate.type)}</p>
-          <p className="mt-0.5 break-words text-body font-semibold text-ink">{candidate.description}</p>
-        </div>
+        <p className="text-caption text-subtitle">{typeLabel(candidate.type)}</p>
         <p className={`amount shrink-0 text-body font-bold ${candidate.type === 'income' ? 'text-income' : 'text-expense'}`}>
           {candidate.type === 'income' ? '+' : '−'}{formatCurrency(candidate.amount, currency)}
         </p>
       </div>
+
+      <input
+        type="text"
+        aria-label="Keterangan transaksi"
+        autoComplete="off"
+        maxLength={LIMITS.description}
+        className="field h-9 px-2.5 py-0 text-body font-semibold"
+        placeholder="Tambahkan keterangan"
+        value={candidate.description || ''}
+        disabled={busy}
+        onChange={(event) => onChange({ description: event.target.value })}
+      />
 
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-caption">
         <dt className="text-subtitle">Tanggal</dt>
@@ -213,7 +223,7 @@ function TransactionApprovalCard ({
         <dt className="self-center text-subtitle">Kategori</dt>
         <dd>
           <select
-            aria-label={`Kategori untuk ${candidate.description}`}
+            aria-label="Kategori transaksi"
             className="field h-9 py-0 text-caption"
             value={candidate.category}
             disabled={busy}

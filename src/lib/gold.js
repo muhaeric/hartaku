@@ -65,3 +65,97 @@ export function formatPurity (karat) {
     (karat / PURE_KARAT) * 100
   )}%`
 }
+
+/**
+ * Which buyback price the whole pile is valued at. Buyback depends on whose
+ * bar it is far more than on the day - the same morning one dealer paid
+ * Rp110rb/gr more for Antam than Hartadinata paid for its own EmasKu - so the
+ * owner picks the brand they would actually sell, or types their shop's price.
+ *
+ * `market` is the median across brands, the default when nothing is known.
+ * Brand keys must match `BRAND_FEEDS` in api/_lib/goldQuote.js.
+ */
+export const GOLD_REFERENCE = {
+  market: 'market',
+  antam: 'antam',
+  ubs: 'ubs',
+  galeri24: 'galeri24',
+  emasku: 'emasku',
+  indogold: 'indogold',
+  pegadaian: 'pegadaian',
+  manual: 'manual'
+}
+
+/** `label` stays short enough for one line beside a price; `hint` says whose it is. */
+export const GOLD_REFERENCE_OPTIONS = [
+  { value: GOLD_REFERENCE.market, label: 'Rata-rata pasar' },
+  { value: GOLD_REFERENCE.antam, label: 'Antam' },
+  { value: GOLD_REFERENCE.ubs, label: 'UBS' },
+  { value: GOLD_REFERENCE.galeri24, label: 'Galeri 24', hint: 'Pegadaian' },
+  { value: GOLD_REFERENCE.emasku, label: 'EmasKu', hint: 'Hartadinata' },
+  { value: GOLD_REFERENCE.indogold, label: 'IndoGold' },
+  { value: GOLD_REFERENCE.pegadaian, label: 'Pegadaian', hint: 'Tabungan Emas' },
+  { value: GOLD_REFERENCE.manual, label: 'Harga sendiri' }
+]
+
+export function goldReferenceLabel (reference) {
+  return (
+    GOLD_REFERENCE_OPTIONS.find((option) => option.value === reference)?.label ||
+    GOLD_REFERENCE_OPTIONS[0].label
+  )
+}
+
+/**
+ * A typed 24K buyback this far off the market is almost always a slipped or
+ * missing zero, not a generous shop.
+ */
+export const MANUAL_PRICE_RANGE = { min: 0.5, max: 1.5 }
+
+/** Null when fine, else why the typed price was refused. */
+export function manualPriceProblem (price, marketPerGram) {
+  if (!Number.isFinite(price)) return 'Harga harus berupa angka.'
+  if (price <= 0) return 'Harga harus lebih besar dari 0.'
+  if (marketPerGram > 0 && price > marketPerGram * MANUAL_PRICE_RANGE.max) return 'too_high'
+  if (marketPerGram > 0 && price < marketPerGram * MANUAL_PRICE_RANGE.min) return 'too_low'
+  return null
+}
+
+/**
+ * The 24K buyback per gram to value gold at, for the chosen reference:
+ * `{ perGram, reference, basis, stale, sources, recordedDate }`, or null when
+ * nothing can price it.
+ *
+ * - `manual`   - the owner's own price; needs no feed at all.
+ * - `brand`    - the median of the dealers quoting that brand.
+ * - `market`   - the median across brands.
+ * - `fallback` - the chosen brand is missing today (or no own price was typed
+ *                yet), so the market price stands in, and the screen says so.
+ */
+export function resolveBuyback (quote, reference = GOLD_REFERENCE.market, manualPrice = 0) {
+  const own = Number(manualPrice)
+  if (reference === GOLD_REFERENCE.manual && own > 0) {
+    return { perGram: own, reference, basis: 'manual', stale: false, sources: [], recordedDate: null }
+  }
+
+  const entry = reference !== GOLD_REFERENCE.market ? quote?.brands?.[reference] : null
+  if (entry?.buybackPerGram > 0) {
+    return {
+      perGram: entry.buybackPerGram,
+      reference,
+      basis: 'brand',
+      stale: Boolean(entry.stale),
+      sources: entry.sources || [],
+      recordedDate: entry.recordedDate || null
+    }
+  }
+
+  if (!(quote?.buybackPerGram > 0)) return null
+  return {
+    perGram: quote.buybackPerGram,
+    reference,
+    basis: reference === GOLD_REFERENCE.market ? 'market' : 'fallback',
+    stale: false,
+    sources: [],
+    recordedDate: quote.recordedDate || null
+  }
+}
