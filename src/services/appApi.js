@@ -36,7 +36,10 @@ export const adminApi = {
   logout: () => post('/api/admin/logout'),
   users: ({ search = '', page = 1, limit = 25 } = {}) =>
     post('/api/admin/users', { search, page, limit }),
-  sendWelcome: (userId) => post('/api/admin/send-welcome', { userId })
+  sendWelcome: (userId) => post('/api/admin/send-welcome', { userId }),
+  /** Processes one batch of the rebrand announcement, or previews it (dryRun). */
+  sendAnnouncement: ({ dryRun = false } = {}) =>
+    post('/api/admin/send-announcement', { dryRun })
 }
 
 export const activityApi = {

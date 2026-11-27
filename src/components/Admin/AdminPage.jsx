@@ -94,6 +94,103 @@ function UserIdentity ({ user }) {
   )
 }
 
+function AnnouncementCard ({ onSessionExpired }) {
+  const toast = useToast()
+  const [status, setStatus] = useState(null)
+  const [previewing, setPreviewing] = useState(false)
+  const [blasting, setBlasting] = useState(false)
+
+  const handle401 = (err) => {
+    if (err.status === 401) {
+      onSessionExpired()
+      return true
+    }
+    return false
+  }
+
+  const preview = async () => {
+    setPreviewing(true)
+    try {
+      setStatus(await adminApi.sendAnnouncement({ dryRun: true }))
+    } catch (err) {
+      if (handle401(err)) return
+      toast.error(err.message)
+    } finally {
+      setPreviewing(false)
+    }
+  }
+
+  const sendAll = async () => {
+    const current = status || (await adminApi.sendAnnouncement({ dryRun: true }).catch(() => null))
+    const remaining = current?.remaining ?? 0
+    if (!remaining) {
+      toast.success('Semua user sudah menerima pengumuman ini.')
+      if (current) setStatus(current)
+      return
+    }
+    if (!window.confirm(`Kirim email pengumuman rebrand ke ${remaining} user yang belum menerima? Email dikirim nyata dan tidak bisa ditarik kembali.`)) return
+
+    setBlasting(true)
+    try {
+      let done = false
+      while (!done) {
+        const result = await adminApi.sendAnnouncement({})
+        setStatus(result)
+        done = result.done
+      }
+      toast.success('Pengumuman selesai dikirim ke semua user.')
+    } catch (err) {
+      if (handle401(err)) return
+      toast.error(`Pengiriman berhenti: ${err.message} Tekan "Kirim" lagi untuk melanjutkan dari sisanya.`)
+    } finally {
+      setBlasting(false)
+    }
+  }
+
+  const pct = status?.total ? Math.round((status.sent / status.total) * 100) : 0
+
+  return (
+    <Card>
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+        <div className="min-w-0">
+          <h2 className="text-section-title font-semibold">Pengumuman rebrand</h2>
+          <p className="text-[11px] leading-4 text-subtitle">
+            Kirim email satu kali "Hartaku kini bernama HartakuSigma" ke semua user. Aman diulang —
+            tiap user hanya menerima sekali.
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <Button size="sm" variant="secondary" loading={previewing} disabled={blasting} onClick={preview}>
+            Pratinjau
+          </Button>
+          <Button size="sm" loading={blasting} disabled={previewing} onClick={sendAll}>
+            Kirim ke semua user
+          </Button>
+        </div>
+      </div>
+
+      {status && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between text-caption text-subtitle">
+            <span>{status.sent} dari {status.total} terkirim</span>
+            <span>{status.remaining} tersisa</span>
+          </div>
+          <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-tint/10">
+            <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${pct}%` }} />
+          </div>
+          {status.dryRun && status.sample?.length > 0 && (
+            <p className="mt-2 text-[11px] leading-4 text-subtitle">
+              Contoh penerima berikutnya: {status.sample.join(', ')}
+              {status.remaining > status.sample.length ? ', …' : ''}
+            </p>
+          )}
+          {blasting && <p className="mt-2 text-[11px] leading-4 text-subtitle">Mengirim batch…</p>}
+        </div>
+      )}
+    </Card>
+  )
+}
+
 export default function AdminPage ({ onSignOut, onSessionExpired }) {
   const toast = useToast()
   const [data, setData] = useState(null)
@@ -182,6 +279,10 @@ export default function AdminPage ({ onSignOut, onSessionExpired }) {
 
           <section className="mt-4">
             <ActivityChart daily={data?.daily} />
+          </section>
+
+          <section className="mt-4">
+            <AnnouncementCard onSessionExpired={onSessionExpired} />
           </section>
 
           <section className="mt-6">

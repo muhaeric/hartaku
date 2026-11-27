@@ -1,6 +1,7 @@
 import { adminEmails } from './admin.js'
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails'
+const RESEND_BATCH_ENDPOINT = 'https://api.resend.com/emails/batch'
 export const TEAM_CONTACT_URL =
   'https://wa.me/6283141469381?text=Hai%20tim%20HartakuSigma%20saya%20ingin%20menyampaikan%20request%20%2F%20feedback'
 
@@ -110,6 +111,49 @@ export function newUserAdminEmail (user) {
   }
 }
 
+/**
+ * One-time rebrand notice: "Hartaku" is now "HartakuSigma". The spreadsheet in
+ * the user's own Drive keeps its original name, so the copy says plainly that
+ * nothing on their side changes and no action is needed.
+ */
+export function announcementEmail (user, appUrl) {
+  const greetingName = firstName(user)
+  return {
+    to: [user.email],
+    subject: 'Hartaku kini bernama HartakuSigma',
+    text: [
+      `Halo ${greetingName},`,
+      '',
+      'Mulai sekarang, Hartaku berganti nama menjadi HartakuSigma.',
+      '',
+      'Yang berubah hanya namanya. Semua fitur, catatan keuangan, dan spreadsheet ' +
+        '"Hartaku - Expense Tracker" di Google Drive-mu tetap sama dan tetap milikmu. ' +
+        'Kamu tidak perlu melakukan apa pun — cukup buka aplikasi seperti biasa.',
+      '',
+      appUrl ? `Buka HartakuSigma: ${appUrl}` : '',
+      '',
+      'Terima kasih sudah mencatat keuanganmu bersama kami.',
+      '',
+      'Salam,',
+      'HartakuSigma'
+    ].filter((line, index, lines) => line || lines[index - 1] !== '').join('\n'),
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;color:#1f2937;max-width:560px;margin:auto">
+        <h1 style="font-size:24px;margin:0 0 16px">Hartaku kini bernama <span style="color:#4361ee">HartakuSigma</span></h1>
+        <p>Halo ${escapeHtml(greetingName)},</p>
+        <p>Mulai sekarang, <strong>Hartaku</strong> berganti nama menjadi <strong>HartakuSigma</strong>.</p>
+        <p>Yang berubah hanya namanya. Semua fitur, catatan keuangan, dan spreadsheet
+        <strong>"Hartaku - Expense Tracker"</strong> di Google Drive-mu tetap sama dan tetap milikmu.
+        Kamu tidak perlu melakukan apa pun — cukup buka aplikasi seperti biasa.</p>
+        ${appUrl
+          ? `<p style="margin:24px 0 0"><a href="${escapeHtml(appUrl)}" style="display:inline-block;padding:12px 18px;border-radius:12px;background:#4361ee;color:#fff;text-decoration:none;font-weight:600">Buka HartakuSigma</a></p>`
+          : ''}
+        <p style="margin-top:28px;color:#6b7280">Terima kasih sudah mencatat keuanganmu bersama kami.<br />Salam, HartakuSigma</p>
+      </div>
+    `
+  }
+}
+
 async function sendEmail (message, idempotencyKey, from) {
   const response = await fetch(RESEND_ENDPOINT, {
     method: 'POST',
@@ -190,4 +234,46 @@ export async function sendNewUserEmailsSafely (user, { appUrl } = {}) {
       console.error(`[email] ${messages[index].label} gagal dikirim:`, result.reason)
     }
   })
+}
+
+/**
+ * Sends one announcement to many recipients in a single Resend batch request
+ * (max 100 per call). The caller keeps the campaign log that makes the blast
+ * idempotent, so this does not set per-message idempotency keys.
+ */
+export async function sendAnnouncementEmails (users, { appUrl } = {}) {
+  const from = emailSenderAddress()
+  if (!process.env.RESEND_API_KEY || !from) {
+    const error = new Error('Resend belum dikonfigurasi. Periksa API key dan domain/alamat pengirim.')
+    error.code = 'email_not_configured'
+    throw error
+  }
+
+  const recipients = (users || []).filter((user) => user?.email)
+  if (!recipients.length) return { sent: 0 }
+  if (recipients.length > 100) {
+    const error = new Error('Batch pengumuman melebihi 100 penerima.')
+    error.code = 'announcement_batch_too_large'
+    throw error
+  }
+
+  const batch = recipients.map((user) => ({ from, ...announcementEmail(user, appUrl) }))
+
+  const response = await fetch(RESEND_BATCH_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'hartaku/1.0'
+    },
+    body: JSON.stringify(batch)
+  })
+
+  if (!response.ok) {
+    const detail = await response.text()
+    throw new Error(`Resend ${response.status}: ${detail.slice(0, 500)}`)
+  }
+
+  await response.json().catch(() => ({}))
+  return { sent: recipients.length }
 }
