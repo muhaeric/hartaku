@@ -1,4 +1,4 @@
-# Hartaku
+# HartakuSigma
 
 Expense tracker ringan, mobile-first. Catatan keuangan disimpan di **Google Spreadsheet milik
 penggunanya sendiri**. Database PostgreSQL hanya menyimpan profil dasar dan aktivitas user.
@@ -17,7 +17,7 @@ penggunanya sendiri**. Database PostgreSQL hanya menyimpan profil dasar dan akti
 ## 1. Setup Google Cloud (sekali saja)
 
 1. Buka [Google Cloud Console](https://console.cloud.google.com/) → **New Project**, beri nama
-   `Hartaku`.
+   `HartakuSigma`.
 2. **APIs & Services → Library** → aktifkan:
    - **Google Sheets API** (wajib)
    - **Google Drive API** (wajib juga dalam praktiknya — ini satu-satunya cara aplikasi
@@ -26,7 +26,7 @@ penggunanya sendiri**. Database PostgreSQL hanya menyimpan profil dasar dan akti
      tidak akan menemukan data lamamu. Aplikasi menolak membuat spreadsheet baru diam-diam
      dalam keadaan itu — kamu akan disodori layar pilihan.)
    - **Gmail API** (opsional, untuk fitur Transaksi Otomatis Beta). Isi email diproses
-     langsung di browser dan tidak dikirim ke backend Hartaku.
+     langsung di browser dan tidak dikirim ke backend HartakuSigma.
 3. **APIs & Services → OAuth consent screen**:
    - User type: **External**, isi nama app + email support.
    - Scopes: tambahkan `.../auth/drive.file` (yang lain — `openid`, `email`, `profile` — sudah
@@ -58,7 +58,7 @@ ADMIN_EMAILS=email-admin@gmail.com
 DATABASE_URL=postgresql://...
 RESEND_API_KEY=re_xxx
 RESEND_EMAIL_DOMAIN=domain-yang-sudah-diverifikasi.com
-# Opsional: EMAIL_FROM=Hartaku <halo@domain-yang-sudah-diverifikasi.com>
+# Opsional: EMAIL_FROM=HartakuSigma <halo@domain-yang-sudah-diverifikasi.com>
 ```
 
 `ADMIN_PIN` dipakai untuk masuk ke `/admin` tanpa akun Google. Gunakan PIN unik yang panjang dan

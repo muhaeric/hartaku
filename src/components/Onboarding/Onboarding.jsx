@@ -202,7 +202,7 @@ function WelcomeStep ({ onNext }) {
 
   return (
     <>
-      <StepHeading icon="👋" title={firstName ? `Hai, ${firstName}!` : 'Selamat datang di Hartaku'}>
+      <StepHeading icon="👋" title={firstName ? `Hai, ${firstName}!` : 'Selamat datang di HartakuSigma'}>
         Pencatat keuangan pribadi yang ringan, dengan data yang tetap milikmu.
       </StepHeading>
 
@@ -308,7 +308,7 @@ function ReadyStep ({ onFinish }) {
 
   return (
     <>
-      <StepHeading icon="🎉" title="Hartaku siap dipakai">
+      <StepHeading icon="🎉" title="HartakuSigma siap dipakai">
         Mulai dari satu catatan. Makin rutin dicatat, makin jelas ke mana uangmu pergi.
       </StepHeading>
 

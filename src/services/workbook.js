@@ -87,14 +87,14 @@ export async function ensureWorkbook ({ spreadsheetId, allowCreate = false } = {
     } catch (err) {
       if (!allowCreate) {
         throw new WorkbookLookupError(
-          'Tidak bisa memeriksa apakah spreadsheet Hartaku sudah ada. ' +
+          'Tidak bisa memeriksa apakah spreadsheet HartakuSigma sudah ada. ' +
             'Biasanya karena Google Drive API belum diaktifkan di project Google Cloud-mu.',
           err
         )
       }
     }
 
-    // Prefer a spreadsheet that actually carries Hartaku's sheets, so a broad
+    // Prefer a spreadsheet that actually carries HartakuSigma's sheets, so a broad
     // match cannot adopt something unrelated. Only if none qualifies do we fall
     // back to the first one that merely opens.
     let fallback = null
@@ -114,9 +114,9 @@ export async function ensureWorkbook ({ spreadsheetId, allowCreate = false } = {
 
   if (!meta && !allowCreate) {
     throw new WorkbookNotFoundError(
-      'Tidak ada satu pun spreadsheet buatan Hartaku di akun Google ini. Kalau kamu yakin ' +
+      'Tidak ada satu pun spreadsheet buatan HartakuSigma di akun Google ini. Kalau kamu yakin ' +
         'catatanmu ada, kemungkinan kamu masuk dengan akun Google yang berbeda, atau akses ' +
-        'aplikasi pernah dicabut sehingga file lamanya tidak lagi terlihat oleh Hartaku.'
+        'aplikasi pernah dicabut sehingga file lamanya tidak lagi terlihat oleh HartakuSigma.'
     )
   }
 
@@ -154,7 +154,7 @@ export async function ensureWorkbook ({ spreadsheetId, allowCreate = false } = {
   return workbook
 }
 
-/** A Hartaku workbook always has the transactions sheet; a stray file will not. */
+/** A HartakuSigma workbook always has the transactions sheet; a stray file will not. */
 function looksLikeWorkbook (meta) {
   return (meta.sheets || []).some((sheet) => sheet.properties?.title === SHEET.transactions)
 }

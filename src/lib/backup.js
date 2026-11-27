@@ -36,7 +36,7 @@ export function backupFilename (date = new Date()) {
     String(date.getDate()).padStart(2, '0')
   ].join('-')
 
-  return `hartaku-${stamp}.json`
+  return `hartakusigma-${stamp}.json`
 }
 
 /** Hands the file to the browser's own download machinery - no server involved. */
@@ -62,7 +62,7 @@ export class BackupError extends Error {}
  *
  * Validated rather than trusted: this file has been outside the app, possibly
  * through a text editor, and restoring is destructive. Anything that is not a
- * recognisable Hartaku backup is refused by name instead of being half-applied.
+ * recognisable HartakuSigma backup is refused by name instead of being half-applied.
  */
 export async function readBackup (file) {
   if (!file) throw new BackupError('Tidak ada file yang dipilih.')
@@ -75,11 +75,11 @@ export async function readBackup (file) {
   }
 
   if (parsed?.format !== FORMAT) {
-    throw new BackupError('File itu bukan cadangan Hartaku.')
+    throw new BackupError('File itu bukan cadangan HartakuSigma.')
   }
   if (Number(parsed.version) > VERSION) {
     throw new BackupError(
-      'Cadangan ini dibuat versi Hartaku yang lebih baru. Perbarui aplikasinya dulu.'
+      'Cadangan ini dibuat versi HartakuSigma yang lebih baru. Perbarui aplikasinya dulu.'
     )
   }
 

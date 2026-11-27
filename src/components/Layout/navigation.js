@@ -36,5 +36,5 @@ export function pageTitle (pathname) {
     }
   }
 
-  return 'Hartaku'
+  return 'HartakuSigma'
 }

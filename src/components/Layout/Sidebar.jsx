@@ -9,7 +9,7 @@ export default function Sidebar () {
         <span className="text-xl" aria-hidden="true">
           💸
         </span>
-        <span className="text-card-title font-semibold">Hartaku</span>
+        <span className="text-card-title font-semibold">HartakuSigma</span>
       </div>
 
       <nav aria-label="Navigasi samping">

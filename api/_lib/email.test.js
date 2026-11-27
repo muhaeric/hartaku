@@ -15,7 +15,7 @@ test('sender defaults to the domain provisioned by the Resend integration', () =
   process.env.RESEND_EMAIL_DOMAIN = 'hartaku.web.id'
 
   try {
-    assert.equal(emailSenderAddress(), 'Hartaku <halo@hartaku.web.id>')
+    assert.equal(emailSenderAddress(), 'HartakuSigma <halo@hartaku.web.id>')
     process.env.EMAIL_FROM = 'Tim Hartaku <support@hartaku.web.id>'
     assert.equal(emailSenderAddress(), 'Tim Hartaku <support@hartaku.web.id>')
   } finally {
@@ -88,7 +88,7 @@ test('admin notification uses the configured allowlist and safe subject text', (
     })
 
     assert.deepEqual(email.to, ['owner@example.com', 'second@example.com'])
-    assert.equal(email.subject, 'User baru Hartaku: User Bcc: injected@example.com')
+    assert.equal(email.subject, 'User baru HartakuSigma: User Bcc: injected@example.com')
     assert.match(email.html, /new@example\.com/)
   } finally {
     if (previous === undefined) delete process.env.ADMIN_EMAILS
