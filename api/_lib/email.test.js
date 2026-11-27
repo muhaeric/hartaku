@@ -70,6 +70,30 @@ test('announcement email omits the app button when no url is given', () => {
   assert.doesNotMatch(email.html, /<a href/)
 })
 
+test('announcement email applies a custom draft with {nama} and {link} placeholders', () => {
+  const email = announcementEmail(
+    { email: 'user@example.com', name: 'Budi Santoso' },
+    'https://app.example',
+    { subject: 'Halo {nama}, ada kabar', body: 'Hai {nama}!\n\n{link}' }
+  )
+
+  assert.equal(email.subject, 'Halo Budi, ada kabar')
+  assert.match(email.text, /Hai Budi!/)
+  assert.match(email.text, /https:\/\/app\.example/)
+  assert.match(email.html, /Hai Budi!/)
+  assert.match(email.html, /<a href="https:\/\/app\.example"/)
+})
+
+test('announcement email escapes a custom body so authored text cannot inject HTML', () => {
+  const email = announcementEmail(
+    { email: 'user@example.com', name: 'Budi' },
+    'https://app.example',
+    { subject: 'Hai', body: 'Lihat <img src=x onerror=alert(1)> ini' }
+  )
+  assert.match(email.html, /&lt;img/)
+  assert.doesNotMatch(email.html, /<img/)
+})
+
 test('manual welcome email sends only the selected user with a fresh idempotency key', async () => {
   const previousKey = process.env.RESEND_API_KEY
   const previousFrom = process.env.EMAIL_FROM

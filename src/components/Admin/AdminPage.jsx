@@ -96,8 +96,10 @@ function UserIdentity ({ user }) {
 
 function AnnouncementCard ({ onSessionExpired }) {
   const toast = useToast()
+  const [subject, setSubject] = useState('')
+  const [body, setBody] = useState('')
   const [status, setStatus] = useState(null)
-  const [previewing, setPreviewing] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [blasting, setBlasting] = useState(false)
 
   const handle401 = (err) => {
@@ -108,35 +110,54 @@ function AnnouncementCard ({ onSessionExpired }) {
     return false
   }
 
-  const preview = async () => {
-    setPreviewing(true)
+  const applyDraft = (result) => {
+    setStatus(result)
+    if (result.subject !== undefined) setSubject(result.subject)
+    if (result.body !== undefined) setBody(result.body)
+  }
+
+  // Load the saved (or default) draft and current progress once.
+  useEffect(() => {
+    let active = true
+    adminApi.sendAnnouncement({ dryRun: true })
+      .then((result) => { if (active) applyDraft(result) })
+      .catch((err) => { if (active && !handle401(err)) toast.error(err.message) })
+      .finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [])
+
+  const saveDraft = async () => {
     try {
-      setStatus(await adminApi.sendAnnouncement({ dryRun: true }))
+      const result = await adminApi.sendAnnouncement({ dryRun: true, subject, body })
+      applyDraft(result)
+      toast.success('Draft pengumuman disimpan.')
     } catch (err) {
       if (handle401(err)) return
       toast.error(err.message)
-    } finally {
-      setPreviewing(false)
     }
   }
 
   const sendAll = async () => {
-    const current = status || (await adminApi.sendAnnouncement({ dryRun: true }).catch(() => null))
-    const remaining = current?.remaining ?? 0
-    if (!remaining) {
-      toast.success('Semua user sudah menerima pengumuman ini.')
-      if (current) setStatus(current)
+    if (!subject.trim() || !body.trim()) {
+      toast.error('Subjek dan isi pengumuman tidak boleh kosong.')
       return
     }
-    if (!window.confirm(`Kirim email pengumuman rebrand ke ${remaining} user yang belum menerima? Email dikirim nyata dan tidak bisa ditarik kembali.`)) return
+    const remaining = status?.remaining ?? 0
+    if (!remaining) {
+      toast.success('Semua user sudah menerima pengumuman ini.')
+      return
+    }
+    if (!window.confirm(`Kirim email pengumuman ke ${remaining} user yang belum menerima? Email dikirim nyata dengan teks di atas dan tidak bisa ditarik kembali.`)) return
 
     setBlasting(true)
     try {
-      let done = false
-      while (!done) {
-        const result = await adminApi.sendAnnouncement({})
+      // First call saves the current draft and sends the first batch; the rest
+      // reuse the saved draft so every recipient gets identical text.
+      let result = await adminApi.sendAnnouncement({ subject, body })
+      setStatus(result)
+      while (!result.done) {
+        result = await adminApi.sendAnnouncement({})
         setStatus(result)
-        done = result.done
       }
       toast.success('Pengumuman selesai dikirim ke semua user.')
     } catch (err) {
@@ -155,15 +176,40 @@ function AnnouncementCard ({ onSessionExpired }) {
         <div className="min-w-0">
           <h2 className="text-section-title font-semibold">Pengumuman rebrand</h2>
           <p className="text-[11px] leading-4 text-subtitle">
-            Kirim email satu kali "Hartaku kini bernama HartakuSigma" ke semua user. Aman diulang —
-            tiap user hanya menerima sekali.
+            Kirim email satu kali ke semua user. Aman diulang — tiap user hanya menerima sekali.
+            Pakai <code>{'{nama}'}</code> untuk nama depan dan <code>{'{link}'}</code> untuk tombol buka aplikasi.
           </p>
         </div>
-        <div className="flex shrink-0 gap-2">
-          <Button size="sm" variant="secondary" loading={previewing} disabled={blasting} onClick={preview}>
-            Pratinjau
+      </div>
+
+      <div className="mt-4 space-y-3">
+        <div>
+          <label className="label" htmlFor="announcement-subject">Subjek</label>
+          <input
+            id="announcement-subject"
+            className="field w-full"
+            value={subject}
+            disabled={loading || blasting}
+            onChange={(event) => setSubject(event.target.value)}
+            placeholder="Subjek email"
+          />
+        </div>
+        <div>
+          <label className="label" htmlFor="announcement-body">Isi email</label>
+          <textarea
+            id="announcement-body"
+            className="field min-h-44 w-full resize-y font-mono text-caption leading-5"
+            value={body}
+            disabled={loading || blasting}
+            onChange={(event) => setBody(event.target.value)}
+            placeholder="Tulis isi pengumuman…"
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="secondary" disabled={loading || blasting} onClick={saveDraft}>
+            Simpan draft
           </Button>
-          <Button size="sm" loading={blasting} disabled={previewing} onClick={sendAll}>
+          <Button size="sm" loading={blasting} disabled={loading} onClick={sendAll}>
             Kirim ke semua user
           </Button>
         </div>

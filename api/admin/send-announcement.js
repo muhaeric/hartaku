@@ -1,10 +1,12 @@
 import { requireAdmin } from '../_lib/admin.js'
-import { sendAnnouncementEmails } from '../_lib/email.js'
+import { ANNOUNCEMENT_DEFAULTS, sendAnnouncementEmails } from '../_lib/email.js'
 import { appOrigin, requireEnv, requireMethod, requireSameOrigin } from '../_lib/http.js'
 import {
+  getAnnouncementDraft,
   getAnnouncementProgress,
   getPendingAnnouncementRecipients,
-  markAnnouncementSent
+  markAnnouncementSent,
+  saveAnnouncementDraft
 } from '../_lib/users.js'
 
 /**
@@ -24,13 +26,26 @@ export default async function handler (req, res) {
   if (!requireAdmin(req, res)) return
 
   const dryRun = req.body?.dryRun === true
+  const hasEdits = req.body?.subject !== undefined || req.body?.body !== undefined
 
   try {
+    // The admin can revise subject/body; once saved, every batch and resume
+    // uses the same stored copy. Fall back to the default copy if none saved.
+    if (hasEdits) {
+      await saveAnnouncementDraft(CAMPAIGN, {
+        subject: req.body?.subject,
+        body: req.body?.body
+      })
+    }
+    const draft = (await getAnnouncementDraft(CAMPAIGN)) || ANNOUNCEMENT_DEFAULTS
+
     if (dryRun) {
       const progress = await getAnnouncementProgress(CAMPAIGN)
       const sample = await getPendingAnnouncementRecipients(CAMPAIGN, 5)
       return res.status(200).json({
         dryRun: true,
+        subject: draft.subject,
+        body: draft.body,
         ...progress,
         done: progress.remaining === 0,
         sample: sample.map((user) => user.email)
@@ -43,7 +58,7 @@ export default async function handler (req, res) {
       return res.status(200).json({ sentThisBatch: 0, done: true, ...progress })
     }
 
-    await sendAnnouncementEmails(recipients, { appUrl: appOrigin(req) })
+    await sendAnnouncementEmails(recipients, { appUrl: appOrigin(req), draft })
     await markAnnouncementSent(CAMPAIGN, recipients.map((user) => user.sub))
 
     const progress = await getAnnouncementProgress(CAMPAIGN)
@@ -54,9 +69,10 @@ export default async function handler (req, res) {
     })
   } catch (error) {
     console.error('[admin/send-announcement] failed:', error)
-    return res.status(500).json({
+    const known = error.code === 'email_not_configured' || error.code === 'announcement_draft_empty'
+    return res.status(known ? 400 : 500).json({
       error: error.code || 'announcement_failed',
-      message: error.code === 'email_not_configured'
+      message: known
         ? error.message
         : 'Pengumuman gagal dikirim. Periksa konfigurasi Resend lalu coba lagi.'
     })
