@@ -46,7 +46,10 @@ export const adminApi = {
     if (subject !== undefined) payload.subject = subject
     if (body !== undefined) payload.body = body
     return post('/api/admin/send-announcement', payload)
-  }
+  },
+  /** Sends the current draft only to a registered admin email, for preview. */
+  testAnnouncement: ({ testEmail, subject, body } = {}) =>
+    post('/api/admin/send-announcement', { test: true, testEmail, subject, body })
 }
 
 export const activityApi = {

@@ -101,6 +101,8 @@ function AnnouncementCard ({ onSessionExpired }) {
   const [status, setStatus] = useState(null)
   const [loading, setLoading] = useState(true)
   const [blasting, setBlasting] = useState(false)
+  const [testEmail, setTestEmail] = useState('')
+  const [testing, setTesting] = useState(false)
 
   const handle401 = (err) => {
     if (err.status === 401) {
@@ -134,6 +136,27 @@ function AnnouncementCard ({ onSessionExpired }) {
     } catch (err) {
       if (handle401(err)) return
       toast.error(err.message)
+    }
+  }
+
+  const sendTest = async () => {
+    if (!testEmail.trim()) {
+      toast.error('Isi dulu email tujuan tes (harus email admin terdaftar).')
+      return
+    }
+    if (!subject.trim() || !body.trim()) {
+      toast.error('Subjek dan isi pengumuman tidak boleh kosong.')
+      return
+    }
+    setTesting(true)
+    try {
+      const result = await adminApi.testAnnouncement({ testEmail: testEmail.trim(), subject, body })
+      toast.success(`Email tes dikirim ke ${result.sentTo}.`)
+    } catch (err) {
+      if (handle401(err)) return
+      toast.error(err.message)
+    } finally {
+      setTesting(false)
     }
   }
 
@@ -205,11 +228,29 @@ function AnnouncementCard ({ onSessionExpired }) {
             placeholder="Tulis isi pengumuman…"
           />
         </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <label className="label" htmlFor="announcement-test-email">Kirim tes ke email admin</label>
+            <input
+              id="announcement-test-email"
+              className="field w-full"
+              type="email"
+              value={testEmail}
+              disabled={loading || blasting}
+              onChange={(event) => setTestEmail(event.target.value)}
+              placeholder="email-admin@contoh.com"
+            />
+          </div>
+          <Button size="sm" variant="secondary" loading={testing} disabled={loading || blasting} onClick={sendTest}>
+            Kirim tes
+          </Button>
+        </div>
+
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" disabled={loading || blasting} onClick={saveDraft}>
+          <Button size="sm" variant="secondary" disabled={loading || blasting || testing} onClick={saveDraft}>
             Simpan draft
           </Button>
-          <Button size="sm" loading={blasting} disabled={loading} onClick={sendAll}>
+          <Button size="sm" loading={blasting} disabled={loading || testing} onClick={sendAll}>
             Kirim ke semua user
           </Button>
         </div>

@@ -1,4 +1,4 @@
-import { requireAdmin } from '../_lib/admin.js'
+import { adminEmails, requireAdmin } from '../_lib/admin.js'
 import { ANNOUNCEMENT_DEFAULTS, sendAnnouncementEmails } from '../_lib/email.js'
 import { appOrigin, requireEnv, requireMethod, requireSameOrigin } from '../_lib/http.js'
 import {
@@ -26,9 +26,45 @@ export default async function handler (req, res) {
   if (!requireAdmin(req, res)) return
 
   const dryRun = req.body?.dryRun === true
+  const isTest = req.body?.test === true
   const hasEdits = req.body?.subject !== undefined || req.body?.body !== undefined
 
   try {
+    // A test send goes only to a configured admin address and never touches the
+    // campaign log, so the admin can preview the real email before the blast.
+    if (isTest) {
+      const allow = adminEmails()
+      const target = String(req.body?.testEmail || '').trim().toLowerCase()
+      if (!allow.length) {
+        return res.status(400).json({
+          error: 'admin_emails_not_configured',
+          message: 'ADMIN_EMAILS belum dikonfigurasi, jadi email tes tidak bisa dikirim.'
+        })
+      }
+      if (!allow.includes(target)) {
+        return res.status(400).json({
+          error: 'test_email_not_allowed',
+          message: 'Email tes harus salah satu alamat admin yang terdaftar di ADMIN_EMAILS.'
+        })
+      }
+
+      const draft = hasEdits
+        ? { subject: String(req.body?.subject || '').trim(), body: String(req.body?.body || '').trim() }
+        : (await getAnnouncementDraft(CAMPAIGN)) || ANNOUNCEMENT_DEFAULTS
+      if (!draft.subject || !draft.body) {
+        return res.status(400).json({
+          error: 'announcement_draft_empty',
+          message: 'Subjek dan isi pengumuman tidak boleh kosong.'
+        })
+      }
+
+      await sendAnnouncementEmails(
+        [{ sub: 'admin-test', email: target, name: 'Admin' }],
+        { appUrl: appOrigin(req), draft }
+      )
+      return res.status(200).json({ test: true, sentTo: target })
+    }
+
     // The admin can revise subject/body; once saved, every batch and resume
     // uses the same stored copy. Fall back to the default copy if none saved.
     if (hasEdits) {
